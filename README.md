@@ -1,92 +1,40 @@
-# Rabbit R1 Creations
+# Claude Start
 
-Sammlung kleiner Web-Apps („Creations“) für den Rabbit R1 (Bildschirm 240×282 px).
+Startseite für den Rabbit R1 (240 × 282 px) mit Links zur Web-Version von claude.ai. Es ist kein eigener Chat und nutzt keine API: Die Links öffnen die echten Seiten im Webview des R1.
 
-## Aufbau
+Wichtig: Ob claude.ai im Webview (Android, Chrome 101) funktioniert, ist **nicht bewiesen**. Die Startseite zeigt deshalb pro Eintrag eine Markierung, damit du es selbst testen kannst. Hintergrund siehe `docs/diagnose.md`.
 
-| Wo | Was |
-| --- | --- |
-| `main` | Übersichtsseite, Doku (`docs/r1-creations.md`), Werkzeuge (`tools/`), Deploy-Workflow |
-| `creation/<name>` | Eine Creation pro Branch (Dateien im Branch-Root) |
+## Bedienung
 
-Die Seite `https://luxx1993.github.io/r1-creations/` listet alle Creations. Jede liegt unter
-`/<name>/`, z. B. `/tally/`.
+- **Drehregler:** Eintrag wählen. **Seitentaste:** öffnen. **Antippen:** öffnen.
+- **Seitentaste lang halten** oder einen Eintrag lang antippen: Markierung weiterschalten ○ ungetestet → ✓ läuft → ✗ weiß/schwarz/Fehler → ○. Sie bleibt nach „← zurück“ erhalten.
+- Zuletzt geöffnete Einträge stehen oben.
+- Am Computer: Pfeiltasten, Enter (öffnen) und `m` (markieren).
 
-## Creations
+## Links ändern
 
-| Name | Branch | Beschreibung |
-| --- | --- | --- |
-| Tally | `creation/tally` | Strichlisten-Zähler mit Auto-Rotation |
-| Marble Maze | `creation/marble-maze` | Murmel-Labyrinth: 15 Level, Neigung per Beschleunigungssensor, Drehregler = Tempo (10 Stufen) |
-| Clawd | `creation/clawd` | Clawd als Haustier im Diorama: 7 Szenen und 11 Stile aus dem Claude-Fables-Plugin, Hüte, Brillen und Schleifen, Auto-Rotation |
+Die Datei `links.js` enthält die Liste. Eine Zeile kopieren und `title`, `url`, `note` anpassen, oder eine Zeile löschen. Für einen eigenen Chat die Adresse `https://claude.ai/chat/<id>` bei „Eigener Chat“ eintragen. Danach eine neue Version ausliefern (siehe Update).
 
-### Tally installieren
+## Hosting
 
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+Dieses Repo liefert den Branch automatisch über GitHub Pages aus: `https://luxx1993.github.io/r1-creations/clau.de/`. Kostenlos, nichts zu tun außer Pushen.
 
-[![Install-QR für Tally – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/tally/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/tally)
+Alternativen für eine eigene Domain: **Netlify Drop** (Ordner oder ZIP auf app.netlify.com/drop ziehen, danach die Seite „claimen“, sonst läuft sie ab) oder **Cloudflare Pages**. Wenn sich die Adresse ändert, den QR neu erzeugen (`python3 tools/make_qr.py …`).
 
-(Ein Klick auf das Bild öffnet den Branch `creation/tally` mit Screenshots und Beschreibung. Das Bild ist immer der aktuelle Code der Creation.)
+## Installation
 
-### Marble Maze installieren
+Auf dem R1: Creations-Karte → „add via QR code“ → `qr.png` (oder `install.html`) scannen. Der Code enthält ein JSON-Objekt, kein bloßer Link.
 
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+## Update
 
-[![Install-QR für Marble Maze – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/marble-maze/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/marble-maze)
+Der R1 merkt sich die Installationsadresse. Darum:
 
-Bedienung: Neigen = Kugel rollt, Drehregler = Tempo (1–10), Seitentaste = Neutrallage kalibrieren (Doppelklick = Y-Achse umkehren), langer Druck = Levelmenü.
+1. Datei als neue Version kopieren (z. B. `index-v1.5.0.html`) und `APP_VERSION`, `creation.json` und den QR darauf anpassen.
+2. Die alte Karte auf dem R1 löschen.
+3. Den neuen QR scannen.
 
-### Clawd installieren
+Geräte-Speicher (Markierungen) gehört zur Installationsadresse: Nach einem Update fangen die Markierungen neu an.
 
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+## Dateien
 
-[![Install-QR für Clawd – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd)
-
-Demo-Video (30 s): [clawd-demo.mp4](https://luxx1993.github.io/r1-creations/clawd/demo/clawd-demo.mp4)
-
-Clawd ist ein Haustier ohne Pflege und ohne Level in einer endlosen Welt (keine Begrenzung nach links oder rechts): Er läuft von selbst durch die Szene, reagiert auf Berührung und schläft ein, wenn niemand da ist.
-
-- Drehregler: lenkt Clawd nach links/rechts (nach oben drehen = nach rechts). Nach einem Druck auf die Seitentaste wählt er stattdessen einen Menüpunkt (Spiel, Schlaf, Items, Welt, Optionen), ein zweiter Druck führt ihn aus. Spiel öffnet eine Auswahl: Ball (Clawd jongliert, mit Ton bei jedem Aufprall), Seilspringen oder Pfeifen; Clawd pfeift und springt Seil auch von selbst.
-- Seitentaste lang halten oder Clawd gedrückt halten: streicheln. Kurz antippen: er reagiert. Viermal schnell antippen oder schütteln: ihm wird schwindlig. Ein Tipp auf die Szene schickt ihn dorthin.
-- Welt: Ort (Wald, Weltraum, Stadt, Wüste, Vulkan, Labor, Dorf) und Stil (Original, Pixel Art, Höhle, Blaupause, Mosaik, Frutiger Aero, Kupferstich, Wandteppich, Golden Age, Ukiyo-e, Kamon) als Rolodex-Auswahl. Items: Kopf, Gesicht und Körper (Hüte, Brillen, Schnurrbart, Schleife, Schal), jeweils im Stil gezeichnet.
-- Ton (alles per WebAudio erzeugt, ohne Dateien; in Welt unter „Ton“ abschaltbar): Clawd „spricht“ in Blips, schnarcht beim Schlafen, pfeift, der Ball klackt, und je nach Stil läuft eine eigene leise Hintergrundmelodie. Auf dem R1 muss die Karte einmal berührt werden, damit der Ton starten darf.
-- Optionen: Klang (Stil, Retro, Glocken, Minimal), Lautstärke (Aus bis 100 %), Ruhezeiten (Töne nachts stumm: 22–07, 23–08, 00–06) und Bewegung (Normal/Ruhig). In „Welt“ lässt sich die Tageszeit-Reaktion („Zeit“) abschalten.
-- Tageszeit: Nach der echten Uhrzeit tönt sich die Szene (Morgenrot, Abendrot, Nacht), Clawd begrüßt dich passend, ist morgens munterer, abends ruhiger mit mehr Pfeifen, nachts langsamer und schläft schneller ein (manchmal findest du ihn schlafend), und die Musik wird nachts leiser und langsamer.
-- Szenen, Stile und Animationen stammen aus dem Claude-Fables-Plugin und sind vorgerendert (`src/` im Branch enthält Generator und Anleitung). Noch nicht auf dem echten Gerät getestet: Sensorfunktionen, Auto-Rotation und die Ladezeit der rund 4 MB Bilder.
-
-### Clawd am Desktop ausprobieren
-
-Clawd ist eine statische Seite (HTML, JavaScript und Bilder) und läuft in jedem normalen Browser, ohne Server und ohne den R1.
-
-- Online: `https://luxx1993.github.io/r1-creations/clawd/index.html` (setzt voraus, dass GitHub Pages öffentlich erreichbar ist).
-- Lokal: `git clone -b creation/clawd --single-branch https://github.com/Luxx1993/r1-creations.git clawd`, dann `index.html` im Browser öffnen (der Ordner `assets/` muss daneben liegen). Alternativ im Ordner `python3 -m http.server` starten und `http://localhost:8000/` öffnen.
-- Bedienung: Pfeiltasten = Drehregler (hoch/links und runter/rechts sind die beiden Drehrichtungen), Enter oder Leertaste = Seitentaste, `H` = streicheln, `O` = Ansicht in 90°-Schritten drehen, Maus = Touch (Klicken und Wischen).
-- Am Desktop fehlen die Sensoren (kein Schütteln, keine automatische Drehung), die Ansicht bleibt 240×282 px groß (Browser-Zoom hilft), der Spielstand liegt im `localStorage` des Browsers, und der Ton startet erst nach dem ersten Klick oder Tastendruck.
-- Weiterentwickeln: `index.html` ist generiert. Der Quelltext liegt in `src/index.src.html`, `python3 src/build.py` baut `index.html` und die versionierte Datei neu. Die Bilder entstehen mit dem Generator in `src/` aus dem Claude-Fables-Plugin (siehe `src/README.md`). Beim Weitergeben die Lizenzen beachten: Claudes 3D-Modell von ChetasLua (MIT) und die Schrift Monocraft (OFL).
-
-## Neue Creation anlegen
-
-```bash
-git checkout -b creation/<name> main
-# index.html, icon.png (96x96), creation.json anlegen
-pip install pillow qrcode
-python3 tools/make_qr.py --title "<Titel>" --description "<Text>" \
-  --url https://luxx1993.github.io/r1-creations/<name>/index.html
-git add -A && git commit -m "Add <name>" && git push -u origin creation/<name>
-```
-
-`creation.json`: `{"title":"…","description":"…","version":"0.1.0","entry":"index.html"}`.
-Der Workflow `.github/workflows/pages.yml` baut bei jedem Push auf `main` oder `creation/**` die
-Seite neu (Übersicht + ein Ordner pro Creation).
-
-## Einmalig einrichten
-
-Settings → Pages → Build and deployment → Source: **GitHub Actions**.
-
-## Hinweise
-
-- Neue Version einer Creation = neue Datei `index-v<version>.html`, alte Karte auf dem R1
-  deinstallieren, neuen QR scannen (die R1 cached die Install-URL).
-- Alle Creations teilen sich den Origin `luxx1993.github.io`: `localStorage`-Schlüssel mit
-  Creation-Namen versehen (z. B. `tally_state`).
-- Details, SDK und Erfahrungen vom echten Gerät: `docs/r1-creations.md`.
+`index.html` (aktuelle Version als `index-v<Version>.html`), `links.js`, `install.html`, `browser.html`, `voice.html`, `docs/diagnose.md`.

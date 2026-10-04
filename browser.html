@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
+<title>Browser-Test</title>
+<style>
+  :root { --bg:#15171c; --fg:#f1efe9; --muted:#8b909c; --ok:#7fb7a4; --bad:#e08a7a; --card:#232730; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; width:240px; background:var(--bg); color:var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size:14px; line-height:1.35; }
+  body { height:282px; overflow-y:auto; padding:8px 10px 24px; }
+  h1 { margin:0 0 6px; font-size:15px; color:var(--muted); font-weight:600; }
+  .box { background:var(--card); border-radius:6px; padding:8px 10px; margin-bottom:8px; word-break:break-word; }
+  .row { display:flex; justify-content:space-between; gap:8px; padding:2px 0; }
+  .ok { color:var(--ok); font-weight:600; }
+  .bad { color:var(--bad); font-weight:600; }
+  .big { font-size:20px; font-weight:700; }
+  button { width:100%; padding:11px; font:inherit; font-size:16px; font-weight:600; color:var(--fg);
+    background:#2f3542; border:0; border-left:5px solid var(--ok); border-radius:6px; }
+  #mic { margin-top:6px; color:var(--muted); }
+  a { color:var(--ok); }
+  #ver { color:var(--muted); font-size:10px; text-align:right; }
+</style>
+</head>
+<body>
+<h1>Browser-Test</h1>
+
+<div class="box">
+  <div class="row"><span>Browser</span><span id="eng" class="big">?</span></div>
+  <div id="ua" style="color:var(--muted);font-size:11px;"></div>
+</div>
+
+<div class="box">
+  <div class="row"><span>Fenster</span><span id="win"></span></div>
+  <div class="row"><span>Pixeldichte</span><span id="dpr"></span></div>
+</div>
+
+<div class="box" id="feat"></div>
+
+<button id="micbtn">Mikrofon testen</button>
+<div id="mic"></div>
+
+<div id="ver">v1.1.0</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const ua = navigator.userAgent;
+  $("ua").textContent = ua;
+
+  // Browser-Version aus dem User-Agent lesen
+  let eng = "unbekannt";
+  const m = ua.match(/(Chrome|Firefox|Version)\/([\d.]+)/);
+  if (m) eng = (m[1] === "Version" ? "Safari " : m[1] + " ") + m[2].split(".")[0];
+  const wv = /; wv\)/.test(ua) ? " (WebView)" : "";
+  $("eng").textContent = eng + wv;
+
+  $("win").textContent = innerWidth + " x " + innerHeight;
+  $("dpr").textContent = String(window.devicePixelRatio || 1);
+
+  function has(fn) { try { return !!fn(); } catch (e) { return false; } }
+
+  const checks = [
+    ["fetch", () => typeof fetch === "function"],
+    ["Promise.allSettled", () => typeof Promise.allSettled === "function"],
+    ["structuredClone", () => typeof structuredClone === "function"],
+    ["Array.at", () => typeof [].at === "function"],
+    ["Object.hasOwn", () => typeof Object.hasOwn === "function"],
+    ["String.replaceAll", () => typeof "".replaceAll === "function"],
+    ["Optional chaining", () => new Function("var a={};return a?.b===undefined")()],
+    ["BigInt", () => typeof BigInt === "function"],
+    ["ResizeObserver", () => typeof ResizeObserver === "function"],
+    ["IntersectionObserver", () => typeof IntersectionObserver === "function"],
+    ["WebSocket", () => typeof WebSocket === "function"],
+    ["localStorage", () => { localStorage.setItem("t", "1"); localStorage.removeItem("t"); return true; }],
+    ["CSS :has()", () => CSS.supports("selector(:has(a))")],
+    ["CSS Container Queries", () => CSS.supports("container-type: inline-size")],
+    ["CSS dvh", () => CSS.supports("height: 100dvh")],
+    ["Mikrofon-API", () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)],
+    ["Spracherkennung", () => !!(window.SpeechRecognition || window.webkitSpeechRecognition)],
+    ["Sprachausgabe", () => typeof speechSynthesis !== "undefined"]
+  ];
+
+  const feat = $("feat");
+  let missing = 0;
+  checks.forEach(([name, fn]) => {
+    const ok = has(fn);
+    if (!ok) missing++;
+    const row = document.createElement("div");
+    row.className = "row";
+    const a = document.createElement("span"); a.textContent = name;
+    const b = document.createElement("span");
+    b.className = ok ? "ok" : "bad";
+    b.textContent = ok ? "ja" : "fehlt";
+    row.append(a, b);
+    feat.appendChild(row);
+  });
+  const sum = document.createElement("div");
+  sum.style.cssText = "margin-top:6px;color:var(--muted);font-size:12px;";
+  sum.textContent = missing === 0 ? "Alle geprüften Funktionen vorhanden." : missing + " von " + checks.length + " Funktionen fehlen.";
+  feat.appendChild(sum);
+
+  // Mikrofon-Test (braucht einen Fingertipp)
+  $("micbtn").addEventListener("click", async () => {
+    const out = $("mic");
+    out.textContent = "Frage Mikrofon an ...";
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach((t) => t.stop());
+      out.textContent = "Mikrofon: erlaubt und verfügbar.";
+      out.style.color = "var(--ok)";
+    } catch (e) {
+      out.textContent = "Mikrofon: " + (e && e.name ? e.name : "Fehler");
+      out.style.color = "var(--bad)";
+    }
+  });
+
+  // Drehregler scrollt die Seite
+  window.addEventListener("scrollUp", () => window.scrollBy(0, -60));
+  window.addEventListener("scrollDown", () => window.scrollBy(0, 60));
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowUp") scrollBy(0, -60);
+    if (e.key === "ArrowDown") scrollBy(0, 60);
+  });
+</script>
+</body>
+</html>
