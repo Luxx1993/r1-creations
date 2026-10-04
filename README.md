@@ -2,7 +2,7 @@
 
 Startseite für den Rabbit R1 (240 × 282 px) mit Links zur Web-Version von claude.ai. Es ist kein eigener Chat und nutzt keine API: Die Links öffnen die echten Seiten im Webview des R1.
 
-Wichtig: Ob claude.ai im Webview (Android, Chrome 101) funktioniert, ist **nicht bewiesen**. Die Startseite zeigt deshalb pro Eintrag eine Markierung, damit du es selbst testen kannst. Hintergrund siehe `docs/diagnose.md`.
+Wichtig: Ob claude.ai im Webview (Android, Chrome 101) funktioniert, ist **nicht bewiesen**. Die Startseite zeigt deshalb pro Eintrag eine Markierung, damit du es selbst testen kannst. Hintergrund siehe `docs/diagnose.md`, Wege zu claude.ai in `docs/moeglichkeiten.md`.
 
 ## Bedienung
 
@@ -37,4 +37,4 @@ Geräte-Speicher (Markierungen) gehört zur Installationsadresse: Nach einem Upd
 
 ## Dateien
 
-`index.html` (aktuelle Version als `index-v<Version>.html`), `links.js`, `install.html`, `browser.html`, `voice.html`, `docs/diagnose.md`.
+`index.html` (aktuelle Version als `index-v<Version>.html`), `links.js`, `install.html`, `browser.html`, `voice.html`, `features.html` (Funktionstest), `docs/diagnose.md`, `docs/moeglichkeiten.md`.

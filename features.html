@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
+<title>Funktionstest</title>
+<style>
+  html, body { margin:0; width:240px; height:282px; overflow-x:hidden; overflow-y:auto; background:#15171c; color:#f1efe9;
+               font: 13px system-ui, sans-serif; }
+  main { padding:8px 10px 24px; }
+  h1 { margin:0 0 4px; font-size:15px; color:#8b909c; }
+  p { margin:0 0 6px; font-size:11px; color:#8b909c; }
+  .r { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #232730; }
+  .ok { color:#7fb7a4; } .no { color:#e08a7a; font-weight:600; }
+  #sum { font-size:14px; margin-bottom:6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Funktionstest</h1>
+  <p>Neue Browser-Funktionen, die moderne Web-Apps oft ohne Ersatz nutzen. ✗ = fehlt in diesem Webview.</p>
+  <div id="sum"></div>
+  <div id="out"></div>
+</main>
+<script>
+  // [Name, Chrome-Version ab der es existiert, Test]
+  const T = [
+    ["AbortSignal.timeout", 103, () => typeof AbortSignal.timeout === "function"],
+    ["AbortSignal.any", 116, () => typeof AbortSignal.any === "function"],
+    ["Array.findLast", 97, () => typeof [].findLast === "function"],
+    ["Array.toSorted", 110, () => typeof [].toSorted === "function"],
+    ["Array.with", 110, () => typeof [].with === "function"],
+    ["Array.fromAsync", 121, () => typeof Array.fromAsync === "function"],
+    ["Object.groupBy", 117, () => typeof Object.groupBy === "function"],
+    ["Map.groupBy", 117, () => typeof Map.groupBy === "function"],
+    ["Promise.withResolvers", 119, () => typeof Promise.withResolvers === "function"],
+    ["Set.union", 122, () => typeof new Set().union === "function"],
+    ["String.isWellFormed", 111, () => typeof "".isWellFormed === "function"],
+    ["URL.canParse", 120, () => typeof URL.canParse === "function"],
+    ["structuredClone", 98, () => typeof structuredClone === "function"],
+    ["Regex v-Flag", 112, () => { new RegExp("[\\p{L}--[a-z]]", "v"); return true; }],
+    ["Intl.Segmenter", 87, () => typeof Intl.Segmenter === "function"],
+    ["Iterator-Helfer", 122, () => typeof Iterator === "function" && typeof Iterator.prototype.map === "function"],
+    ["Navigation API", 102, () => "navigation" in window],
+    ["View Transitions", 111, () => typeof document.startViewTransition === "function"],
+    ["Popover", 114, () => HTMLElement.prototype.hasOwnProperty("popover")],
+    ["CSS :has()", 105, () => CSS.supports("selector(:has(a))")],
+    ["CSS Container Queries", 105, () => CSS.supports("container-type: inline-size")],
+    ["CSS dvh", 108, () => CSS.supports("height: 1dvh")],
+    ["CSS color-mix()", 111, () => CSS.supports("color: color-mix(in srgb, red, blue)")],
+    ["CSS oklch()", 111, () => CSS.supports("color: oklch(50% 0.1 100)")],
+    ["CSS Nesting", 112, () => { const s = document.createElement("style"); s.textContent = "a{&b{color:red}}"; document.head.appendChild(s);
+        const ok = s.sheet.cssRules[0] && s.sheet.cssRules[0].cssRules && s.sheet.cssRules[0].cssRules.length > 0; s.remove(); return !!ok; }],
+    ["CSS @layer", 99, () => { const s = document.createElement("style"); s.textContent = "@layer x{a{color:red}}"; document.head.appendChild(s);
+        const ok = s.sheet.cssRules.length > 0 && s.sheet.cssRules[0].constructor.name !== "CSSUnknownRule"; s.remove(); return ok; }],
+    ["CSS text-wrap", 114, () => CSS.supports("text-wrap: balance")],
+    ["Web Locks", 69, () => !!navigator.locks],
+    ["IndexedDB", 24, () => !!window.indexedDB],
+    ["Service Worker", 40, () => "serviceWorker" in navigator],
+    ["WebSocket", 16, () => typeof WebSocket === "function"],
+    ["localStorage", 4, () => { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return true; }],
+    ["Cookies an", 1, () => navigator.cookieEnabled]
+  ];
+  let bad = 0;
+  const out = document.getElementById("out");
+  for (const [name, ver, fn] of T) {
+    let ok = false; try { ok = !!fn(); } catch (e) {}
+    if (!ok) bad++;
+    const d = document.createElement("div"); d.className = "r";
+    const a = document.createElement("span"); a.textContent = name + " (" + ver + ")";
+    const b = document.createElement("span"); b.className = ok ? "ok" : "no"; b.textContent = ok ? "✓" : "✗";
+    d.appendChild(a); d.appendChild(b); out.appendChild(d);
+  }
+  const mem = performance.memory ? Math.round(performance.memory.jsHeapSizeLimit / 1048576) + " MB JS-Heap max" : "Heap unbekannt";
+  const dm = navigator.deviceMemory ? ", Gerät ~" + navigator.deviceMemory + " GB" : "";
+  const cv = (navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || "?";
+  document.getElementById("sum").textContent = bad + " von " + T.length + " fehlen · Chrome " + cv + " · " + mem + dm;
+  window.addEventListener("scrollUp", () => window.scrollBy(0, -60));
+  window.addEventListener("scrollDown", () => window.scrollBy(0, 60));
+  window.addEventListener("sideClick", () => history.back());
+  window.addEventListener("keydown", (e) => { if (e.key === "ArrowUp") window.scrollBy(0, -60); if (e.key === "ArrowDown") window.scrollBy(0, 60); });
+</script>
+</body>
+</html>

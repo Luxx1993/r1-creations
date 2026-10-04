@@ -30,3 +30,7 @@ Die in den Protokollen sichtbaren Ladefehler (`ERR_TUNNEL_CONNECTION_FAILED` fü
 1. In der Liste jeden Eintrag öffnen und nach der Rückkehr markieren (✓ läuft, ✗ weiß/schwarz/Fehler).
 2. Hilfe (`support.claude.com`) und Startseite vergleichen: Läuft nur die angemeldete Web-App nicht, spricht das für ein Problem der App und nicht des Webviews allgemein.
 3. Foto machen, falls das Bild weiß wird, und notieren, ob es nach dem Anmelden sofort oder erst nach einigen Sekunden passiert.
+
+## Nachtrag 2026-10-04: Funktionstest
+
+`features.html` prüft 33 Browser-Funktionen. In Chromium 101 fehlen 23, darunter `Promise.withResolvers`, `Object.groupBy`, `Array.toSorted`, `AbortSignal.timeout`, CSS-Nesting, `color-mix()`, `:has()`, Container Queries und `dvh`. Ob claude.ai eine davon ohne Ersatz nutzt, ist **nicht belegt** (Code nicht erreichbar). Ergebnis am echten R1 steht noch aus. Möglichkeiten siehe `docs/moeglichkeiten.md`.

@@ -12,6 +12,8 @@ window.LINKS = [
   { title: "Hilfe",         url: "https://support.claude.com/", note: "Hilfe-Center" },
   { title: "clau.de",       url: "https://clau.de/",           note: "Test: Ziel unbekannt" },
   { title: "Eigener Chat",  url: "https://claude.ai/chat/<id>", note: "Link in links.js eintragen" },
+  { title: "Funktionstest", url: "features.html",              note: "Was fehlt dem Webview?" },
+  { title: "PC-Fernzugriff", url: "https://remotedesktop.google.com/access", note: "Test: eigener PC mit Chrome" },
   { title: "Sprachtest",    url: "voice.html",                 note: "Sprechen und Vorlesen" },
   { title: "Browser-Test",  url: "browser.html",               note: "Version und Mikrofon" }
 ];
