@@ -52,3 +52,10 @@ Die in den Protokollen sichtbaren Ladefehler (`ERR_TUNNEL_CONNECTION_FAILED` fü
 
 - ChatGPT (chatgpt.com) lief im selben Webview „etwas besser“ (Details noch offen).
 - Folgerung: Der Webview kann grundsätzlich eine große Chat-App ausführen. Das Problem liegt eher im Code von claude.ai (z. B. Anforderungen an neuere Browser) als am R1 allgemein. Weiterhin nicht belegt.
+
+## ChatGPT im Detail (2026-10-05, Angabe von Lukas)
+
+- ChatGPT lädt, Eingabe ins Chatfeld geht, das Mikrofon (Diktat) funktioniert.
+- Beim **Absenden** bricht ChatGPT ab, wie claude.ai.
+- Folgerung: Beide großen Chat-Apps scheitern an derselben Stelle, dem Senden und Anzeigen der Antwort. Das spricht für eine gemeinsame Ursache im Webview (Chrome 101) und nicht für ein claude.ai-spezifisches Problem. Ein naheliegender Kandidat sind Funktionen, die moderne Chat-Apps beim Senden nutzen und die laut Funktionstest fehlen (z. B. `AbortSignal.timeout`/`AbortSignal.any` für Zeitlimits beim Abruf). **Vermutung, nicht belegt.**
+- Konsequenz: Ein direkter Weg im Webview ist sehr unwahrscheinlich. Realistisch bleibt nur, die App woanders laufen zu lassen (PC-Fernzugriff).
