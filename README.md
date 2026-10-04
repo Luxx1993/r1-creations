@@ -29,7 +29,7 @@ Auf dem R1: Creations-Karte → „add via QR code“ → `qr.png` (oder `instal
 
 Der R1 merkt sich die Installationsadresse. Darum:
 
-1. Datei als neue Version kopieren (z. B. `index-v1.5.0.html`) und `APP_VERSION`, `creation.json` und den QR darauf anpassen.
+1. Datei als neue Version kopieren (z. B. `index-v1.7.0.html`) und `APP_VERSION`, den `?v=` bei `links.js`, `creation.json` und den QR darauf anpassen.
 2. Die alte Karte auf dem R1 löschen.
 3. Den neuen QR scannen.
 
