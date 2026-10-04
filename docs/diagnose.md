@@ -34,3 +34,9 @@ Die in den Protokollen sichtbaren Ladefehler (`ERR_TUNNEL_CONNECTION_FAILED` fü
 ## Nachtrag 2026-10-04: Funktionstest
 
 `features.html` prüft 33 Browser-Funktionen. In Chromium 101 fehlen 23, darunter `Promise.withResolvers`, `Object.groupBy`, `Array.toSorted`, `AbortSignal.timeout`, CSS-Nesting, `color-mix()`, `:has()`, Container Queries und `dvh`. Ob claude.ai eine davon ohne Ersatz nutzt, ist **nicht belegt** (Code nicht erreichbar). Ergebnis am echten R1 steht noch aus. Möglichkeiten siehe `docs/moeglichkeiten.md`.
+
+## Ergebnis am echten R1 (2026-10-05, Fotos von Lukas)
+
+- Funktionstest: **23 von 33 fehlen**, dieselben wie im Chromium-101-Test. Chrome **101.0.4951.61**.
+- Speicher: **1020 MB** JS-Heap maximal, Gerät etwa **4 GB** RAM.
+- Folgerung: Der Webview entspricht genau Chrome 101. Fehlende Funktionen bleiben die wahrscheinlichste Ursache für das weiße Bild, belegt ist sie weiterhin nicht. Speichermangel ist bei 1 GB Heap weniger wahrscheinlich, aber nicht ausgeschlossen.
