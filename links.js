@@ -12,6 +12,7 @@ window.LINKS = [
   { title: "Hilfe",         url: "https://support.claude.com/", note: "Hilfe-Center" },
   { title: "clau.de",       url: "https://clau.de/",           note: "Test: Ziel unbekannt" },
   { title: "Eigener Chat",  url: "https://claude.ai/chat/<id>", note: "Link in links.js eintragen" },
+  { title: "ChatGPT",       url: "https://chatgpt.com/",       note: "Zum Vergleich" },
   { title: "Funktionstest", url: "features.html",              note: "Was fehlt dem Webview?" },
   { title: "PC-Fernzugriff", url: "https://remotedesktop.google.com/access", note: "Test: eigener PC mit Chrome" },
   { title: "Sprachtest",    url: "voice.html",                 note: "Sprechen und Vorlesen" },
