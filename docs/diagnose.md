@@ -47,3 +47,8 @@ Die in den Protokollen sichtbaren Ladefehler (`ERR_TUNNEL_CONNECTION_FAILED` fü
 - Nach dem Absenden bewegt sich das Claude-Logo kurz (Antwort-Animation), dann wird der Bildschirm **schwarz**.
 - Einordnung: Schwarz im dunklen Design und weiß im hellen Design passen beide zu „die App räumt ihre Ansicht ab und nur der Seitenhintergrund bleibt“. Das spricht eher für einen JavaScript-Fehler beim Anzeigen der Antwort als für einen Absturz des ganzen Webviews. **Nicht belegt.** Ob die Animation selbst oder das Anzeigen der Antwort den Fehler auslöst, ist offen.
 - Nächster Test: nach dem schwarzen Bild zurück und „Letzte Chats“ öffnen. Steht die Antwort im Chat, hat der Server geantwortet und nur die Live-Anzeige scheitert.
+
+## Vergleich mit ChatGPT (2026-10-05, Angabe von Lukas)
+
+- ChatGPT (chatgpt.com) lief im selben Webview „etwas besser“ (Details noch offen).
+- Folgerung: Der Webview kann grundsätzlich eine große Chat-App ausführen. Das Problem liegt eher im Code von claude.ai (z. B. Anforderungen an neuere Browser) als am R1 allgemein. Weiterhin nicht belegt.
