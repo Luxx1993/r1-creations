@@ -1,0 +1,23 @@
+name = "r1-rg"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+preview_urls = false
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true          # every request passes the access-key check in the worker
+html_handling = "auto-trailing-slash"
+not_found_handling = "none"
+
+[observability]
+enabled = false                  # no request logs
+
+# Optional, recommended: global token cache (otherwise each worker isolate keeps its own token).
+#   npx wrangler kv namespace create TOKEN_KV   -> paste the id below and uncomment
+# [[kv_namespaces]]
+# binding = "TOKEN_KV"
+# id = "<id>"
+
+# Secret (never commit it):  npx wrangler secret put ACCESS_KEY

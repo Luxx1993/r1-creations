@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=240, initial-scale=1.0, user-scalable=no">
+<!-- Media is loaded straight from media.redgifs.com: its CDN answers 403 to foreign referers, 206 without one. -->
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>RG</title>
+<style>
+  :root { --top: 40px; --nav: 36px; --bg: #0e0e10; --acc: #FF2D20; --fg: #f2f2f3; --mut: #9a9aa2; --tile: #1a1a1f; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; width: 240px; height: 282px; overflow: hidden; background: var(--bg); color: var(--fg);
+               font: 13px/1.25 system-ui, -apple-system, sans-serif; }
+  #app { position: relative; width: 240px; height: 282px; overflow: hidden; }
+  #top { position: absolute; left: 0; top: 0; width: 240px; height: var(--top); background: var(--bg); }
+  #stage { position: absolute; left: 0; top: var(--top); width: 240px; height: calc(282px - var(--top) - var(--nav));
+           overflow: hidden; background: #000; touch-action: none; }
+  .screen { position: absolute; inset: 0; display: none; }
+  .screen.on { display: block; }
+
+  /* feed: one clip per screen, centred, letterboxed */
+  #feed video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center;
+                background: #000; opacity: 0; transition: opacity .12s; pointer-events: none; }
+  #feed video.on { opacity: 1; }
+  .pill { position: absolute; top: 6px; padding: 2px 7px; border-radius: 9px; background: rgba(0,0,0,.6);
+          font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .2s; }
+  #ctx { left: 6px; max-width: 168px; }
+  #snd { right: 6px; }
+  #info { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 8px 6px; opacity: 0; transition: opacity .2s;
+          background: linear-gradient(transparent, rgba(0,0,0,.8)); pointer-events: none; }
+  #info .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+  #iu { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #iu .ok { color: var(--acc); font-size: 12px; margin-left: 3px; }
+  #ipos { font-size: 12px; color: var(--mut); flex: none; }
+  #itags { font-size: 11px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  #pp { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%;
+        background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; font-size: 20px;
+        opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .show { opacity: 1 !important; }
+
+  /* lists (Explore, Niches) */
+  #list { background: var(--bg); }
+  #lhead { height: 22px; padding: 5px 9px 0; display: flex; justify-content: space-between; font-size: 11px; color: var(--mut);
+           text-transform: uppercase; letter-spacing: .06em; }
+  #lwin { position: absolute; top: 22px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+  #linner { padding-top: 2px; transition: transform .15s ease-out; will-change: transform; }
+  .tile { height: 48px; margin: 0 8px 6px; border-radius: 10px; background: var(--tile); display: flex; align-items: center;
+          gap: 9px; padding: 0 10px; border: 2px solid transparent; }
+  .tile.sel { border-color: var(--acc); background: #26161a; }
+  .tile .bar { width: 4px; height: 26px; border-radius: 2px; background: var(--acc); flex: none; }
+  .tile img { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; background: #26262c; flex: none; }
+  .tile .tx { min-width: 0; }
+  .tile .t { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .s { font-size: 11px; color: var(--mut); }
+
+  /* search */
+  #search { background: var(--bg); padding: 12px 8px; }
+  #q { display: block; width: 100%; height: 44px; resize: none; border-radius: 10px; border: 2px solid #34343a; background: var(--tile);
+       color: var(--fg); font: 15px system-ui, -apple-system, sans-serif; padding: 10px; outline: none; user-select: text; -webkit-user-select: text; }
+  #q:focus { border-color: var(--acc); }
+  #go { margin-top: 8px; width: 100%; height: 44px; border: 0; border-radius: 10px; background: var(--acc); color: #fff;
+        font: 700 14px system-ui, -apple-system, sans-serif; }
+  .hint { font-size: 11px; color: var(--mut); margin-top: 10px; text-align: center; line-height: 1.4; }
+
+  /* status / voice */
+  #status { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; text-align: center; padding: 0 18px; font-size: 12px; pointer-events: none; z-index: 5; }
+  #status.on { display: flex; }
+  #status.err { background: rgba(14,14,16,.88); }
+  #status.err .spin { display: none; }
+  #stxt { white-space: pre-line; }
+  #status.err #stxt::before { content: '!'; display: block; width: 28px; height: 28px; margin: 0 auto 8px; border-radius: 50%;
+            background: var(--acc); color: #fff; font: 700 18px/28px system-ui, sans-serif; }
+  .spin { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,.18); border-top-color: var(--acc); border-radius: 50%;
+          animation: sp .8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  #voice { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+           background: rgba(14,14,16,.9); font-size: 13px; z-index: 6; }
+  #voice.on { display: flex; }
+  #voice .dot { width: 46px; height: 46px; border-radius: 50%; background: var(--acc); animation: pu 1s ease-in-out infinite alternate; }
+  @keyframes pu { from { transform: scale(.8); opacity: .7; } to { transform: scale(1); opacity: 1; } }
+
+  /* bottom navigation */
+  #nav { position: absolute; left: 0; bottom: 0; width: 240px; height: var(--nav); display: flex; background: #141417;
+         border-top: 1px solid #232328; }
+  #nav button { flex: 1; border: 0; background: none; color: var(--mut); font: 600 12px system-ui, -apple-system, sans-serif;
+                display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; }
+  #nav button.on { color: var(--fg); }
+  #nav button::after { content: ''; width: 18px; height: 2px; border-radius: 1px; background: transparent; }
+  #nav button.on::after { background: var(--acc); }
+
+  #dbg { position: absolute; left: 0; top: var(--top); z-index: 9; display: none; padding: 2px 4px; white-space: pre;
+         font: 9px/1.2 ui-monospace, monospace; color: #8f8; background: rgba(0,0,0,.72); pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top"></div>
+  <div id="stage">
+    <section id="feed" class="screen">
+      <video id="vA" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture></video>
+      <video id="vB" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture></video>
+      <div id="ctx" class="pill"></div>
+      <div id="snd" class="pill"></div>
+      <div id="pp"></div>
+      <div id="info"><div class="row"><div id="iu"></div><div id="ipos"></div></div><div id="itags"></div></div>
+    </section>
+    <section id="list" class="screen">
+      <div id="lhead"><span id="ltitle"></span><span id="lver"></span></div>
+      <div id="lwin"><div id="linner"></div></div>
+    </section>
+    <section id="search" class="screen">
+      <textarea id="q" rows="1" maxlength="80" placeholder="Tag oder Begriff" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+      <button id="go" type="button">Suchen</button>
+      <div class="hint">Seitentaste halten = Sprachsuche<br>Seitentaste kurz = Suchen</div>
+    </section>
+    <div id="status"><div class="spin"></div><div id="stxt"></div></div>
+    <div id="voice"><div class="dot"></div><div id="vtxt">Höre zu …</div></div>
+  </div>
+  <nav id="nav">
+    <button type="button" data-tab="home">Home</button>
+    <button type="button" data-tab="explore">Explore</button>
+    <button type="button" data-tab="niches">Niches</button>
+  </nav>
+  <div id="dbg"></div>
+</div>
+<script src="version.js"></script>
+<script>
+'use strict';
+// ---------- settings (URL parameters override the defaults) ----------
+const P = new URLSearchParams(location.search);
+const int = (v, lo, hi, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+const KEY = P.get('k') || '';
+const DEBUG = P.get('debug') === '1';
+const SCROLL_LOCK_MS = int(P.get('lock'), 0, 3000, 300);  // Sperrzeit nach jedem Videowechsel (?lock=…)
+const LIST_LOCK_MS = int(P.get('listlock'), 0, 3000, 0);  // Sperrzeit in Listen (eine Rastung = ein Eintrag)
+const DOUBLE_CLICK_MS = 250;      // zweiter sideClick (Doppelklick ≈ 50 ms) wird verworfen
+const LOAD_AHEAD = 5;             // nächste Seite holen, wenn nur noch so viele Clips übrig sind
+const INFO_MS = 1800;             // Overlay mit Creator und Position
+const STALL_MS = 15000;           // ab dann gilt ein Video als hängend
+const TOP_SAFE = int(P.get('top'), 0, 80, 40);  // die R1 legt ihre Leiste über die obersten ~40 px
+const USE_HD = P.get('hd') === '1';
+const SWIPE_PX = 28;
+const TILE_H = 54;                // .tile height + margin
+const VERSION = window.APP_VERSION || '?';
+
+const $ = (id) => document.getElementById(id);
+document.documentElement.style.setProperty('--top', TOP_SAFE + 'px');
+const fire = (name) => window.dispatchEvent(new CustomEvent(name));
+const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' Mio' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(n || 0);
+
+// ---------- debug overlay (?debug=1) ----------
+const dbg = { scrollUp: 0, scrollDown: 0, ignored: 0, side: 0, sideDbl: 0, lpStart: 0, lpEnd: 0, ptr: 0, gap: 0, minGap: 0, lastT: 0, stt: 0 };
+function dbgRender() {
+  if (!DEBUG) return;
+  const v = active;
+  $('dbg').textContent =
+    `v${VERSION} lock ${SCROLL_LOCK_MS}ms list ${LIST_LOCK_MS}ms\n` +
+    `up ${dbg.scrollUp} down ${dbg.scrollDown} ignored ${dbg.ignored}\n` +
+    `gap ${dbg.gap}ms min ${dbg.minGap || '-'}ms\n` +
+    `side ${dbg.side} dbl-ign ${dbg.sideDbl} lp ${dbg.lpStart}/${dbg.lpEnd}\n` +
+    `ptr ${dbg.ptr} stt ${dbg.stt} media ${mediaMode}${USE_HD ? ' hd' : ' sd'}\n` +
+    `vid rs${v.readyState} ns${v.networkState} ${v.dataset.mode || ''} ${screen}`;
+}
+if (DEBUG) { $('dbg').style.display = 'block'; setInterval(dbgRender, 500); }
+
+// ---------- API ----------
+async function api(path) {
+  const r = await fetch(path, { headers: { 'X-Access-Key': KEY } });
+  let body = null;
+  try { body = await r.json(); } catch (e) {}
+  if (!r.ok) {
+    const err = new Error((body && body.error) || 'http_' + r.status);
+    err.status = r.status;
+    throw err;
+  }
+  return body;
+}
+function errText(e) {
+  if (!e.status) return 'Netzwerkfehler.\nSeitentaste = erneut versuchen';
+  if (e.status === 429) return 'Zu viele Anfragen an RedGifs.\nKurz warten, dann Seitentaste.';
+  if (e.status === 503) return 'Token-Limit erreicht.\nIn einigen Minuten Seitentaste.';
+  if (e.status === 404) return 'Zugriff verweigert oder nicht gefunden.\nInstall-QR prüfen.';
+  if (e.message === 'auth_failed') return 'RedGifs lehnt das Token ab.\nSeitentaste = erneut';
+  return 'Serverfehler (' + e.status + ').\nSeitentaste = erneut';
+}
+
+// ---------- status overlay ----------
+let errorAction = null;
+function showLoading(text) {
+  errorAction = null;
+  $('status').className = 'on';
+  $('stxt').textContent = text || '';
+}
+function showError(text, retry) {
+  errorAction = retry;
+  $('status').className = 'on err';
+  $('stxt').textContent = text;
+}
+function hideStatus() { errorAction = null; $('status').className = ''; }
+
+// ---------- media ----------
+let mediaMode = P.get('media') === 'proxy' ? 'proxy' : 'direct';
+let directFails = 0;
+function mediaUrl(u, viaProxy) {
+  if (!u) return '';
+  return viaProxy ? '/media?u=' + encodeURIComponent(u) + '&k=' + encodeURIComponent(KEY) : u;
+}
+
+// ---------- feeds ----------
+function makeFeed(kind, params, label) {
+  return { kind, params, label, items: [], seen: new Set(), page: 0, pages: 1, idx: 0, loading: false, done: false, error: null, empty: 0, pending: 0 };
+}
+const homeFeed = makeFeed('trending', {}, 'Trending');
+let curFeed = homeFeed;
+
+async function loadMore(f) {
+  if (f.loading || f.done) return;
+  f.loading = true; f.error = null;
+  if (f === curFeed && screen === 'feed' && !f.items.length) showLoading('Lade …');
+  try {
+    const q = new URLSearchParams(Object.assign({}, f.params, { page: f.page + 1 }));
+    const body = await api('/api/' + f.kind + '?' + q);
+    f.page = body.page || f.page + 1;
+    f.pages = body.pages || 0;
+    if (body.tag) f.label = '#' + body.tag;
+    let added = 0;
+    for (const it of body.items || []) if (!f.seen.has(it.id)) { f.seen.add(it.id); f.items.push(it); added++; }
+    f.empty = added ? 0 : f.empty + 1;
+    if (f.page >= f.pages || f.empty >= 3) f.done = true;
+  } catch (e) {
+    f.error = e;
+  }
+  f.loading = false;
+  if (f !== curFeed || screen !== 'feed') return;
+  if (f.error && (!f.items.length || f.pending)) { showError(errText(f.error), () => { f.error = null; loadMore(f); }); return; }
+  if (!f.items.length) {
+    if (f.done) showError(f.kind === 'search' ? 'Keine Treffer für „' + (f.params.q || '') + '“.' : 'Keine Clips gefunden.', () => {});
+    else loadMore(f);
+    return;
+  }
+  if (f.pending) { const d = f.pending; f.pending = 0; step(d); return; }
+  if (!vids.some((v) => v.dataset.id === (f.items[f.idx] || {}).id)) showItem();
+  else { preloadNeighbour(); $('ipos').textContent = (f.idx + 1) + '/' + f.items.length + (f.done ? '' : '+'); }
+}
+
+// ---------- video elements: max. two in the DOM ----------
+const vids = [$('vA'), $('vB')];
+let active = vids[0];
+let lastDir = 1, paused = false, soundOn = false, stallTimer = 0;
+const itemById = (id) => curFeed.items.find((x) => x.id === id);
+
+for (const v of vids) {
+  v.muted = true; v.loop = true; v.playsInline = true;
+  v.addEventListener('playing', () => { if (v === active) { v.dataset.ok = '1'; clearTimeout(stallTimer); hideStatus(); if (v.dataset.mode === 'd') directFails = 0; } });
+  v.addEventListener('waiting', () => { if (v === active && screen === 'feed' && !paused) showLoading(''); });
+  v.addEventListener('error', () => onVideoError(v));
+}
+
+function assign(v, item, preload) {
+  const viaProxy = mediaMode === 'proxy' || !!item.viaProxy;
+  const mode = viaProxy ? 'p' : 'd';
+  v.preload = preload;
+  if (v.dataset.id === item.id && v.dataset.mode === mode) return false;
+  v.pause();
+  v.dataset.id = item.id; v.dataset.mode = mode; v.dataset.ok = '';
+  v.poster = mediaUrl(item.p, viaProxy);
+  v.src = mediaUrl(USE_HD ? item.hd : item.sd, viaProxy);
+  return true;
+}
+
+function playActive() {
+  if (screen !== 'feed' || paused || document.hidden) { active.pause(); return; }
+  const p = active.play();
+  if (p && p.catch) p.catch(() => {});
+}
+
+function showItem() {
+  const f = curFeed, it = f.items[f.idx];
+  if (!it) { if (!f.loading) loadMore(f); return; }
+  let v = vids.find((x) => x.dataset.id === it.id) || vids.find((x) => x !== active);
+  const other = v === vids[0] ? vids[1] : vids[0];
+  other.pause();
+  active = v;
+  assign(v, it, 'auto');
+  v.muted = !(soundOn && it.a);
+  v.classList.add('on'); other.classList.remove('on');
+  if (v.dataset.ok) hideStatus(); else showLoading('');
+  playActive();
+  clearTimeout(stallTimer);
+  stallTimer = setTimeout(() => {
+    if (active === v && !v.dataset.ok && screen === 'feed') showError('Video lädt nicht.\nSeitentaste = erneut', retryVideo);
+  }, STALL_MS);
+  preloadNeighbour();
+  showInfo();
+  if (f.items.length - 1 - f.idx < LOAD_AHEAD && !f.done) loadMore(f);
+}
+
+function preloadNeighbour() {
+  const f = curFeed, nb = f.items[f.idx + (lastDir < 0 ? -1 : 1)] || f.items[f.idx + 1];
+  const other = active === vids[0] ? vids[1] : vids[0];
+  if (nb && nb.id !== active.dataset.id) assign(other, nb, 'metadata');
+}
+
+function onVideoError(v) {
+  const it = itemById(v.dataset.id);
+  if (v !== active) { v.dataset.id = ''; return; }      // a failed preload is simply retried later
+  if (it && !it.viaProxy && mediaMode === 'direct') {
+    it.viaProxy = true;                                  // fall back to the worker's stream proxy
+    if (++directFails >= 2) mediaMode = 'proxy';
+    showItem();
+    return;
+  }
+  showError('Video nicht abspielbar.\nSeitentaste = erneut', retryVideo);
+}
+function retryVideo() { active.dataset.id = ''; showItem(); }
+
+function step(dir) {
+  const f = curFeed, n = f.idx + dir;
+  if (n < 0) { flashInfo(); return; }
+  if (n >= f.items.length) {
+    if (f.done) { flashInfo(); return; }
+    f.pending = dir; showLoading('Lade mehr …'); loadMore(f); return;
+  }
+  f.idx = n; lastDir = dir; paused = false;
+  showItem();
+}
+
+// ---------- overlays ----------
+let infoTimer = 0;
+function showInfo() {
+  const f = curFeed, it = f.items[f.idx];
+  if (!it) return;
+  $('ctx').textContent = f.label;
+  const iu = $('iu');
+  iu.textContent = '@' + (it.u || 'unbekannt');
+  if (it.v) { const s = document.createElement('span'); s.className = 'ok'; s.textContent = '✓'; iu.appendChild(s); }
+  $('ipos').textContent = (f.idx + 1) + '/' + f.items.length + (f.done ? '' : '+');
+  $('itags').textContent = it.t.join(' · ');
+  $('snd').textContent = it.a ? (soundOn ? '🔊 Ton an' : '🔇 Tippen = Ton') : 'ohne Ton';
+  for (const id of ['ctx', 'info', 'snd']) $(id).classList.add('show');
+  clearTimeout(infoTimer);
+  infoTimer = setTimeout(() => { for (const id of ['ctx', 'info', 'snd']) $(id).classList.remove('show'); }, INFO_MS);
+}
+const flashInfo = showInfo;
+let ppTimer = 0;
+function flashPP(text) {
+  $('pp').textContent = text; $('pp').classList.add('show');
+  clearTimeout(ppTimer); ppTimer = setTimeout(() => $('pp').classList.remove('show'), paused ? 1200 : 600);
+}
+function togglePause() {
+  paused = !paused;
+  if (paused) active.pause(); else playActive();
+  flashPP(paused ? '❚❚' : '▶');
+  showInfo();
+}
+function toggleSound() {
+  const it = curFeed.items[curFeed.idx];
+  if (!it || !it.a) { showInfo(); return; }
+  soundOn = !soundOn;
+  active.muted = !soundOn;
+  if (!paused) playActive();
+  showInfo();
+}
+
+// ---------- lists: Explore (top tags) and Niches ----------
+const lists = {
+  explore: { title: 'Explore', items: [{ kind: 'search', t: 'Suche', s: 'Tippen oder Seitentaste halten' }], sel: 0, page: 0, pages: 1, loading: false, error: null, built: 0 },
+  niches: { title: 'Niches', items: [], sel: 0, page: 0, pages: 1, loading: false, error: null, built: 0 },
+};
+let curList = null;
+
+async function loadList(name) {
+  const L = lists[name];
+  if (L.loading || L.page >= L.pages) return;
+  L.loading = true; L.error = null;
+  if (curList === L && L.items.length < 2) showLoading('Lade …');
+  try {
+    if (name === 'explore') {
+      const body = await api('/api/tags');
+      for (const t of body.tags || []) L.items.push({ kind: 'tag', q: t.n, t: t.n, s: fmt(t.c) + ' Clips' });
+      L.page = L.pages = 1;
+    } else {
+      const body = await api('/api/niches?page=' + (L.page + 1));
+      for (const n of body.niches || []) L.items.push({ kind: 'niche', id: n.id, t: n.n, s: fmt(n.s) + ' Abos · ' + fmt(n.g) + ' Clips', img: n.p });
+      L.page = body.page || L.page + 1; L.pages = body.pages || L.page;
+    }
+  } catch (e) { L.error = e; }
+  L.loading = false;
+  if (curList !== L || screen !== 'list') return;
+  if (L.error && L.items.length < 2) showError(errText(L.error), () => loadList(name)); else hideStatus();
+  renderList();
+}
+
+function renderList() {
+  const L = curList, inner = $('linner');
+  $('ltitle').textContent = L.title;
+  $('lver').textContent = 'v' + VERSION;
+  const rebuilt = inner.dataset.list !== L.title;
+  if (rebuilt) { inner.textContent = ''; inner.dataset.list = L.title; L.built = 0; inner.style.transition = 'none'; }
+  for (let i = L.built; i < L.items.length; i++) {          // append only new tiles
+    const it = L.items[i], el = document.createElement('div');
+    el.className = 'tile'; el.dataset.i = i;
+    if (it.img) { const im = document.createElement('img'); im.src = it.img; im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; el.appendChild(im); }
+    else { const b = document.createElement('div'); b.className = 'bar'; el.appendChild(b); }
+    const tx = document.createElement('div'); tx.className = 'tx';
+    const t = document.createElement('div'); t.className = 't'; t.textContent = it.t;
+    const s = document.createElement('div'); s.className = 's'; s.textContent = it.s;
+    tx.append(t, s); el.appendChild(tx); inner.appendChild(el);
+  }
+  L.built = L.items.length;
+  for (const el of inner.children) el.classList.toggle('sel', +el.dataset.i === L.sel);
+  const winH = $('lwin').clientHeight, maxOff = Math.max(0, L.items.length * TILE_H + 2 - winH);
+  const off = Math.min(maxOff, Math.max(0, L.sel * TILE_H - (winH - TILE_H) / 2));
+  inner.style.transform = 'translateY(' + (-off) + 'px)';
+  if (rebuilt) { void inner.offsetHeight; inner.style.transition = ''; }   // jump, don't slide, when switching lists
+}
+
+function listMove(d) {
+  const L = curList;
+  L.sel = Math.min(L.items.length - 1, Math.max(0, L.sel + d));
+  renderList();
+  if (L === lists.niches && L.items.length - L.sel < 6) loadList('niches');
+}
+
+function openListItem(i) {
+  const it = curList.items[i];
+  if (!it) return;
+  curList.sel = i; renderList();
+  if (it.kind === 'search') openSearch();
+  else if (it.kind === 'tag') openFeed(makeFeed('search', { q: it.q, exact: '1' }, '#' + it.q));
+  else if (it.kind === 'niche') openFeed(makeFeed('niche', { id: it.id }, it.t));
+}
+
+// ---------- screens, tabs, history ----------
+let screen = 'feed', tab = 'home';
+function setScreen(s) {
+  screen = s;
+  for (const id of ['feed', 'list', 'search']) $(id).classList.toggle('on', id === s);
+  if (s !== 'feed') { for (const v of vids) v.pause(); clearTimeout(stallTimer); }
+  if (s !== 'search') $('q').blur();
+  hideStatus();
+}
+function updateNav() { for (const b of $('nav').children) b.classList.toggle('on', b.dataset.tab === tab); }
+
+function goTab(t, fromPop) {
+  tab = t; updateNav();
+  if (!fromPop && history.state && history.state.sub) history.replaceState({ tab: t }, '');
+  if (t === 'home') { curFeed = homeFeed; enterFeed(); }
+  else {
+    curList = lists[t]; setScreen('list'); renderList();
+    if (curList.items.length < 2 || curList.error) loadList(t);
+  }
+}
+function enterFeed() {
+  setScreen('feed');
+  const f = curFeed;
+  if (!f.items.length) { if (f.error || (!f.loading && !f.done)) { f.error = null; loadMore(f); } else if (f.loading) showLoading('Lade …'); else loadMore(f); return; }
+  showItem();
+}
+function openFeed(f) {
+  history.pushState({ tab, sub: 'feed' }, '');
+  curFeed = f; lastDir = 1; paused = false;
+  enterFeed();
+}
+function openSearch() {
+  history.pushState({ tab, sub: 'search' }, '');
+  setScreen('search');
+  const q = $('q'); q.value = '';
+  q.focus();                             // shows the OS keyboard
+}
+function submitSearch(text) {
+  const q = String(text == null ? $('q').value : text).replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (!q) { $('q').focus(); return; }
+  $('q').blur();
+  if (screen === 'search') { curFeed = makeFeed('search', { q }, '„' + q + '“'); lastDir = 1; paused = false; history.replaceState({ tab, sub: 'feed' }, ''); enterFeed(); }
+  else openFeed(makeFeed('search', { q }, '„' + q + '“'));
+}
+window.addEventListener('popstate', () => goTab(tab, true));
+
+// ---------- hardware events ----------
+let lockUntil = 0, lastSide = -1e9;
+function onScroll(dir, name) {
+  const t = performance.now();
+  dbg[name]++;
+  if (dbg.lastT) { dbg.gap = Math.round(t - dbg.lastT); dbg.minGap = dbg.minGap ? Math.min(dbg.minGap, dbg.gap) : dbg.gap; }
+  dbg.lastT = t;
+  if (voiceOn || screen === 'search') return;
+  if (t < lockUntil) { dbg.ignored++; dbgRender(); return; }
+  if (screen === 'feed') { lockUntil = t + SCROLL_LOCK_MS; step(dir); }
+  else if (screen === 'list') { lockUntil = t + LIST_LOCK_MS; listMove(dir); }
+  dbgRender();
+}
+window.addEventListener('scrollUp', () => onScroll(-1, 'scrollUp'));
+window.addEventListener('scrollDown', () => onScroll(1, 'scrollDown'));
+
+window.addEventListener('sideClick', () => {
+  const t = performance.now();
+  dbg.side++;
+  if (t - lastSide < DOUBLE_CLICK_MS) { dbg.sideDbl++; dbgRender(); return; }
+  lastSide = t;
+  if (voiceOn) return;
+  if (errorAction) { const a = errorAction; hideStatus(); a(); }
+  else if (screen === 'feed') togglePause();
+  else if (screen === 'list') openListItem(curList.sel);
+  else if (screen === 'search') submitSearch();
+  dbgRender();
+});
+
+// ---------- voice search: hold the side button ----------
+let voiceOn = false, voiceTimer = 0, lastStt = { t: 0, text: '' };
+const hasVoice = () => typeof CreationVoiceHandler !== 'undefined';
+function voiceUi(on, text) { $('voice').classList.toggle('on', on); if (text) $('vtxt').textContent = text; }
+window.addEventListener('longPressStart', () => {
+  dbg.lpStart++;
+  if (!hasVoice()) { if (screen !== 'search') openSearch(); return; }
+  if (voiceOn) return;
+  voiceOn = true;
+  voiceUi(true, 'Höre zu …');
+  try { CreationVoiceHandler.postMessage('start'); } catch (e) { voiceOn = false; voiceUi(false); }
+});
+window.addEventListener('longPressEnd', () => {
+  dbg.lpEnd++;
+  if (!voiceOn) return;
+  voiceUi(true, 'Erkenne …');
+  try { CreationVoiceHandler.postMessage('stop'); } catch (e) {}
+  clearTimeout(voiceTimer);
+  voiceTimer = setTimeout(() => { voiceOn = false; voiceUi(false); }, 8000);   // no result -> give up quietly
+});
+window.onPluginMessage = (d) => {
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return; } }
+  if (!d || d.type !== 'sttEnded') return;
+  dbg.stt++;
+  const text = String(d.transcript || '').trim(), t = Date.now();
+  if (text === lastStt.text && t - lastStt.t < 2000) return;      // double delivery
+  lastStt = { t, text };
+  clearTimeout(voiceTimer);
+  voiceOn = false; voiceUi(false);
+  if (text) submitSearch(text);
+  else { showError('Nichts verstanden.\nSeitentaste halten = nochmal', () => {}); }
+};
+
+// ---------- touch (pointer events only, no touchstart/preventDefault) ----------
+let ptr = null;
+$('stage').addEventListener('pointerdown', (e) => { dbg.ptr++; ptr = { x: e.clientX, y: e.clientY, t: performance.now(), target: e.target }; });
+$('stage').addEventListener('pointercancel', () => { ptr = null; });
+$('stage').addEventListener('pointerup', (e) => {
+  if (!ptr) return;
+  const dy = e.clientY - ptr.y, dx = e.clientX - ptr.x, start = ptr;
+  ptr = null;
+  if (screen === 'search') { if (start.target === $('go') && e.target === $('go')) submitSearch(); else if (start.target === $('q')) $('q').focus(); return; }
+  if (voiceOn) return;
+  if (errorAction && Math.abs(dy) < SWIPE_PX) { const a = errorAction; hideStatus(); a(); return; }
+  if (screen === 'feed') {
+    if (Math.abs(dy) >= SWIPE_PX && Math.abs(dy) > Math.abs(dx)) {
+      const t = performance.now();
+      if (t >= lockUntil) { lockUntil = t + SCROLL_LOCK_MS; step(dy < 0 ? 1 : -1); }
+    } else if (Math.abs(dy) < 10 && Math.abs(dx) < 10) toggleSound();
+  } else if (screen === 'list') {
+    if (Math.abs(dy) >= SWIPE_PX) listMove(-Math.round(dy / TILE_H) || (dy < 0 ? 1 : -1));
+    else {
+      const tile = start.target.closest && start.target.closest('.tile');
+      if (tile) openListItem(+tile.dataset.i);
+    }
+  }
+});
+$('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitSearch(); } });
+for (const b of $('nav').children) b.addEventListener('pointerup', () => goTab(b.dataset.tab));
+
+// ---------- desktop fallbacks ----------
+let spaceDown = false;
+window.addEventListener('keydown', (e) => {
+  if (e.target === $('q')) return;
+  const map = { ArrowUp: 'scrollUp', ArrowDown: 'scrollDown', Escape: 'sideClick' };
+  if (map[e.key]) { e.preventDefault(); fire(map[e.key]); }
+  else if (e.code === 'Space') { e.preventDefault(); if (!e.repeat && !spaceDown) { spaceDown = true; fire('longPressStart'); } }
+});
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'Space' && spaceDown) { spaceDown = false; fire('longPressEnd'); }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) for (const v of vids) v.pause();
+  else if (screen === 'feed') playActive();
+});
+
+// ---------- start ----------
+history.replaceState({ tab: 'home' }, '');
+goTab('home');
+dbgRender();
+</script>
+</body>
+</html>
