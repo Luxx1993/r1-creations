@@ -47,7 +47,7 @@ Oben im Skript von `index.html`: `INVERT_X`, `INVERT_Y` (wirken auf alle Modi) u
 Libellen). Danach `index.html` als neue Version kopieren (z. B. `index-v0.1.1.html`), QR neu erzeugen:
 
 ```bash
-python3 tools/make_qr.py --title "Wasserwaage" --description "Neigung messen: Linie, Libellen, 3D" \
+python3 tools/make_qr.py --title "Wasserwaage" --description "Neigungsmesser" \
   --url https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/index-v0.1.1.html \
   --theme "#4cd964" --out wasserwaage/qr.png
 ```
