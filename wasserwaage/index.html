@@ -62,7 +62,7 @@
     <rect class="hit" data-hit="v2" x="-90" y="-36" width="180" height="72" transform="translate(148 154) rotate(-45)"/>
     <rect class="hit" data-hit="v0" x="20" y="10" width="200" height="62"/>
     <rect class="hit" data-hit="v1" x="12" y="76" width="58" height="156"/>
-    <rect class="hit" data-hit="value" x="40" y="250" width="160" height="32"/>
+    <rect class="hit" data-hit="value" x="40" y="238" width="160" height="44"/>
   </g>
 
   <!-- MODUS 3: 3D -->
@@ -265,9 +265,8 @@ function setMode(m) {
   st.mode = m;
   MODES.forEach((id, i) => $(id).classList.toggle('on', i === m));
   $('bg').setAttribute('fill', '#111');
-  hold = false;
   pick = -1;
-  $('hold').setAttribute('display', 'none');
+  setHold(false);
 }
 let shown = null;              // bei HOLD eingefrorene Messwerte
 function draw(m) {
@@ -357,7 +356,8 @@ function onTap(x, y) {
   const el = document.elementFromPoint(x, y);
   const hit = el && el.getAttribute && el.getAttribute('data-hit');
   if (!hit) return;                                   // Hintergrund: nichts
-  if (hit[0] === 'v' && hit !== 'value') {
+  if (hit === 'value') { setHold(!hold); return; }   // große Gradzahl: HOLD an/aus
+  if (hit[0] === 'v') {
     const i = +hit.slice(1);
     pick = pick === i ? -1 : i;
   }
@@ -370,13 +370,85 @@ document.body.addEventListener('touchstart', (e) => {
 window.addEventListener('mousedown', (e) => onTap(e.clientX, e.clientY));
 
 // ---- Bedienung
-window.addEventListener('sideClick', () => { setMode((st.mode + 1) % 3); save(); });
+// Seitentaste: Klick = Modus wechseln, Doppelklick (zwei sideClick ~50 ms nacheinander) =
+// Kalibrierung zurücksetzen, langer Druck = kalibrieren. Der Einzelklick wartet DBL_MS ab.
+const DBL_MS = 350;
+let clickTimer = null, lastLong = 0;
+function setHold(on) {
+  hold = on;
+  show('hold', on);
+}
+function calibrate() {
+  const m = measure();
+  setHold(false);
+  if (st.mode === 2) {
+    if (m.upright) { toast('Flach auflegen'); return; }
+    st.offX = m.Xr; st.offY = m.Yr;
+  } else {
+    if (m.flat) { toast('Hochkant halten'); return; }
+    st.offT = devStep(m.thRaw, 45);          // Abweichung zum nächsten Vielfachen von 45°
+  }
+  save();
+  toast('Kalibriert');
+}
+function resetCal() {
+  st.offT = st.offX = st.offY = 0;
+  setHold(false);
+  save();
+  toast('Zurückgesetzt');
+}
+window.addEventListener('sideClick', () => {
+  if (Date.now() - lastLong < 700) return;   // Loslassen nach langem Druck zählt nicht als Klick
+  if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; resetCal(); return; }
+  clickTimer = setTimeout(() => { clickTimer = null; setMode((st.mode + 1) % 3); save(); }, DBL_MS);
+});
+window.addEventListener('longPressStart', () => {
+  lastLong = Date.now();
+  if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+  calibrate();
+});
+window.addEventListener('longPressEnd', () => { lastLong = Date.now(); });
 
-// Desktop-Vorschau (auf dem R1 ohne Wirkung)
+// Scrollrad: Einheit °, % Gefälle, mm/m (gilt für alle Modi, wird gespeichert)
+const UNIT_NAMES = ['Grad °', 'Gefälle %', 'mm/m'];
+function wheel(dir) {
+  st.unit = mod(st.unit + dir, 3);
+  save();
+  toast(UNIT_NAMES[st.unit], 900);
+}
+window.addEventListener('scrollUp', () => wheel(1));
+window.addEventListener('scrollDown', () => wheel(-1));
+
+// Desktop-Vorschau (auf dem R1 ohne Wirkung): Maus = Neigung, Klick = Touch,
+// Enter/Leertaste/Pfeil links/rechts = Seitentaste (zweimal schnell = Doppelklick,
+// gedrückt halten = langer Druck), Pfeil hoch/runter oder Mausrad = Scrollrad, H = HOLD.
 if (typeof PluginMessageHandler === 'undefined') {
+  const SIDE = ['Enter', ' ', 'ArrowLeft', 'ArrowRight'];
+  let downAt = 0, longTimer = null, longFired = false;
+  const fire = (n) => window.dispatchEvent(new Event(n));
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.dispatchEvent(new Event('sideClick')); }
+    if (SIDE.includes(e.key)) {
+      e.preventDefault();
+      if (e.repeat || downAt) return;
+      downAt = Date.now(); longFired = false;
+      longTimer = setTimeout(() => { longFired = true; fire('longPressStart'); }, 600);
+    } else if (e.key === 'ArrowUp') { e.preventDefault(); fire('scrollUp'); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); fire('scrollDown'); }
+    else if (e.key === 'h' || e.key === 'H') setHold(!hold);   // HOLD ohne die Maus (= Neigung) zu bewegen
   });
+  window.addEventListener('keyup', (e) => {
+    if (!SIDE.includes(e.key) || !downAt) return;
+    clearTimeout(longTimer); downAt = 0;
+    if (longFired) fire('longPressEnd'); else fire('sideClick');
+  });
+  let lastWheel = 0;
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const now = Date.now();
+    if (now - lastWheel < 150 || !e.deltaY) return;
+    lastWheel = now;
+    fire(e.deltaY < 0 ? 'scrollUp' : 'scrollDown');
+  }, { passive: false });
 }
 
 (async () => {
