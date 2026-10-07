@@ -19,6 +19,7 @@ Die Seite `https://luxx1993.github.io/r1-creations/` listet alle Creations. Jede
 | Tally | `creation/tally` | Strichlisten-Zähler mit Auto-Rotation |
 | Marble Maze | `creation/marble-maze` | Murmel-Labyrinth: 15 Level, Neigung per Beschleunigungssensor, Drehregler = Tempo (10 Stufen) |
 | Clawd | `creation/clawd` | Clawd als Haustier im Diorama: 7 Szenen und 11 Stile aus dem Claude-Fables-Plugin, Hüte, Brillen und Schleifen, Auto-Rotation |
+| Todoist | `creation/todoist` | Todoist-Aufgaben mit Sync: Heute, Eingang, Projekte, Suche, Sprach-Eingabe per PTT, Offline-Queue, Vorlesen. Deutsch und Englisch |
 
 ### Tally installieren
 
@@ -63,6 +64,17 @@ Clawd ist eine statische Seite (HTML, JavaScript und Bilder) und läuft in jedem
 - Bedienung: Pfeiltasten = Drehregler (hoch/links und runter/rechts sind die beiden Drehrichtungen), Enter oder Leertaste = Seitentaste, `H` = streicheln, `O` = Ansicht in 90°-Schritten drehen, Maus = Touch (Klicken und Wischen).
 - Am Desktop fehlen die Sensoren (kein Schütteln, keine automatische Drehung), die Ansicht bleibt 240×282 px groß (Browser-Zoom hilft), der Spielstand liegt im `localStorage` des Browsers, und der Ton startet erst nach dem ersten Klick oder Tastendruck.
 - Weiterentwickeln: `index.html` ist generiert. Der Quelltext liegt in `src/index.src.html`, `python3 src/build.py` baut `index.html` und die versionierte Datei neu. Die Bilder entstehen mit dem Generator in `src/` aus dem Claude-Fables-Plugin (siehe `src/README.md`). Beim Weitergeben die Lizenzen beachten: Claudes 3D-Modell von ChetasLua (MIT) und die Schrift Monocraft (OFL).
+
+### Todoist installieren
+
+Synchronisiert direkt mit deinem eigenen Todoist-Konto (Optik der Todoist-Android-App im Dark Mode). Nach dem Scannen im Setup den API-Token eingeben (Todoist → Einstellungen → Integrationen → Entwickler); er bleibt auf dem R1. Ohne Token gibt es einen Demo-Modus.
+
+| Deutsch | English |
+| --- | --- |
+| [![Install-QR für Todoist (Deutsch) – Klick öffnet die Anleitung](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) | [![Install QR for Todoist (English) – click for the guide](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/en/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
+| `/todoist/` · [Anleitung](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) | `/todoist/en/` · [Guide](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
+
+Bedienung: Scrollrad = Aufgabe wählen, Seitentaste = erledigen (5 s Rückgängig), PTT halten = Aufgabe diktieren → Review → Senden, Plus = Texteingabe, Lautsprecher = Liste vorlesen, Bildschirm 1 s halten = Setup. Beide Sprachen kommen aus derselben Quelldatei (`index.html` im Branch, `release.py` hält `en/` synchron).
 
 ## Neue Creation anlegen
 
