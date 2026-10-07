@@ -71,15 +71,12 @@ Synchronisiert direkt mit deinem eigenen Todoist-Konto (Optik der Todoist-Androi
 
 | Deutsch | English |
 | --- | --- |
-| [![Install-QR für Todoist (Deutsch) – Klick öffnet die Anleitung](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.de.md) | [![Install QR for Todoist (English) – click for the guide](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/en/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
-| `/todoist/` · [Anleitung](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.de.md) | `/todoist/en/` · [Guide](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
+| [![Install-QR für Todoist (Deutsch) – Klick öffnet die Anleitung](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) | [![Install QR for Todoist (English) – click for the guide](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/en/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
+| `/todoist/` · [Anleitung](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) | `/todoist/en/` · [Guide](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
 
 Bedienung: Scrollrad = Aufgabe wählen, Seitentaste = erledigen (5 s Rückgängig), PTT halten = Aufgabe diktieren → Review → Senden, Plus = Texteingabe, Lautsprecher = Liste vorlesen, Bildschirm 1 s halten = Setup. Beide Sprachen kommen aus derselben Quelldatei (`index.html` im Branch, `release.py` hält `en/` synchron).
 
 ## Neue Creation anlegen
-
-Hinweis: Seit PR #1 liegen auch die Todoist-Dateien auf `main`. In einem neuen Creation-Branch zuerst entfernen:
-`git rm -r -q index*.html en install.html creation.json qr.png icon.png make_icon.py release.py proxy test screenshots README.de.md README.en.md`.
 
 ```bash
 git checkout -b creation/<name> main
