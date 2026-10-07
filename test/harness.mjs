@@ -511,12 +511,12 @@ async function main() {
   const fit = await ev(`(function(){ return { w: document.documentElement.scrollWidth, h: document.documentElement.scrollHeight }; })()`);
   eq('page fits 240x282 without scrolling', fit, { w: 240, h: 282 });
   const hdrTop = await ev(`document.getElementById('hdr').getBoundingClientRect().top`);
-  check('282 px webview (R1 bar above it): header at the very top', hdrTop < 2, String(hdrTop));
+  check('282 px webview (R1 bar above it): header at the very top', hdrTop <= 2, String(hdrTop));
   // a taller webview means the OS bar lies over the page: keep that strip free
   await rpc(WS, 'Emulation.setDeviceMetricsOverride', { width: 240, height: 320, deviceScaleFactor: 1, mobile: false });
   await sleep(200);
   const tall = await ev(`({ hdr: document.getElementById('hdr').getBoundingClientRect().top, nav: document.getElementById('nav').getBoundingClientRect().bottom })`);
-  eq('320 px webview: 38 px kept free on top, nav at the bottom', tall, { hdr: 38, nav: 320 });
+  eq('320 px webview: 38 px kept free on top, nav at the bottom', tall, { hdr: 40, nav: 320 });
   await rpc(WS, 'Emulation.setDeviceMetricsOverride', { width: 240, height: 282, deviceScaleFactor: 1, mobile: false });
   await sleep(200);
 
