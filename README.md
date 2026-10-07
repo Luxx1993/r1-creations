@@ -20,6 +20,7 @@ Die Seite `https://luxx1993.github.io/r1-creations/` listet alle Creations. Jede
 | Marble Maze | `creation/marble-maze` | Murmel-Labyrinth: 15 Level, Neigung per Beschleunigungssensor, Drehregler = Tempo (10 Stufen) |
 | Clawd | `creation/clawd` | Clawd als Haustier im Diorama: 7 Szenen und 11 Stile aus dem Claude-Fables-Plugin, Hüte, Brillen und Schleifen, Auto-Rotation |
 | Todoist | `creation/todoist` | Todoist-Aufgaben mit Sync: Heute, Eingang, Projekte, Suche, Sprach-Eingabe per PTT, Offline-Queue, Vorlesen. Deutsch und Englisch |
+| Wasserwaage | `creation/bubble-level` | Neigungsmesser mit drei Modi: Linie (an Wand/Kante), drei Libellen (0°, 90°, 45°) und runde 3D-Libelle (flach). Kalibrierung, HOLD, Einheiten °, %, mm/m |
 
 ### Tally installieren
 
@@ -76,6 +77,17 @@ Synchronisiert direkt mit deinem eigenen Todoist-Konto (Optik der Todoist-Androi
 
 Bedienung: Scrollrad = Aufgabe wählen, Seitentaste = erledigen (5 s Rückgängig), PTT halten = Aufgabe diktieren → Review → Senden, Plus = Texteingabe, Lautsprecher = Liste vorlesen, Bildschirm 1 s halten = Setup. Beide Sprachen kommen aus derselben Quelldatei (`index.html` im Branch, `release.py` hält `en/` synchron).
 
+### Wasserwaage installieren
+
+Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen (oder die Install-Seite
+`https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/install.html` öffnen).
+
+[![Install-QR für die Wasserwaage – Klick öffnet die Anleitung](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/bubble-level/wasserwaage/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/bubble-level/README.md)
+
+Bedienung: Seitentaste = Modus (Linie → Libellen → 3D), langer Druck = kalibrieren, Doppelklick = Kalibrierung
+zurücksetzen, Scrollrad = Einheit (°, % Gefälle, mm/m), große Zahl antippen = HOLD, Libelle antippen = fest
+wählen. Die Dateien liegen im Unterordner `wasserwaage/` des Branches.
+
 ## Neue Creation anlegen
 
 ```bash
@@ -101,4 +113,9 @@ Settings → Pages → Build and deployment → Source: **GitHub Actions**.
   deinstallieren, neuen QR scannen (die R1 cached die Install-URL).
 - Alle Creations teilen sich den Origin `luxx1993.github.io`: `localStorage`-Schlüssel mit
   Creation-Namen versehen (z. B. `tally_state`).
+- Install-QR kurz halten: Der R1 erkannte einen QR mit 275 Zeichen Inhalt (QR-Version 11) nicht, mit
+  254 Zeichen (Version 10) schon. Kurze URL und Beschreibung wählen, `make_qr.py` gibt den Inhalt aus.
+- Deploy: Bisher scheitert der automatische Lauf bei einem Push auf `creation/*` nach wenigen Sekunden
+  (vermutlich erlaubt die Umgebung `github-pages` nur `main`). Dann den Workflow „Deploy Pages“ manuell
+  auf `main` starten (Actions → Deploy Pages → Run workflow); er baut alle Creation-Branches mit.
 - Details, SDK und Erfahrungen vom echten Gerät: `docs/r1-creations.md`.

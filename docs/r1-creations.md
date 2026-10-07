@@ -197,6 +197,7 @@ A double click on PTT arrives as **two `sideClick` events about 50 ms apart**, n
 - The QR must contain this **JSON object, not a bare URL** (community testing: a plain URL QR was rejected as "invalid").
 - The tool's default `themeColor` is `#FE5000` (rabbit orange).
 - It renders with the `qr-code-styling` library at **error correction level "L"** (lowest, to fit more data), 300 x 300 px, black on white. Keep the JSON short so the code stays scannable on the R1 camera; use short URLs and a small `iconUrl`.
+- **[verified on device]** Size limit in practice: a 275-character payload (QR version 11 at level L) was **not recognised** by the R1; the same creation with a 254-character payload (version 10) installed at once. Working codes in this repo are 215–254 characters (versions 9–10). Aim for at most ~260 characters and show the code on install pages at an integer pixel scale (no blurry downscaling).
 - The tool supports a **share link with prefilled fields**: `.../qr/final/index_fixed.html?jsondata=<url-safe-base64-of-the-JSON>` (base64 with `+` -> `-`, `/` -> `_`, `=` stripped). Handy for generating install links programmatically.
 - Claude Code can also generate the QR itself: encode the same JSON string with any QR library (for example the Python `qrcode` package) at low error correction, with a white quiet zone.
 
@@ -477,6 +478,17 @@ Voice: for speech input the community uses either the PTT long-press flow (see t
 - **Sound without files (WebAudio, not yet verified on a real R1):** oscillators and noise bursts are enough for voice blips, snoring, a whistle, ball hits and a looping melody per style. An `AudioContext` starts suspended: create/resume it in a user gesture (touch, button event) and suspend it on `visibilitychange`.
 - **Pixel art on canvas:** draw at low resolution, threshold the alpha channel to remove half-transparent edges, then scale up with smoothing off, otherwise it looks blurry.
 
+## 11d. Lessons from the Wasserwaage creation (verified on a real R1)
+
+**[verified on device]** From the bubble level (`creation/bubble-level`, files in the subfolder `wasserwaage/`).
+
+- **Accelerometer axes are gravity in screen coordinates.** With `tiltX`/`tiltY`/`tiltZ` used unchanged, x points to the right and y to the bottom edge: holding the R1 upright gives `tiltY` ≈ +1; lowering the right side makes `tiltX` positive; lying flat, raising the right edge makes `tiltX` negative. So `atan2(tiltX, tiltY)` is the clockwise rotation of the device and a bubble moves by `-(X, Y)`. Matches the Tally finding (clockwise = x positive); no sign flips were needed.
+- **The sensor is noisy at rest.** With a one-pole low pass (factor 0.2 at 60 Hz) a device lying still on a table showed readings jumping between 0.1° and 0.5°, and a "level" indicator flickered on and off. Fix (v0.1.1, desktop-tested with simulated noise, **device check pending**): two-stage adaptive filter (fast stage 0.2 detects movement; slow stage 0.02 at rest, switching to fast for 400 ms after a change of more than ~1.7°), a displayed value that only moves to a new tenth when the reading is more than 0.08° away from it, and hysteresis for the level state (on below 0.3°, off from 0.5°).
+- **Double click and single click on the side button can coexist:** delay the single-click action by ~350 ms and treat a second `sideClick` within that window as a double click. Ignore a `sideClick` arriving right after `longPressStart`/`longPressEnd`. Worked on the device.
+- **A creation can live in a subfolder of its branch.** `creation.json` `entry` may point to `wasserwaage/index-v0.1.1.html`; the site build exports the whole branch, so the install URL is `/<branch-name>/<folder>/…`. The hub page only embeds a QR found at the branch root.
+- **Pages deploy:** pushes to `creation/*` started the Pages workflow but it failed within seconds (also for Todoist); running the workflow manually on `main` (workflow_dispatch) deployed every creation branch. Probably the `github-pages` environment only allows `main`.
+- **SVG is fine for this kind of UI:** a few dozen SVG elements updated at 25 Hz (attributes only, no re-render) ran smoothly on the device.
+
 ## 12. Open questions and known gaps
 
 **Still open**
@@ -497,6 +509,7 @@ Voice: for speech input the community uses either the PTT long-press flow (see t
 - `creationStorage.plain` with Base64 works and persists across closing the card, even though the official demo's own JS never calls it. It may appear after the page has loaded, so wait for it.
 - `scrollUp`, `scrollDown`, `sideClick`, `longPressStart` and `touchstart` on `document.body` work as documented.
 - The QR JSON schema (five fields, low error correction) is confirmed from rabbit's own QR tool (`creations-sdk/qr`, read directly from the repo) and a QR generated with it installed correctly.
+- Accelerometer axis signs relative to the screen (see 11d), and a practical QR payload limit of about 260 characters (see section 4).
 
 ## 13. Sources
 
