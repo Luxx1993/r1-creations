@@ -7,8 +7,8 @@ kein eigener Server nötig. Referenz: `docs/r1-creations.md`. Diese Creation leb
 
 ## Screenshots
 
-Aus dem Test-Harness (Chromium, 240×282 px, gemockte Todoist-API). Auf dem R1 liegt oben die
-System-Leiste (zurück, Uhr, Akku) über den freien 38 px.
+Aus dem Test-Harness (Chromium, 240×282 px, gemockte Todoist-API). Auf dem R1 sitzt die
+System-Leiste (zurück, Uhr, Akku) darüber, außerhalb der Seite.
 
 | Projekt „Arbeit“ | Heute | Eingang | Browsen |
 | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ R1: Creations-Karte → „add via QR code“ → scannen.
 
 ![Install-QR](qr.png)
 
-Der QR enthält nur `{"title":"Todoist","url":".../todoist/index-v0.1.0.html?v=1","description":…,"iconUrl":…,"themeColor":"#C24B4B"}`,
+Der QR enthält nur `{"title":"Todoist","url":".../todoist/index-v0.1.1.html?v=1","description":…,"iconUrl":…,"themeColor":"#C24B4B"}`,
 niemals den Token. `install.html` zeigt denselben Code im Browser und baut ihn aus der eigenen Adresse,
 funktioniert also auch auf einem anderen Host.
 
@@ -118,8 +118,9 @@ Methoden und dasselbe Aufgabenformat liefern.
 
 ## CORS und Proxy
 
-Ob Todoist Aufrufe aus dem R1-Webview zulässt, ist offen (Preflight wegen `Authorization`). Die App
-ruft die API direkt auf. Zeigt „Testen“ auf dem Gerät einen Netz/CORS-Fehler, obwohl der R1 online ist:
+**Auf dem R1 geprüft (07.10.2026, v0.1.0):** Der Webview ruft `api.todoist.com` direkt auf, Lesen und
+Anlegen funktionieren, kein Proxy nötig. Der Proxy bleibt als Reserve, falls Todoist das ändert.
+Zeigt „Testen“ auf dem Gerät einen Netz/CORS-Fehler, obwohl der R1 online ist:
 
 1. Den Ordner `proxy/` als eigenes Vercel-Projekt deployen (Vercel → Add New → Project → dieses Repo,
    Branch `creation/todoist`, Root Directory `proxy`).
@@ -138,12 +139,12 @@ Neue Version:
 
 ```bash
 # APP_VERSION in index.html erhöhen, dann
-cp index.html index-v0.1.1.html
+cp index.html index-v0.1.2.html
 # creation.json: "version" und "entry" anpassen, ENTRY in install.html anpassen
 python3 tools/make_qr.py --title Todoist --description "Todoist-Aufgaben auf dem R1" \
-  --url "https://luxx1993.github.io/r1-creations/todoist/index-v0.1.1.html?v=1" \
+  --url "https://luxx1993.github.io/r1-creations/todoist/index-v0.1.2.html?v=1" \
   --icon-url https://luxx1993.github.io/r1-creations/todoist/icon.png --theme "#C24B4B"
-git commit -am "Todoist 0.1.1" && git push
+git commit -am "Todoist 0.1.2" && git push
 ```
 
 Auf dem R1 die alte Karte deinstallieren, neuen QR scannen, Token neu eingeben.
@@ -156,23 +157,29 @@ node test/harness.mjs      # Node 22+, Chrome/Chromium (CHROME=/pfad/zu/chrome)
 
 Fährt die echte `index.html` in Headless-Chrome gegen eine gemockte Todoist-API v1 (mit absichtlich
 kleinen Seiten für die Cursor-Logik) und stubbt `CreationVoiceHandler`, `PluginMessageHandler` und
-`creationStorage`. 95 Prüfungen: Setup und Verbindungstest (OK, 401, CORS), Heute/Eingang/Browsen/Projekt/
+`creationStorage`. 96 Prüfungen: Setup und Verbindungstest (OK, 401, CORS), Heute/Eingang/Browsen/Projekt/
 Suchen, Scrollrad und Side-Button, Doppelklick-Schutz, Erledigen per Kreis und Taste mit Rückgängig,
 Sprache → Review → Senden/Verwerfen, Plus tippen/halten, Bearbeiten, Vorlesen (max. 8, fester Wortlaut),
 Offline-Queue über einen Neustart, abgelehnte Writes, Token nur im Secure Storage, Layout 240×282,
-Demo-Modus, Proxy. Die Screenshots oben schreibt derselbe Lauf nach `screenshots/`.
+Layout bei 282 und 320 px Höhe, Demo-Modus, Proxy. Die Screenshots oben schreibt derselbe Lauf nach `screenshots/`.
 
 Lokal ansehen: `python3 -m http.server 8000`, dann `http://localhost:8000/index.html` (Demo-Modus).
 
-## Nur auf dem echten R1 prüfbar
+## Auf dem echten R1
 
-- **CORS**: ob der Webview `api.todoist.com` mit `Authorization`-Header aufrufen darf (Setup → Testen).
+Bestätigt (v0.1.0): Installation per QR, Token-Setup, direkter API-Zugriff ohne Proxy (CORS ok), Sync
+(grüner Punkt), Anlegen, Eingang, Suchen, Layout und Farben. Der Webview ist 240×282 px groß und liegt
+*unter* der OS-Leiste; die in v0.1.0 freigehaltenen 38 px oben waren unnötig und sind in v0.1.1 weg.
+Die App misst die Höhe selbst (`fitScreen()`): Meldet ein Webview mehr als 282 px, gilt der Überschuss
+oben als von der Leiste verdeckt. Das Setup zeigt unten die gemessene Größe (z. B. `240×282`).
+
+Noch offen:
+
 - **Sprache**: `CreationVoiceHandler` (PTT halten, Plus halten) und die Qualität deutscher Transkripte.
 - **Vorlesen**: ob das R1-LLM den Text wörtlich spricht oder ausschmückt.
 - **Quick Add auf Deutsch**: ob „morgen“ erkannt wird, hängt von der Spracheinstellung des Todoist-Kontos ab.
 - `creationStorage.secure` auf dem Gerät (fällt sonst auf `.plain` zurück, nie auf `localStorage`).
 - `longPressEnd` und Plus-Halten mit echtem Touch, R1-Tastatur in Setup, Editor und Suchfeld.
-- Ob die OS-Leiste wirklich ~38 px verdeckt (Konstante `--safe` in der CSS).
 - Tempo bei großen Konten (alle offenen Aufgaben für Suchen und Browsen).
 
 ## Dateien
@@ -180,7 +187,7 @@ Lokal ansehen: `python3 -m http.server 8000`, dann `http://localhost:8000/index.
 | Pfad | Inhalt |
 | --- | --- |
 | `index.html` | die Creation (Arbeitskopie) |
-| `index-v0.1.0.html` | versionierte Kopie, auf die der QR zeigt |
+| `index-v0.1.1.html` | versionierte Kopie, auf die der QR zeigt (`index-v0.1.0.html` bleibt für alte Karten) |
 | `install.html` | Install-Seite mit QR |
 | `qr.png`, `icon.png`, `make_icon.py` | Install-QR, Icon (96×96) und sein Generator |
 | `creation.json` | Metadaten für die Übersichtsseite |
