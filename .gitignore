@@ -1,0 +1,10 @@
+# Never commit a token or a configured endpoint.
+.env
+.env.*
+config.local.*
+*.secret
+secrets.*
+# tooling
+node_modules/
+.vercel/
+.DS_Store
