@@ -29,7 +29,7 @@ On the R1: creations card → "add via QR code" → scan this code.
 ![Install QR code (English)](en/qr.png)
 
 The same code is shown on `https://luxx1993.github.io/r1-creations/todoist/en/install.html`.
-It contains only `{"title":"Todoist","url":".../todoist/en/index-v0.1.2.html?v=1","description":"Todoist tasks on the R1","iconUrl":…,"themeColor":"#C24B4B"}`.
+It contains only `{"title":"Todoist","url":".../todoist/en/index-v0.1.3.html?v=1","description":"Todoist tasks on the R1","iconUrl":…,"themeColor":"#C24B4B"}`.
 
 ## Set up your token
 
@@ -58,7 +58,7 @@ enter the token once more.
 | Tap the circle | complete | | |
 | Tap a card | first tap selects, second tap edits | | |
 | Tap / hold + | type a task / dictate a task | | |
-| Speaker icon | reads the first 8 tasks of the list aloud | | |
+| Speaker icon | reads the first 8 tasks of the list aloud (device voice, else the R1 voice) | | |
 | Tap the sync dot | sync now and show the status | | |
 | Hold the screen 1 s | setup | | |
 
@@ -114,7 +114,7 @@ node test/harness.mjs           # Node 22+, Chrome/Chromium; fails if the Englis
 ```
 
 The harness drives the real page in headless Chrome against a mock Todoist API v1, with stubs for the
-R1 bridges (`CreationVoiceHandler`, `PluginMessageHandler`, `creationStorage`). It runs 112 checks,
+R1 bridges (`CreationVoiceHandler`, `PluginMessageHandler`, `creationStorage`). It runs 121 checks,
 including a full English pass, and writes the screenshots above.
 
 Todoist API used: `GET /projects`, `GET /tasks?project_id=…`, `GET /tasks/filter?query=today | overdue`,
@@ -123,8 +123,11 @@ Todoist API used: `GET /projects`, `GET /tasks?project_id=…`, `GET /tasks/filt
 
 ## Known limits
 
-- Reading aloud goes through the R1's built-in LLM. The prompt pins the wording, but the LLM may
-  still add words; the screen is the main output.
+- Reading aloud: the app first tries the webview's own speech synthesis, which reads word for word.
+  If the R1 has no voice in the app language (setup shows `TTS 0`), or it does not start within 1.5 s,
+  the text goes to the R1 voice. That voice runs through the R1's built-in LLM: the prompt pins the
+  wording, but the LLM may still add words. The toast says which voice was used; the screen stays the
+  main output.
 - If the connection drops right after a task was created, the retry can create it a second time.
 - Large accounts: Search and Browse load all open tasks.
 

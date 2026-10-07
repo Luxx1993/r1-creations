@@ -29,7 +29,7 @@ R1: Creations-Karte → „add via QR code“ → scannen.
 
 Englische Version: QR in [`en/qr.png`](en/qr.png) bzw. auf `en/install.html`, Anleitung in [README.en.md](README.en.md).
 
-Der QR enthält nur `{"title":"Todoist","url":".../todoist/index-v0.1.2.html?v=1","description":…,"iconUrl":…,"themeColor":"#C24B4B"}`,
+Der QR enthält nur `{"title":"Todoist","url":".../todoist/index-v0.1.3.html?v=1","description":…,"iconUrl":…,"themeColor":"#C24B4B"}`,
 niemals den Token. `install.html` zeigt denselben Code im Browser und baut ihn aus der eigenen Adresse,
 funktioniert also auch auf einem anderen Host.
 
@@ -61,7 +61,7 @@ muss der Token einmal neu eingegeben werden.
 | Kreis antippen | erledigen | | |
 | Karte antippen | 1. Tipp auswählen, 2. Tipp bearbeiten | | |
 | Plus antippen / halten | Texteingabe / Sprachaufnahme | | |
-| Lautsprecher | liest die ersten 8 Aufgaben der Liste vor | | |
+| Lautsprecher | liest die ersten 8 Aufgaben der Liste vor (Gerätestimme, sonst R1-Stimme) | | |
 | Sync-Punkt antippen | sofort synchronisieren, Status anzeigen | | |
 | Bildschirm 1 s halten | Setup | | |
 
@@ -175,9 +175,9 @@ node test/harness.mjs      # Node 22+, Chrome/Chromium (CHROME=/pfad/zu/chrome)
 
 Fährt die echte `index.html` in Headless-Chrome gegen eine gemockte Todoist-API v1 (mit absichtlich
 kleinen Seiten für die Cursor-Logik) und stubbt `CreationVoiceHandler`, `PluginMessageHandler` und
-`creationStorage`. 112 Prüfungen: Sprach-Sync (Deutsch = Englisch), Setup und Verbindungstest (OK, 401, CORS), Heute/Eingang/Browsen/Projekt/
+`creationStorage`. 121 Prüfungen: Sprach-Sync (Deutsch = Englisch), Setup und Verbindungstest (OK, 401, CORS), Heute/Eingang/Browsen/Projekt/
 Suchen, Scrollrad und Side-Button, Doppelklick-Schutz, Erledigen per Kreis und Taste mit Rückgängig,
-Sprache → Review → Senden/Verwerfen, Plus tippen/halten, Bearbeiten, Vorlesen (max. 8, fester Wortlaut),
+Sprache → Review → Senden/Verwerfen, Plus tippen/halten, Bearbeiten, Vorlesen (max. 8, Gerätestimme mit Rückfall auf die R1-Stimme, fester Wortlaut),
 Offline-Queue über einen Neustart, abgelehnte Writes, Token nur im Secure Storage, Layout 240×282,
 Layout bei 282 und 320 px Höhe, Demo-Modus, Proxy und ein englischer Durchlauf (Texte, Datumsformat,
 Vorlese-Prompt). Die Screenshots schreibt derselbe Lauf nach `screenshots/` und `screenshots/en/`.
@@ -193,10 +193,18 @@ Sprachaufnahme per PTT (`CreationVoiceHandler`) → Review → Senden funktionie
 Die App misst die Höhe selbst (`fitScreen()`): Meldet ein Webview mehr als 282 px, gilt der Überschuss
 oben als von der Leiste verdeckt. Das Setup zeigt unten die gemessene Größe (z. B. `240×282`).
 
+**Vorlesen** (v0.1.2 getestet): funktioniert, aber das R1-LLM schmückt den Text aus. Seit v0.1.3 liest
+die App zuerst mit der Gerätestimme (`speechSynthesis`, wörtlich, ohne LLM), wenn der Webview eine
+Stimme in der App-Sprache hat und sie innerhalb von 1,5 s startet. Sonst geht der Text wie bisher an
+die R1-Stimme, jetzt mit strengerem Prompt (Rolle „reine Vorlesestimme“, Text abgesetzt, Begrüßung,
+Einleitung, Zusammenfassung und Rückfragen ausdrücklich verboten). Die Meldung nennt den Weg
+(„Gerätestimme“ oder „R1-Stimme“), das Setup zeigt unten `TTS n` (Zahl der Stimmen, `+` = passende Stimme).
+
 Noch offen:
 
+- **Gerätestimme auf dem R1**: ob der Webview überhaupt Stimmen hat (Setup: `TTS 0` = nein).
+- Ob der strengere Prompt das Ausschmücken der R1-Stimme genug bremst.
 - **Plus halten** als Alternative zu PTT.
-- **Vorlesen**: ob das R1-LLM den Text wörtlich spricht oder ausschmückt.
 - **Quick Add auf Deutsch**: ob „morgen“ erkannt wird, hängt von der Spracheinstellung des Todoist-Kontos ab.
 - `creationStorage.secure` auf dem Gerät (fällt sonst auf `.plain` zurück, nie auf `localStorage`).
 - `longPressEnd` und Plus-Halten mit echtem Touch, R1-Tastatur in Setup, Editor und Suchfeld.
@@ -207,7 +215,7 @@ Noch offen:
 | Pfad | Inhalt |
 | --- | --- |
 | `index.html` | die Creation (einzige Quelle, beide Sprachen) |
-| `index-v0.1.2.html` | versionierte Kopie, auf die der QR zeigt (ältere bleiben für installierte Karten) |
+| `index-v0.1.3.html` | versionierte Kopie, auf die der QR zeigt (ältere bleiben für installierte Karten) |
 | `install.html` | Install-Seite mit QR |
 | `en/` | englische Version: `index.html` (Kopie), `index-v….html`, `install.html`, `qr.png` |
 | `release.py` | Sprach-Sync und Releases (versionierte Dateien, QR-Codes) |

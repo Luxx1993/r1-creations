@@ -206,6 +206,13 @@ function mk(prefix) { return {
   removeItem: function (k) { localStorage.removeItem(prefix + k); return Promise.resolve(); },
   clear: function () { return Promise.resolve(); } }; }
 window.creationStorage = { secure: mk('__sec_'), plain: mk('__pln_') };
+// controllable fake speech synthesis: no voices by default (like most webviews)
+window.__tts = { voices: [], mode: 'ok', spoken: [], cancels: 0 };
+try { Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
+  getVoices: function () { return window.__tts.voices; },
+  speak: function (u) { window.__tts.spoken.push(u.text); if (window.__tts.mode === 'ok') setTimeout(function () { u.onstart && u.onstart(); }, 50); },
+  cancel: function () { window.__tts.cancels++; },
+  addEventListener: function () {} } }); } catch (e) {}
 window.__fire = function (n) { window.dispatchEvent(new Event(n)); };
 window.__scr = function () { var e = document.querySelector('.scr.vis'); return e ? e.id.slice(2) : 'main'; };
 window.__titles = function () { return [].map.call(document.querySelectorAll('#list .card .ttl'), function (e) { return e.textContent; }); };
@@ -443,8 +450,30 @@ async function main() {
   const llm = await ev('__r1.llm');
   eq('one LLM request', llm.length, 1);
   check('useLLM + wantsR1Response', llm[0] && llm[0].useLLM === true && llm[0].wantsR1Response === true);
-  check('prompt pins the wording', llm[0] && llm[0].message.startsWith('Sprich genau diesen Text, ohne Zusätze'), llm[0] && llm[0].message);
-  check('reads list title and tasks', llm[0] && llm[0].message.includes('Eingang, 5 Aufgaben. Eins: Rückruf Elektriker'), llm[0] && llm[0].message);
+  check('prompt pins the wording', llm[0] && llm[0].message.startsWith('Du bist nur eine Vorlesestimme. Gib ausschließlich den folgenden Text aus') && llm[0].message.includes('keine Begrüßung'), llm[0] && llm[0].message);
+  check('reads list title and tasks after the instruction', llm[0] && /\n\nEingang, 5 Aufgaben\. Eins: Rückruf Elektriker/.test(llm[0].message), llm[0] && llm[0].message);
+  check('no device voice -> R1 voice, named in the toast', (await ev(`document.getElementById('toast').textContent`)).includes('R1-Stimme'));
+  // device voice in the right language: read word for word, no LLM
+  await ev(`__r1.llm = []; __tts.spoken = []; __tts.voices = [{ lang: 'de-DE', name: 'Deutsch' }]; __tts.mode = 'ok'`);
+  await tap('#speak');
+  await sleep(200);
+  eq('device voice used, LLM not asked', await ev('__r1.llm.length'), 0);
+  check('device voice gets the plain text', (await ev('__tts.spoken[0]')).startsWith('Eingang, 5 Aufgaben. Eins: Rückruf Elektriker'));
+  check('toast names the device voice', (await ev(`document.getElementById('toast').textContent`)).includes('Gerätestimme'));
+  // voice exists but stays silent -> fall back to the R1 after 1.5 s
+  await ev(`__r1.llm = []; __tts.spoken = []; __tts.cancels = 0; __tts.mode = 'silent'`);
+  await tap('#speak');
+  await sleep(400);
+  eq('waits for the device voice first', await ev('__r1.llm.length'), 0);
+  await sleep(1400);
+  eq('silent device voice falls back to the R1 voice', await ev('__r1.llm.length'), 1);
+  check('silent utterance cancelled', (await ev('__tts.cancels')) >= 2);
+  // only a voice in another language -> R1 voice
+  await ev(`__r1.llm = []; __tts.voices = [{ lang: 'en-US', name: 'English' }]; __tts.mode = 'ok'`);
+  await tap('#speak');
+  await sleep(200);
+  eq('wrong-language voice is not used', await ev('__r1.llm.length'), 1);
+  await ev(`__tts.voices = []`);
   await tap('.tab[data-view="today"]');
   await until(`document.getElementById('title').textContent === 'Heute'`, 'today');
   for (let i = 0; i < 3; i++) tasks.push(T('Extra ' + i, '100', 0));
@@ -604,7 +633,12 @@ async function main() {
   await ev(`__r1.llm = []`);
   await tap('#speak');
   const enSaid = (await ev('__r1.llm'))[0];
-  check('read-aloud prompt in English', enSaid && enSaid.message.startsWith('Say exactly this text, with nothing added') && enSaid.message.includes('Work, 8 tasks. One: '), enSaid && enSaid.message);
+  check('read-aloud prompt in English', enSaid && enSaid.message.startsWith('You are only a text-to-speech voice. Output only the following text') && enSaid.message.includes('\n\nWork, 8 tasks. One: '), enSaid && enSaid.message);
+  await ev(`__r1.llm = []; __tts.spoken = []; __tts.voices = [{ lang: 'en_GB', name: 'English' }]; __tts.mode = 'ok'`);
+  await tap('#speak');
+  await sleep(200);
+  check('English device voice (en_GB) used without the LLM', (await ev('__r1.llm.length')) === 0 && (await ev('__tts.spoken[0]')).startsWith('Work, 8 tasks. One: '));
+  await ev(`__tts.voices = []`);
   await tap('.tab[data-view="search"]');
   await type('bosch');
   await until(`__titles().length === 2`, 'en search');

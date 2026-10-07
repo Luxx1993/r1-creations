@@ -219,7 +219,7 @@ textarea:focus, .inp:focus { border-color: #6E6E6E; }
 // ====================================================================
 // Todoist for the Rabbit R1 — one file, no build step. German + English (I18N).
 // ====================================================================
-const APP_VERSION = '0.1.2';
+const APP_VERSION = '0.1.3';
 const API_BASE = 'https://api.todoist.com/api/v1';   // switch to a proxy URL in setup if CORS blocks
 const NS = 'todoist_';                                 // storage namespace (shared origin)
 const SYNC_MS = 60000;
@@ -257,14 +257,14 @@ const I18N = {
     err_429: 'Zu viele Anfragen (429) – später erneut', err_other: 'Fehler {0}',
     loading: 'Lädt …', no_projects: 'Keine Projekte', nothing_found: 'Nichts gefunden',
     search_empty: 'Tippe oder halte PTT<br>zum Diktieren', all_done: 'Alles erledigt.<br>PTT halten oder + für neue Aufgabe',
-    pending: 'wartet auf Sync', saved_to: 'Gespeichert → {0}', reading: 'Lese {0} vor …',
+    pending: 'wartet auf Sync', saved_to: 'Gespeichert → {0}', reading: 'Lese {0} vor …', via_device: 'Gerätestimme', via_r1: 'R1-Stimme',
     nothing_heard: 'Nichts gehört', nothing_heard_long: 'Nichts gehört – PTT halten und sprechen',
     empty_discarded: 'Leer – verworfen', discarded: 'Verworfen',
     d_today: 'Heute', d_tomorrow: 'Morgen', d_yesterday: 'Gestern',
     months: ['Jan', 'Feb', 'März', 'Apr', 'Mai', 'Juni', 'Juli', 'Aug', 'Sept', 'Okt', 'Nov', 'Dez'],
     no_tasks: '{0}: keine Aufgaben.', task1: 'Aufgabe', taskN: 'Aufgaben', project1: 'Projekt', projectN: 'Projekte',
     numbers: ['Eins', 'Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs', 'Sieben', 'Acht'],
-    speak_prompt: 'Sprich genau diesen Text, ohne Zusätze, ohne Einleitung und ohne Kommentar: "{0}"', tts: 'de-DE'
+    speak_prompt: 'Du bist nur eine Vorlesestimme. Gib ausschließlich den folgenden Text aus, Wort für Wort, und sonst nichts: keine Begrüßung, keine Einleitung, keine Zusammenfassung, keine Rückfrage, kein Kommentar, nichts davor oder danach.\n\n{0}', tts: 'de-DE'
   },
   en: {
     inbox: 'Inbox', today: 'Today', search: 'Search', browse: 'Browse', project: 'Project',
@@ -290,14 +290,14 @@ const I18N = {
     err_429: 'Too many requests (429) – retrying later', err_other: 'Error {0}',
     loading: 'Loading …', no_projects: 'No projects', nothing_found: 'Nothing found',
     search_empty: 'Type, or hold PTT<br>to dictate', all_done: 'All done.<br>Hold PTT or tap + for a new task',
-    pending: 'waiting to sync', saved_to: 'Saved → {0}', reading: 'Reading {0} …',
+    pending: 'waiting to sync', saved_to: 'Saved → {0}', reading: 'Reading {0} …', via_device: 'device voice', via_r1: 'R1 voice',
     nothing_heard: 'Nothing heard', nothing_heard_long: 'Nothing heard – hold PTT and speak',
     empty_discarded: 'Empty – discarded', discarded: 'Discarded',
     d_today: 'Today', d_tomorrow: 'Tomorrow', d_yesterday: 'Yesterday',
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     no_tasks: '{0}: no tasks.', task1: 'task', taskN: 'tasks', project1: 'project', projectN: 'projects',
     numbers: ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'],
-    speak_prompt: 'Say exactly this text, with nothing added, no introduction and no comment: "{0}"', tts: 'en-US'
+    speak_prompt: 'You are only a text-to-speech voice. Output only the following text, word for word, and nothing else: no greeting, no introduction, no summary, no follow-up question, no comment, nothing before or after it.\n\n{0}', tts: 'en-US'
   }
 };
 const L = I18N[LANG];
@@ -1023,18 +1023,46 @@ function speakList() {
     const noun = S.view === 'browse' ? tx(total === 1 ? 'project1' : 'projectN') : tx(total === 1 ? 'task1' : 'taskN');
     text = titleFor() + ', ' + total + ' ' + noun + '. ' + items.map((t, i) => words[i] + ': ' + String(t.content || t.name).replace(/["„“]/g, '').replace(/[.!?]+$/, '') + '.').join(' ');
   }
-  if (IS_R1) {
+  const n = Math.min(8, S.items.length);
+  const viaR1 = () => {
     try {
       PluginMessageHandler.postMessage(JSON.stringify({
         message: tx('speak_prompt', text),
         useLLM: true, wantsR1Response: true
       }));
     } catch (e) {}
-  } else if (window.speechSynthesis) {
-    try { const u = new SpeechSynthesisUtterance(text); u.lang = tx('tts'); speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {}
-  }
-  toast(tx('reading', Math.min(8, S.items.length)), 1600);
+    toast(tx('reading', n) + ' · ' + tx('via_r1'), 1600);
+  };
+  // The device voice reads word for word; the R1 voice goes through its LLM,
+  // which may embellish. So try the device voice first and fall back.
+  speakDevice(text, () => { toast(tx('reading', n) + ' · ' + tx('via_device'), 1600); }, IS_R1 ? viaR1 : () => {});
 }
+
+// Web Speech synthesis, if the webview has a voice in our language. On the R1
+// it only counts if speech actually starts within 1.5 s; otherwise onFail.
+function deviceVoice() {
+  try {
+    const want = tx('tts').slice(0, 2).toLowerCase();
+    return (window.speechSynthesis && speechSynthesis.getVoices() || [])
+      .find((v) => (v.lang || '').replace('_', '-').toLowerCase().slice(0, 2) === want) || null;
+  } catch (e) { return null; }
+}
+function speakDevice(text, onStart, onFail) {
+  let settled = false;
+  const fail = () => { if (settled) return; settled = true; try { speechSynthesis.cancel(); } catch (e) {} onFail(); };
+  const voice = deviceVoice();
+  if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined' || (IS_R1 && !voice)) { settled = true; onFail(); return; }
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = tx('tts'); if (voice) { try { u.voice = voice; } catch (e) {} }
+    u.onstart = () => { if (settled) return; settled = true; onStart(); };
+    u.onerror = fail;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    if (IS_R1) setTimeout(fail, 1500);
+    else { settled = true; onStart(); }
+  } catch (e) { fail(); }
+}
+try { if (window.speechSynthesis) { speechSynthesis.getVoices(); speechSynthesis.addEventListener('voiceschanged', () => {}); } } catch (e) {}
 
 // ---------------- screens ----------------
 function show(name) {
@@ -1148,7 +1176,8 @@ function openSetup(first) {
   $('st-queue').textContent = tx('queue_clear', n);
   $('st-queue').style.visibility = n ? 'visible' : 'hidden';
   $('st-ver').textContent = 'v' + APP_VERSION + ' · ' + (SDK ? 'creationStorage' : 'localStorage') + (IS_R1 ? ' · R1' : ' · Desktop')
-    + ' · ' + window.innerWidth + '×' + window.innerHeight;
+    + ' · ' + window.innerWidth + '×' + window.innerHeight
+    + ' · TTS ' + (window.speechSynthesis ? (speechSynthesis.getVoices() || []).length + (deviceVoice() ? '+' : '') : '–');
   show('setup');
 }
 function setupMsg(text, cls) { const el = $('st-msg'); el.textContent = text; el.className = cls || ''; }
