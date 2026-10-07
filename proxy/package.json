@@ -1,0 +1,6 @@
+{
+  "name": "r1-todoist-proxy",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" }
+}

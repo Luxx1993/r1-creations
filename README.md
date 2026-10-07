@@ -1,92 +1,189 @@
-# Rabbit R1 Creations
+# Todoist – Aufgaben-App für den Rabbit R1
 
-Sammlung kleiner Web-Apps („Creations“) für den Rabbit R1 (Bildschirm 240×282 px).
+Creation für den 240×282-px-Bildschirm, die direkt mit deinem Todoist-Konto synchronisiert.
+Optik nach der Todoist-Android-App im Dark Mode. Eine Datei (`index.html`), kein Build-Schritt,
+kein eigener Server nötig. Referenz: `docs/r1-creations.md`. Diese Creation lebt auf dem Branch
+`creation/todoist` und wird unter `/todoist/` ausgeliefert.
 
-## Aufbau
+## Screenshots
 
-| Wo | Was |
+Aus dem Test-Harness (Chromium, 240×282 px, gemockte Todoist-API). Auf dem R1 liegt oben die
+System-Leiste (zurück, Uhr, Akku) über den freien 38 px.
+
+| Projekt „Arbeit“ | Heute | Eingang | Browsen |
+| --- | --- | --- | --- |
+| ![Projekt](screenshots/projekt.png) | ![Heute](screenshots/heute.png) | ![Eingang](screenshots/eingang.png) | ![Browsen](screenshots/browsen.png) |
+
+| Review nach Sprache | Suchen | Setup | Demo-Modus |
+| --- | --- | --- | --- |
+| ![Review](screenshots/review.png) | ![Suchen](screenshots/suchen.png) | ![Setup](screenshots/setup.png) | ![Demo](screenshots/demo-projekt.png) |
+
+## Installieren
+
+R1: Creations-Karte → „add via QR code“ → scannen.
+
+![Install-QR](qr.png)
+
+Der QR enthält nur `{"title":"Todoist","url":".../todoist/index-v0.1.0.html?v=1","description":…,"iconUrl":…,"themeColor":"#C24B4B"}`,
+niemals den Token. `install.html` zeigt denselben Code im Browser und baut ihn aus der eigenen Adresse,
+funktioniert also auch auf einem anderen Host.
+
+## Token einrichten
+
+1. Todoist (Web oder App) → Einstellungen → Integrationen → Entwickler → API-Token kopieren.
+2. Auf dem R1 öffnet sich beim ersten Start das Setup. Token eintippen (R1-Tastatur), **Testen**:
+   - `OK – Verbindung steht, n Projekte` → **Speichern** (oder Side-Button).
+   - `401 – Token ungültig` → Token prüfen.
+   - `Netz/CORS-Fehler` → der R1-Webview darf die Todoist-API nicht direkt aufrufen, siehe „CORS und Proxy“.
+3. Setup später wieder öffnen: Bildschirm ca. 1 s gedrückt halten.
+4. Ohne Token: **Demo ansehen** zeigt Beispielaufgaben (aus der Designvorlage), es geht nichts ins Netz.
+   „Abmelden (Demo)“ im Setup löscht den Token (zweimal tippen).
+
+Der Token liegt nur in `creationStorage.secure` (Base64, hardwareverschlüsselt). Er steht nicht im Code,
+nicht im QR, nicht in URLs und nicht in Logs; `.gitignore` blockt `.env*`, `*.secret`, `secrets.*`.
+Am Desktop (ohne R1-SDK) liegt er ersatzweise im `localStorage` des Browsers.
+
+Hinweis: `creationStorage` gehört zur installierten URL. Nach einem Update (neue `index-v….html`)
+muss der Token einmal neu eingegeben werden.
+
+## Bedienung
+
+| Eingabe | Liste | Review-Screen | Editor / Setup |
+| --- | --- | --- | --- |
+| Scrollrad | Auswahl (hellerer Rand), Liste scrollt mit | SENDEN / BEARBEITEN / VERWERFEN | Text scrollen |
+| Side-Button | ausgewählte Aufgabe erledigen (in Browsen: Projekt öffnen) | gewählten Chip ausführen (beim Bearbeiten: senden) | speichern |
+| PTT halten | Sprachaufnahme → Review (in Suchen: Suchbegriff diktieren) | neu aufnehmen | – |
+| Kreis antippen | erledigen | | |
+| Karte antippen | 1. Tipp auswählen, 2. Tipp bearbeiten | | |
+| Plus antippen / halten | Texteingabe / Sprachaufnahme | | |
+| Lautsprecher | liest die ersten 8 Aufgaben der Liste vor | | |
+| Sync-Punkt antippen | sofort synchronisieren, Status anzeigen | | |
+| Bildschirm 1 s halten | Setup | | |
+
+- Erledigen: Kreis füllt sich, Titel wird durchgestrichen, Karte gleitet hinaus. 5 s lang gibt es
+  **RÜCKGÄNGIG** unten (sendet `reopen` bzw. streicht das noch wartende `close`).
+- Ein PTT-Doppelklick kommt als zwei `sideClick` im Abstand von ~50 ms an. Die App ignoriert den
+  zweiten, damit nie zwei Aufgaben auf einmal erledigt werden.
+- Neue Aufgaben gehen per **Quick Add** an Todoist: „Angebot prüfen morgen #Arbeit p1“ setzt Datum,
+  Projekt und Priorität wie in den Todoist-Apps. In einer Projektansicht landen Aufgaben ohne `#Projekt`
+  in diesem Projekt (Quick Add, danach `move`), sonst im Eingang.
+- Suchen filtert lokal über alle offenen Aufgaben (Titel und Projektname).
+- Kein Löschen in v1.
+
+Desktop-Tastatur: Leertaste halten = PTT, Esc = Side-Button, ↑/↓ = Scrollrad.
+
+Sync-Punkt: grün = synchron, gelb = lädt oder Einträge warten (Zahl daneben), leerer Kreis =
+offline/Demo, rot = Todoist hat abgelehnt (z. B. 401).
+
+## Sync und Offline-Queue
+
+- Jede Änderung (anlegen, erledigen, rückgängig, bearbeiten) wird zuerst in `creationStorage.plain`
+  gespeichert und erscheint sofort in der Liste, dann gesendet.
+- Netzfehler → bleibt in der Queue, neuer Versuch beim Start, alle 60 s und beim `online`-Event.
+- Abgelehnt (401/403/400) → bleibt in der Queue, Fehler wird angezeigt, die Queue hält an (Reihenfolge
+  bleibt erhalten). Im Setup gibt es „Warteschlange leeren (n)“ für hoffnungslose Fälle.
+- 404 bei erledigen/bearbeiten (Aufgabe woanders gelöscht) → Eintrag wird verworfen.
+- Quick Add + Verschieben ist zweistufig: Wurde die Aufgabe schon angelegt, wird beim nächsten Versuch
+  nur noch verschoben, nicht doppelt angelegt.
+- Lesen: Cache sofort anzeigen, dann beim Öffnen, beim Tab-Wechsel und alle 60 s nachladen.
+
+Grenze: Geht die Antwort auf ein erfolgreiches Anlegen unterwegs verloren (Verbindung reißt nach dem
+Senden), legt der nächste Versuch die Aufgabe ein zweites Mal an. Todoist bietet dafür `X-Request-Id`;
+das ist bewusst nicht aktiv, weil ein zusätzlicher Header die CORS-Freigabe gefährden könnte.
+
+## Todoist-API
+
+Basis-URL `https://api.todoist.com/api/v1` (Konstante `API_BASE`, im Setup änderbar), `Authorization: Bearer <token>`.
+
+| Zweck | Aufruf |
 | --- | --- |
-| `main` | Übersichtsseite, Doku (`docs/r1-creations.md`), Werkzeuge (`tools/`), Deploy-Workflow |
-| `creation/<name>` | Eine Creation pro Branch (Dateien im Branch-Root) |
+| Projekte, Eingang erkennen | `GET /projects` (`inbox_project`) |
+| Eingang / Projekt | `GET /tasks?project_id=…` |
+| Heute | `GET /tasks/filter?query=today \| overdue&lang=en` |
+| Suche (alle offenen) | `GET /tasks` |
+| Anlegen | `POST /tasks/quick {text}`, ggf. `POST /tasks/{id}/move {project_id}`; Fallback `POST /tasks {content}` |
+| Erledigen / rückgängig | `POST /tasks/{id}/close` / `POST /tasks/{id}/reopen` |
+| Bearbeiten | `POST /tasks/{id} {content}` |
 
-Die Seite `https://luxx1993.github.io/r1-creations/` listet alle Creations. Jede liegt unter
-`/<name>/`, z. B. `/tally/`.
+Alle Listen folgen `next_cursor` (Seiten à 200). Priorität: API `4` = P1 (rot), `3` = P2 (orange),
+`2` = P3 (blau), `1` = P4 (grau).
 
-## Creations
+Geprüft gegen das offizielle Doist-SDK `Doist/todoist-api-typescript` (Stand 05.10.2026), weil
+developer.todoist.com aus der Build-Umgebung nicht erreichbar war.
 
-| Name | Branch | Beschreibung |
-| --- | --- | --- |
-| Tally | `creation/tally` | Strichlisten-Zähler mit Auto-Rotation |
-| Marble Maze | `creation/marble-maze` | Murmel-Labyrinth: 15 Level, Neigung per Beschleunigungssensor, Drehregler = Tempo (10 Stufen) |
-| Clawd | `creation/clawd` | Clawd als Haustier im Diorama: 7 Szenen und 11 Stile aus dem Claude-Fables-Plugin, Hüte, Brillen und Schleifen, Auto-Rotation |
+Der Zugriff ist in einer Provider-Schnittstelle gekapselt (`listInbox`, `listToday`, `listProjects`,
+`listTasks(projectId)`, `listAll`, `add(text, opts)`, `complete(id)`, `reopen(id)`, `update(id, text)`,
+`test()`). Es gibt `TodoistProvider` und `DemoProvider`; ein Notion-Provider müsste nur dieselben
+Methoden und dasselbe Aufgabenformat liefern.
 
-### Tally installieren
+## CORS und Proxy
 
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+Ob Todoist Aufrufe aus dem R1-Webview zulässt, ist offen (Preflight wegen `Authorization`). Die App
+ruft die API direkt auf. Zeigt „Testen“ auf dem Gerät einen Netz/CORS-Fehler, obwohl der R1 online ist:
 
-[![Install-QR für Tally – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/tally/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/tally)
+1. Den Ordner `proxy/` als eigenes Vercel-Projekt deployen (Vercel → Add New → Project → dieses Repo,
+   Branch `creation/todoist`, Root Directory `proxy`).
+2. Optional Env-Variable `ALLOWED_ORIGINS` (Standard `https://luxx1993.github.io`).
+3. Im Setup die API-URL auf `https://<projekt>.vercel.app/api/v1` stellen, Testen, Speichern.
 
-(Ein Klick auf das Bild öffnet den Branch `creation/tally` mit Screenshots und Beschreibung. Das Bild ist immer der aktuelle Code der Creation.)
+Der Proxy reicht nur die genutzten Task-/Projekt-Endpunkte samt `Authorization`-Header durch, speichert
+und loggt nichts und braucht keinen eigenen Schlüssel.
 
-### Marble Maze installieren
+## Deploy (GitHub Pages)
 
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+Dieser Branch wird wie alle `creation/*`-Branches vom Workflow auf `main` nach
+`https://luxx1993.github.io/r1-creations/todoist/` exportiert (Push genügt).
 
-[![Install-QR für Marble Maze – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/marble-maze/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/marble-maze)
-
-Bedienung: Neigen = Kugel rollt, Drehregler = Tempo (1–10), Seitentaste = Neutrallage kalibrieren (Doppelklick = Y-Achse umkehren), langer Druck = Levelmenü.
-
-### Clawd installieren
-
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
-
-[![Install-QR für Clawd – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd)
-
-Demo-Video (30 s): [clawd-demo.mp4](https://luxx1993.github.io/r1-creations/clawd/demo/clawd-demo.mp4)
-
-Clawd ist ein Haustier ohne Pflege und ohne Level in einer endlosen Welt (keine Begrenzung nach links oder rechts): Er läuft von selbst durch die Szene, reagiert auf Berührung und schläft ein, wenn niemand da ist.
-
-- Drehregler: lenkt Clawd nach links/rechts (nach oben drehen = nach rechts). Nach einem Druck auf die Seitentaste wählt er stattdessen einen Menüpunkt (Spiel, Schlaf, Items, Welt, Optionen), ein zweiter Druck führt ihn aus. Spiel öffnet eine Auswahl: Ball (Clawd jongliert, mit Ton bei jedem Aufprall), Seilspringen oder Pfeifen; Clawd pfeift und springt Seil auch von selbst.
-- Seitentaste lang halten oder Clawd gedrückt halten: streicheln. Kurz antippen: er reagiert. Viermal schnell antippen oder schütteln: ihm wird schwindlig. Ein Tipp auf die Szene schickt ihn dorthin.
-- Welt: Ort (Wald, Weltraum, Stadt, Wüste, Vulkan, Labor, Dorf) und Stil (Original, Pixel Art, Höhle, Blaupause, Mosaik, Frutiger Aero, Kupferstich, Wandteppich, Golden Age, Ukiyo-e, Kamon) als Rolodex-Auswahl. Items: Kopf, Gesicht und Körper (Hüte, Brillen, Schnurrbart, Schleife, Schal), jeweils im Stil gezeichnet.
-- Ton (alles per WebAudio erzeugt, ohne Dateien; in Welt unter „Ton“ abschaltbar): Clawd „spricht“ in Blips, schnarcht beim Schlafen, pfeift, der Ball klackt, und je nach Stil läuft eine eigene leise Hintergrundmelodie. Auf dem R1 muss die Karte einmal berührt werden, damit der Ton starten darf.
-- Optionen: Klang (Stil, Retro, Glocken, Minimal), Lautstärke (Aus bis 100 %), Ruhezeiten (Töne nachts stumm: 22–07, 23–08, 00–06) und Bewegung (Normal/Ruhig). In „Welt“ lässt sich die Tageszeit-Reaktion („Zeit“) abschalten.
-- Tageszeit: Nach der echten Uhrzeit tönt sich die Szene (Morgenrot, Abendrot, Nacht), Clawd begrüßt dich passend, ist morgens munterer, abends ruhiger mit mehr Pfeifen, nachts langsamer und schläft schneller ein (manchmal findest du ihn schlafend), und die Musik wird nachts leiser und langsamer.
-- Szenen, Stile und Animationen stammen aus dem Claude-Fables-Plugin und sind vorgerendert (`src/` im Branch enthält Generator und Anleitung). Noch nicht auf dem echten Gerät getestet: Sensorfunktionen, Auto-Rotation und die Ladezeit der rund 4 MB Bilder.
-
-### Clawd am Desktop ausprobieren
-
-Clawd ist eine statische Seite (HTML, JavaScript und Bilder) und läuft in jedem normalen Browser, ohne Server und ohne den R1.
-
-- Online: `https://luxx1993.github.io/r1-creations/clawd/index.html` (setzt voraus, dass GitHub Pages öffentlich erreichbar ist).
-- Lokal: `git clone -b creation/clawd --single-branch https://github.com/Luxx1993/r1-creations.git clawd`, dann `index.html` im Browser öffnen (der Ordner `assets/` muss daneben liegen). Alternativ im Ordner `python3 -m http.server` starten und `http://localhost:8000/` öffnen.
-- Bedienung: Pfeiltasten = Drehregler (hoch/links und runter/rechts sind die beiden Drehrichtungen), Enter oder Leertaste = Seitentaste, `H` = streicheln, `O` = Ansicht in 90°-Schritten drehen, Maus = Touch (Klicken und Wischen).
-- Am Desktop fehlen die Sensoren (kein Schütteln, keine automatische Drehung), die Ansicht bleibt 240×282 px groß (Browser-Zoom hilft), der Spielstand liegt im `localStorage` des Browsers, und der Ton startet erst nach dem ersten Klick oder Tastendruck.
-- Weiterentwickeln: `index.html` ist generiert. Der Quelltext liegt in `src/index.src.html`, `python3 src/build.py` baut `index.html` und die versionierte Datei neu. Die Bilder entstehen mit dem Generator in `src/` aus dem Claude-Fables-Plugin (siehe `src/README.md`). Beim Weitergeben die Lizenzen beachten: Claudes 3D-Modell von ChetasLua (MIT) und die Schrift Monocraft (OFL).
-
-## Neue Creation anlegen
+Neue Version:
 
 ```bash
-git checkout -b creation/<name> main
-# index.html, icon.png (96x96), creation.json anlegen
-pip install pillow qrcode
-python3 tools/make_qr.py --title "<Titel>" --description "<Text>" \
-  --url https://luxx1993.github.io/r1-creations/<name>/index.html
-git add -A && git commit -m "Add <name>" && git push -u origin creation/<name>
+# APP_VERSION in index.html erhöhen, dann
+cp index.html index-v0.1.1.html
+# creation.json: "version" und "entry" anpassen, ENTRY in install.html anpassen
+python3 tools/make_qr.py --title Todoist --description "Todoist-Aufgaben auf dem R1" \
+  --url "https://luxx1993.github.io/r1-creations/todoist/index-v0.1.1.html?v=1" \
+  --icon-url https://luxx1993.github.io/r1-creations/todoist/icon.png --theme "#C24B4B"
+git commit -am "Todoist 0.1.1" && git push
 ```
 
-`creation.json`: `{"title":"…","description":"…","version":"0.1.0","entry":"index.html"}`.
-Der Workflow `.github/workflows/pages.yml` baut bei jedem Push auf `main` oder `creation/**` die
-Seite neu (Übersicht + ein Ordner pro Creation).
+Auf dem R1 die alte Karte deinstallieren, neuen QR scannen, Token neu eingeben.
 
-## Einmalig einrichten
+## Testen
 
-Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+```bash
+node test/harness.mjs      # Node 22+, Chrome/Chromium (CHROME=/pfad/zu/chrome)
+```
 
-## Hinweise
+Fährt die echte `index.html` in Headless-Chrome gegen eine gemockte Todoist-API v1 (mit absichtlich
+kleinen Seiten für die Cursor-Logik) und stubbt `CreationVoiceHandler`, `PluginMessageHandler` und
+`creationStorage`. 95 Prüfungen: Setup und Verbindungstest (OK, 401, CORS), Heute/Eingang/Browsen/Projekt/
+Suchen, Scrollrad und Side-Button, Doppelklick-Schutz, Erledigen per Kreis und Taste mit Rückgängig,
+Sprache → Review → Senden/Verwerfen, Plus tippen/halten, Bearbeiten, Vorlesen (max. 8, fester Wortlaut),
+Offline-Queue über einen Neustart, abgelehnte Writes, Token nur im Secure Storage, Layout 240×282,
+Demo-Modus, Proxy. Die Screenshots oben schreibt derselbe Lauf nach `screenshots/`.
 
-- Neue Version einer Creation = neue Datei `index-v<version>.html`, alte Karte auf dem R1
-  deinstallieren, neuen QR scannen (die R1 cached die Install-URL).
-- Alle Creations teilen sich den Origin `luxx1993.github.io`: `localStorage`-Schlüssel mit
-  Creation-Namen versehen (z. B. `tally_state`).
-- Details, SDK und Erfahrungen vom echten Gerät: `docs/r1-creations.md`.
+Lokal ansehen: `python3 -m http.server 8000`, dann `http://localhost:8000/index.html` (Demo-Modus).
+
+## Nur auf dem echten R1 prüfbar
+
+- **CORS**: ob der Webview `api.todoist.com` mit `Authorization`-Header aufrufen darf (Setup → Testen).
+- **Sprache**: `CreationVoiceHandler` (PTT halten, Plus halten) und die Qualität deutscher Transkripte.
+- **Vorlesen**: ob das R1-LLM den Text wörtlich spricht oder ausschmückt.
+- **Quick Add auf Deutsch**: ob „morgen“ erkannt wird, hängt von der Spracheinstellung des Todoist-Kontos ab.
+- `creationStorage.secure` auf dem Gerät (fällt sonst auf `.plain` zurück, nie auf `localStorage`).
+- `longPressEnd` und Plus-Halten mit echtem Touch, R1-Tastatur in Setup, Editor und Suchfeld.
+- Ob die OS-Leiste wirklich ~38 px verdeckt (Konstante `--safe` in der CSS).
+- Tempo bei großen Konten (alle offenen Aufgaben für Suchen und Browsen).
+
+## Dateien
+
+| Pfad | Inhalt |
+| --- | --- |
+| `index.html` | die Creation (Arbeitskopie) |
+| `index-v0.1.0.html` | versionierte Kopie, auf die der QR zeigt |
+| `install.html` | Install-Seite mit QR |
+| `qr.png`, `icon.png`, `make_icon.py` | Install-QR, Icon (96×96) und sein Generator |
+| `creation.json` | Metadaten für die Übersichtsseite |
+| `proxy/` | optionaler Vercel-CORS-Proxy (`api/todoist.js`, `vercel.json`) |
+| `test/harness.mjs` | End-to-End-Test mit Mock-API und Screenshots |
+| `screenshots/` | 240×282-Screenshots aus dem Test |
