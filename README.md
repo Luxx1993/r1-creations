@@ -6,12 +6,21 @@ Creation auf dem Branch `creation/bubble-level`, Dateien im Ordner `wasserwaage/
 | Datei | Inhalt |
 | --- | --- |
 | `wasserwaage/index.html` | Die Creation (Entwicklungsstand) |
-| `wasserwaage/index-v0.1.0.html` | Versionierte Kopie, auf die der QR-Code zeigt |
+| `wasserwaage/index-v0.1.1.html` | Versionierte Kopie, auf die der QR-Code zeigt (aktuell) |
+| `wasserwaage/index-v0.1.0.html` | Erste Version, bleibt für bereits installierte Karten |
 | `wasserwaage/install.html` | Install-Seite mit QR-Code, Bedienung und QR-Inhalt |
 | `wasserwaage/qr.png`, `icon.png` | Install-QR (JSON-Payload) und Icon 96×96 (`make_icon.py`) |
-| `creation.json` | Eintrag für die Übersichtsseite (`entry`: `wasserwaage/index-v0.1.0.html`) |
+| `creation.json` | Eintrag für die Übersichtsseite (`entry`: `wasserwaage/index-v0.1.1.html`) |
 
 Nach dem Deploy: `https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/install.html`
+
+**Auf dem echten R1 getestet (v0.1.0):** Installation per QR, alle drei Modi, Achsenrichtung (Standardwerte
+stimmen), Kalibrierung, Doppelklick, HOLD, Scrollrad und Speichern über einen Neustart.
+
+| Version | Änderung |
+| --- | --- |
+| 0.1.1 | Ruhigere Anzeige: adaptive Glättung, Hysterese für Zahl und Eben-Zustand (Gerät auf dem Tisch flackerte zwischen 0,1° und 0,5°) |
+| 0.1.0 | Erste Version |
 
 ## Modi
 
@@ -41,14 +50,25 @@ mit leerem `creationStorage`; der `localStorage`-Spiegel trägt die Werte meist 
 Wie in der Vorschau: positive Werte = rechte (bzw. in 3D bei Y: untere) Seite liegt höher. Die Konstante `SHOW`
 (Standard `-1`) dreht nur die Zahl, nicht die Blase.
 
+## Ruhige Anzeige
+
+Oben im Skript von `index.html`:
+
+| Konstante | Standard | Wirkung |
+| --- | --- | --- |
+| `SMOOTH_SLOW` | 0.02 | Glättung in Ruhe (kleiner = ruhiger, aber träger bei Feinkorrekturen) |
+| `MOVE_G`, `SETTLE_MS` | 0.03 g (ca. 1,7°), 400 ms | Ab dieser Bewegung folgt die Anzeige sofort, danach noch so lange schnell |
+| `HYST_DEG` | 0.08° | Neues Zehntel erst ab diesem Abstand zum angezeigten Wert |
+| `LEVEL_DEG`, `LEVEL_OFF_DEG` | 0.3°, 0.45° | „Eben“ an unter 0,3°, aus erst ab 0,5° |
+
 ## Achsen umdrehen
 
 Oben im Skript von `index.html`: `INVERT_X`, `INVERT_Y` (wirken auf alle Modi) und `INVERT_THETA` (nur Linie und
-Libellen). Danach `index.html` als neue Version kopieren (z. B. `index-v0.1.1.html`), QR neu erzeugen:
+Libellen). Danach `index.html` als neue Version kopieren (z. B. `index-v0.1.2.html`), QR neu erzeugen:
 
 ```bash
 python3 tools/make_qr.py --title "Wasserwaage" --description "Neigungsmesser" \
-  --url https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/index-v0.1.1.html \
+  --url https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/index-v0.1.2.html \
   --theme "#4cd964" --out wasserwaage/qr.png
 ```
 
