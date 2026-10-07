@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=240, height=282, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Wasserwaage</title>
+<style>
+  html, body { margin: 0; width: 240px; height: 282px; overflow: hidden;
+               background: #111; color: #fff;
+               font: 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+               -webkit-user-select: none; user-select: none;
+               -webkit-tap-highlight-color: transparent; touch-action: none; }
+  svg { position: absolute; left: 0; top: 0; display: block; }
+  text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         font-variant-numeric: tabular-nums; fill: #fff; }
+  .hit { fill: #000; fill-opacity: 0; }
+  .mode { display: none; }
+  .mode.on { display: inline; }
+  .mk { stroke: #1a7a30; stroke-width: 2; stroke-linecap: round; }
+  .mk.lv { stroke: #fff; }
+  .halo { paint-order: stroke; stroke: #111; stroke-opacity: .35; stroke-width: 4px; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<svg id="scr" width="240" height="282" viewBox="0 0 240 282" xmlns="http://www.w3.org/2000/svg">
+  <rect id="bg" x="0" y="0" width="240" height="282" fill="#111"/>
+
+  <!-- MODUS 1: LINIE -->
+  <g id="m-line" class="mode">
+    <g id="lnRot">
+      <rect x="-300" y="141" width="840" height="500" fill="#4cd964"/>
+      <line x1="20" y1="141" x2="64" y2="141" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      <line x1="176" y1="141" x2="220" y2="141" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text id="lnVal" class="halo" x="120" y="222" font-size="40" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
+    <text id="lnHint" class="halo" x="120" y="260" font-size="14" text-anchor="middle" dominant-baseline="central" display="none">Hochkant halten</text>
+    <rect class="hit" data-hit="value" x="30" y="194" width="180" height="56"/>
+  </g>
+
+  <!-- MODUS 2: LIBELLEN -->
+  <g id="m-vials" class="mode">
+    <g id="v2" transform="translate(148 154) rotate(-45)">
+      <rect id="v2r" x="-75" y="-17" width="150" height="34" rx="17" fill="#4cd964"/>
+      <line class="mk" x1="-15" y1="-13" x2="-15" y2="13"/>
+      <line class="mk" x1="15" y1="-13" x2="15" y2="13"/>
+      <circle id="v2b" cx="0" cy="0" r="11" fill="#d7f7de"/>
+    </g>
+    <g id="v0">
+      <rect id="v0r" x="30" y="24" width="180" height="34" rx="17" fill="#4cd964"/>
+      <line class="mk" x1="105" y1="28" x2="105" y2="54"/>
+      <line class="mk" x1="135" y1="28" x2="135" y2="54"/>
+      <circle id="v0b" cx="120" cy="41" r="11" fill="#d7f7de"/>
+    </g>
+    <g id="v1">
+      <rect id="v1r" x="24" y="84" width="34" height="140" rx="17" fill="#4cd964"/>
+      <line class="mk" x1="28" y1="139" x2="54" y2="139"/>
+      <line class="mk" x1="28" y1="169" x2="54" y2="169"/>
+      <circle id="v1b" cx="41" cy="154" r="11" fill="#d7f7de"/>
+    </g>
+    <text id="vLbl" x="120" y="246" font-size="14" text-anchor="middle" dominant-baseline="central"></text>
+    <text id="vVal" x="120" y="269" font-size="26" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
+    <rect class="hit" data-hit="v2" x="-90" y="-36" width="180" height="72" transform="translate(148 154) rotate(-45)"/>
+    <rect class="hit" data-hit="v0" x="20" y="10" width="200" height="62"/>
+    <rect class="hit" data-hit="v1" x="12" y="76" width="58" height="156"/>
+    <rect class="hit" data-hit="value" x="40" y="238" width="160" height="44"/>
+  </g>
+
+  <!-- MODUS 3: 3D -->
+  <g id="m-3d" class="mode">
+    <circle cx="120" cy="112" r="88" fill="#4cd964"/>
+    <g stroke="#1a7a30" fill="none">
+      <line x1="32" y1="112" x2="208" y2="112" stroke-width="1.5"/>
+      <line x1="120" y1="24" x2="120" y2="200" stroke-width="1.5"/>
+      <circle cx="120" cy="112" r="55" stroke-width="1.5"/>
+      <circle cx="120" cy="112" r="18" stroke-width="2" stroke-dasharray="4 3"/>
+    </g>
+    <circle id="b3" cx="120" cy="112" r="9" fill="#d7f7de" stroke="#fff" stroke-width="0"/>
+    <text id="tLbl" x="120" y="220" font-size="14" text-anchor="middle" dominant-baseline="central"></text>
+    <text id="tVal" x="120" y="247" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
+    <text x="120" y="272" font-size="15" text-anchor="middle" dominant-baseline="central"><tspan id="tX"></tspan><tspan id="tY" dx="16"></tspan></text>
+    <rect class="hit" data-hit="value" x="40" y="226" width="160" height="44"/>
+  </g>
+
+  <!-- Overlays -->
+  <text id="hold" x="232" y="16" font-size="13" font-weight="700" text-anchor="end" display="none">HOLD</text>
+  <g id="toast" display="none">
+    <rect x="40" y="121" width="160" height="40" rx="20" fill="#111" stroke="#4cd964" stroke-width="2"/>
+    <text id="toastT" x="120" y="141" font-size="16" font-weight="600" text-anchor="middle" dominant-baseline="central"></text>
+  </g>
+</svg>
+<script>
+const APP_VERSION = '0.1.0';
+
+// ---- Achsen: falls die Blase auf dem echten R1 zur tieferen statt zur höheren Seite wandert,
+// hier umdrehen. X/Y wirken auf alle Modi, THETA nur auf Linie und Libellen.
+const INVERT_X = false;
+const INVERT_Y = false;
+const INVERT_THETA = false;
+
+const SMOOTH = 0.2;          // Tiefpass-Faktor pro Sensorwert (60 Hz)
+const FRAME_MS = 40;         // neu zeichnen mit 25 Hz
+const LEVEL_DEG = 0.3;       // darunter gilt die Anzeige als eben
+const FLAT_G = 0.85;         // |az| darüber: R1 liegt flach (Linie/Libellen)
+const UPRIGHT_G = 0.5;       // |az| darunter: R1 steht (3D)
+const KEY = 'wasserwaage_state';
+const MODES = ['m-line', 'm-vials', 'm-3d'];
+const DEG = 180 / Math.PI;
+
+const $ = (id) => document.getElementById(id);
+const mod = (a, n) => ((a % n) + n) % n;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+// Abweichung vom Sollwinkel ziel in -90..+90
+const dev = (t, ziel) => mod(mod(t - ziel, 180) + 270, 180) - 90;
+// Abweichung zum nächsten Vielfachen von step in -step/2..+step/2
+const devStep = (t, step) => mod(t + step / 2, step) - step / 2;
+
+// ---- Speicher: creationStorage.plain (kommt evtl. verspätet), gespiegelt in localStorage
+const enc = (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const dec = (s) => JSON.parse(decodeURIComponent(escape(atob(s))));
+let st = { mode: 0, unit: 0, offT: 0, offX: 0, offY: 0 };
+const cs = () => (window.creationStorage && window.creationStorage.plain) || null;
+const unwrap = (raw) => {
+  if (raw && typeof raw === 'object') raw = raw.value !== undefined ? raw.value : null;
+  return typeof raw === 'string' && raw ? dec(raw) : null;
+};
+function sanitize() {
+  st.mode = clamp(Math.round(st.mode) || 0, 0, 2);
+  st.unit = clamp(Math.round(st.unit) || 0, 0, 2);
+  for (const k of ['offT', 'offX', 'offY']) if (!Number.isFinite(st[k])) st[k] = 0;
+}
+function loadQuick() {        // sofort aus dem localStorage-Spiegel, damit beim Start nichts leer bleibt
+  try { const v = unwrap(localStorage.getItem(KEY)); if (v) st = Object.assign(st, v); } catch (e) {}
+  sanitize();
+}
+async function load() {
+  for (let i = 0; i < 15 && !cs(); i++) await new Promise((r) => setTimeout(r, 100));
+  let v = null;
+  try { if (cs()) v = unwrap(await cs().getItem(KEY)); } catch (e) {}
+  if (!v) { try { v = unwrap(localStorage.getItem(KEY)); } catch (e) {} }
+  if (v) st = Object.assign(st, v);
+  sanitize();
+}
+let saveTimer = null;
+function flush() {
+  clearTimeout(saveTimer); saveTimer = null;
+  const e = enc(st);
+  try { localStorage.setItem(KEY, e); } catch (x) {}
+  try { if (cs()) cs().setItem(KEY, e); } catch (x) {}
+}
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(flush, 300); }
+window.addEventListener('pagehide', () => { if (saveTimer) flush(); });
+document.addEventListener('visibilitychange', () => { if (saveTimer) flush(); });
+
+// ---- Sensor: geglättete Schwerkraft in g. Bildschirmkoordinaten: x nach rechts, y nach unten.
+const acc = { x: 0, y: 1, z: 0 };
+let gotReal = false;
+function sample(x, y, z) {
+  acc.x += (x - acc.x) * SMOOTH;
+  acc.y += (y - acc.y) * SMOOTH;
+  acc.z += (z - acc.z) * SMOOTH;
+}
+function onAccel(d) {
+  if (!d) return;
+  const x = d.tiltX ?? d.x ?? (d.rawX != null ? d.rawX / 9.81 : null);
+  const y = d.tiltY ?? d.y ?? (d.rawY != null ? d.rawY / 9.81 : null);
+  const z = d.tiltZ ?? d.z ?? (d.rawZ != null ? d.rawZ / 9.81 : 0);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+  gotReal = true;
+  sample(x, y, Number.isFinite(z) ? z : 0);
+}
+let dmOn = false;
+function startMotionFallback() {
+  if (dmOn) return;
+  dmOn = true;
+  window.addEventListener('devicemotion', (e) => {      // Android-Achsen auf die R1-Konvention bringen
+    const a = e.accelerationIncludingGravity;
+    if (a && a.x != null && a.y != null) onAccel({ x: -a.x / 9.81, y: a.y / 9.81, z: (a.z || 0) / 9.81 });
+  });
+}
+async function initSensors() {
+  for (let i = 0; i < 30 && !(window.creationSensors && window.creationSensors.accelerometer); i++)
+    await new Promise((r) => setTimeout(r, 100));
+  try {
+    const a = window.creationSensors && window.creationSensors.accelerometer;
+    if (a && (await a.isAvailable())) {
+      a.start(onAccel, { frequency: 60 });
+      setTimeout(() => { if (!gotReal) startMotionFallback(); }, 2500);
+      return;
+    }
+  } catch (e) {}
+  startMotionFallback();
+}
+
+// ---- Desktop-Simulation: ohne echte Sensordaten steuert die Mausposition die Neigung.
+// Linie/Libellen: links/rechts = Drehung um -100..+100° (oben/unten fein ±3°).
+// 3D: Position = Neigung X/Y bis ±15°.
+const sim = { mx: 0, my: 0 };
+function simSample() {
+  const sx = INVERT_X ? -1 : 1, sy = INVERT_Y ? -1 : 1;
+  if (st.mode === 2) {
+    const x = Math.sin(sim.mx * 15 / DEG), y = Math.sin(sim.my * 15 / DEG);
+    sample(x * sx, y * sy, Math.sqrt(Math.max(0, 1 - x * x - y * y)));
+  } else {
+    let p = sim.mx * 100 + sim.my * 3;
+    if (INVERT_THETA) p = -p;
+    sample(Math.sin(p / DEG) * sx, Math.cos(p / DEG) * sy, 0);
+  }
+}
+setInterval(() => { if (!gotReal) simSample(); }, 1000 / 60);
+window.addEventListener('mousemove', (e) => {
+  sim.mx = clamp((e.clientX - 120) / 120, -1, 1);
+  sim.my = clamp((e.clientY - 141) / 141, -1, 1);
+});
+
+// ---- Messwerte (in Grad) aus der geglätteten Schwerkraft
+let lastTh = 0;
+function measure() {
+  const ax = acc.x * (INVERT_X ? -1 : 1), ay = acc.y * (INVERT_Y ? -1 : 1), az = acc.z;
+  const n = Math.hypot(ax, ay, az) || 1;
+  const azn = Math.abs(az) / n;
+  const flat = azn > FLAT_G, upright = azn < UPRIGHT_G;
+  if (!flat) {
+    let t = Math.atan2(ax, ay) * DEG;
+    if (INVERT_THETA) t = -t;
+    lastTh = t;
+  }
+  const Xr = Math.atan2(ax, Math.hypot(ay, az)) * DEG;
+  const Yr = Math.atan2(ay, Math.hypot(ax, az)) * DEG;
+  // 3D: kalibrierte X/Y, Gesamtneigung aus dem damit gedrehten Schwerkraftvektor
+  // (ohne Kalibrierung identisch mit atan2(sqrt(ax²+ay²), |az|))
+  const X = Xr - st.offX, Y = Yr - st.offY;
+  const sx = Math.sin(X / DEG), sy = Math.sin(Y / DEG);
+  const h = Math.min(1, Math.hypot(sx, sy));
+  const tot = Math.atan2(h, Math.sqrt(1 - h * h)) * DEG;
+  return { thRaw: lastTh, th: lastTh - st.offT, flat, upright, Xr, Yr, X, Y, tot };
+}
+
+// ---- Zahlen: Gradzahl immer mit Nachkommastelle, echtes Minuszeichen; % und mm/m über tan
+const UNITS = ['°', '%', 'mm/m'];
+function fmt(deg) {
+  let v = deg, d = 1;
+  if (st.unit > 0) {
+    v = Math.tan(deg / DEG) * (st.unit === 1 ? 100 : 1000);
+    if (Math.abs(v) >= 100) d = 0;
+  }
+  if (!Number.isFinite(v) || Math.abs(v) > 99999) return '∞';
+  let s = v.toFixed(d);
+  if (/^-0(\.0+)?$/.test(s)) s = s.slice(1);
+  return s.replace('-', '−');
+}
+const shownDeg = (deg) => Math.round(deg * 10) / 10;      // so wie angezeigt (eine Nachkommastelle)
+const isLevel = (deg) => Math.abs(shownDeg(deg)) < LEVEL_DEG;
+// Wert mit Einheit in ein <text> schreiben; % und mm/m kleiner hinter der Zahl
+function setVal(el, deg, size) {
+  if (deg === null) { el.textContent = '—'; return; }
+  const n = fmt(deg);
+  if (st.unit === 0 || n === '∞') { el.textContent = n + (st.unit === 0 ? '°' : ''); return; }
+  el.innerHTML = n + '<tspan font-size="' + Math.round(size * 0.55) + '" dx="3">' + UNITS[st.unit] + '</tspan>';
+}
+const show = (id, on) => $(id).setAttribute('display', on ? 'inline' : 'none');
+
+// ---- Anzeige
+let hold = false;
+function setMode(m) {
+  st.mode = m;
+  MODES.forEach((id, i) => $(id).classList.toggle('on', i === m));
+  $('bg').setAttribute('fill', '#111');
+  pick = -1;
+  setHold(false);
+}
+let shown = null;              // bei HOLD eingefrorene Messwerte
+function draw(m) {
+  if (!hold || !shown) shown = m;
+  const s = shown;
+  if (st.mode === 0) drawLine(s);
+  else if (st.mode === 1) drawVials(s);
+  else draw3d(s);
+}
+
+// MODUS 1: Linie. a = Abweichung zum nächsten Vielfachen von 90°; die Trennlinie dreht sich
+// um -a um die Bildmitte und bleibt so zur Schwerkraft ausgerichtet.
+function drawLine(s) {
+  const a = devStep(s.th, 90);
+  $('lnRot').setAttribute('transform', 'rotate(' + (-a).toFixed(2) + ' 120 141)');
+  setVal($('lnVal'), s.flat ? null : a, 40);
+  show('lnHint', s.flat);
+  $('bg').setAttribute('fill', !s.flat && isLevel(a) ? '#4cd964' : '#111');
+}
+let lastDraw = 0;
+function frame(now) {
+  if (now - lastDraw >= FRAME_MS) {
+    lastDraw = now;
+    draw(measure());
+  }
+  requestAnimationFrame(frame);
+}
+
+let toastTimer = null;
+function toast(msg, ms = 1200) {
+  $('toastT').textContent = msg;
+  $('toast').setAttribute('display', 'inline');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').setAttribute('display', 'none'), ms);
+}
+
+// MODUS 2: Libellen. Jede Libelle zeigt d = dev(θ, Sollwinkel). Die Blase wandert 8 px pro Grad
+// zur höheren Seite: Richtung = Lage der Libellenachse u zur Schwerkraft g (Bildschirmkoordinaten).
+const VIALS = [
+  { id: 'v0', ziel: 0,  ux: 1,        uy: 0,         max: 73, cx: 120, cy: 41 },   // waagerecht
+  { id: 'v1', ziel: 90, ux: 0,        uy: 1,         max: 53, cx: 41,  cy: 154 },  // senkrecht
+  { id: 'v2', ziel: 45, ux: Math.SQRT1_2, uy: -Math.SQRT1_2, max: 58, cx: 0, cy: 0 }, // 45°, lokal gedreht
+];
+let pick = -1;                 // fest gewählte Libelle (-1 = automatisch), wird nicht gespeichert
+function drawVials(s) {
+  const gx = Math.sin(s.th / DEG), gy = Math.cos(s.th / DEG);
+  const ds = VIALS.map((v) => dev(s.th, v.ziel));
+  let act = pick;
+  if (act < 0) { act = 0; for (let i = 1; i < 3; i++) if (Math.abs(ds[i]) < Math.abs(ds[act])) act = i; }
+  const level = !s.flat && isLevel(ds[act]);
+  VIALS.forEach((v, i) => {
+    const off = clamp(-8 * Math.asin(clamp(v.ux * gx + v.uy * gy, -1, 1)) * DEG, -v.max, v.max);
+    const b = $(v.id + 'b');
+    if (i === 1) b.setAttribute('cy', (v.cy + off).toFixed(1));
+    else b.setAttribute('cx', (v.cx + off).toFixed(1));
+    $(v.id).setAttribute('opacity', i === act ? 1 : 0.35);
+    $(v.id + 'r').setAttribute('stroke', i === pick ? '#fff' : 'none');
+    $(v.id + 'r').setAttribute('stroke-width', 3);
+    $(v.id).querySelectorAll('.mk').forEach((m) => m.classList.toggle('lv', i === act && level));
+  });
+  const lbl = $('vLbl');
+  if (s.flat) { lbl.textContent = 'Hochkant halten'; lbl.setAttribute('opacity', 1); }
+  else { lbl.textContent = (pick >= 0 ? '● ' : '') + 'Abw. ' + VIALS[act].ziel + '°'; lbl.setAttribute('opacity', 0.7); }
+  setVal($('vVal'), s.flat ? null : ds[act], 26);
+}
+
+// MODUS 3: 3D. Blase = (X, Y) × 7 px pro Grad zur höheren Seite, Vektor auf 79 px begrenzt.
+const short = (deg) => fmt(deg) + (st.unit === 0 ? '°' : ' ' + UNITS[st.unit]);
+function draw3d(s) {
+  let bx = -s.X * 7, by = -s.Y * 7;
+  const len = Math.hypot(bx, by);
+  if (len > 79) { bx *= 79 / len; by *= 79 / len; }
+  const b = $('b3');
+  b.setAttribute('cx', (120 + bx).toFixed(1));
+  b.setAttribute('cy', (112 + by).toFixed(1));
+  b.setAttribute('stroke-width', isLevel(s.tot) ? 2.5 : 0);
+  const lbl = $('tLbl');
+  lbl.textContent = s.upright ? 'Flach auflegen' : 'Gesamt';
+  lbl.setAttribute('opacity', s.upright ? 1 : 0.7);
+  setVal($('tVal'), s.tot, 30);
+  $('tX').textContent = 'X ' + short(s.X);
+  $('tY').textContent = 'Y ' + short(s.Y);
+}
+
+// ---- Touch: Ziel über unsichtbare Flächen (class="hit", data-hit) bestimmen
+function onTap(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const hit = el && el.getAttribute && el.getAttribute('data-hit');
+  if (!hit) return;                                   // Hintergrund: nichts
+  if (hit === 'value') { setHold(!hold); return; }   // große Gradzahl: HOLD an/aus
+  if (hit[0] === 'v') {
+    const i = +hit.slice(1);
+    pick = pick === i ? -1 : i;
+  }
+}
+document.body.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  if (t) onTap(t.clientX, t.clientY);
+}, { passive: false });
+window.addEventListener('mousedown', (e) => onTap(e.clientX, e.clientY));
+
+// ---- Bedienung
+// Seitentaste: Klick = Modus wechseln, Doppelklick (zwei sideClick ~50 ms nacheinander) =
+// Kalibrierung zurücksetzen, langer Druck = kalibrieren. Der Einzelklick wartet DBL_MS ab.
+const DBL_MS = 350;
+let clickTimer = null, lastLong = 0;
+function setHold(on) {
+  hold = on;
+  show('hold', on);
+}
+function calibrate() {
+  const m = measure();
+  setHold(false);
+  if (st.mode === 2) {
+    if (m.upright) { toast('Flach auflegen'); return; }
+    st.offX = m.Xr; st.offY = m.Yr;
+  } else {
+    if (m.flat) { toast('Hochkant halten'); return; }
+    st.offT = devStep(m.thRaw, 45);          // Abweichung zum nächsten Vielfachen von 45°
+  }
+  save();
+  toast('Kalibriert');
+}
+function resetCal() {
+  st.offT = st.offX = st.offY = 0;
+  setHold(false);
+  save();
+  toast('Zurückgesetzt');
+}
+window.addEventListener('sideClick', () => {
+  if (Date.now() - lastLong < 700) return;   // Loslassen nach langem Druck zählt nicht als Klick
+  if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; resetCal(); return; }
+  clickTimer = setTimeout(() => { clickTimer = null; setMode((st.mode + 1) % 3); save(); }, DBL_MS);
+});
+window.addEventListener('longPressStart', () => {
+  lastLong = Date.now();
+  if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+  calibrate();
+});
+window.addEventListener('longPressEnd', () => { lastLong = Date.now(); });
+
+// Scrollrad: Einheit °, % Gefälle, mm/m (gilt für alle Modi, wird gespeichert)
+const UNIT_NAMES = ['Grad °', 'Gefälle %', 'mm/m'];
+function wheel(dir) {
+  st.unit = mod(st.unit + dir, 3);
+  save();
+  toast(UNIT_NAMES[st.unit], 900);
+}
+window.addEventListener('scrollUp', () => wheel(1));
+window.addEventListener('scrollDown', () => wheel(-1));
+
+// Desktop-Vorschau (auf dem R1 ohne Wirkung): Maus = Neigung, Klick = Touch,
+// Enter/Leertaste/Pfeil links/rechts = Seitentaste (zweimal schnell = Doppelklick,
+// gedrückt halten = langer Druck), Pfeil hoch/runter oder Mausrad = Scrollrad, H = HOLD.
+if (typeof PluginMessageHandler === 'undefined') {
+  const SIDE = ['Enter', ' ', 'ArrowLeft', 'ArrowRight'];
+  let downAt = 0, longTimer = null, longFired = false;
+  const fire = (n) => window.dispatchEvent(new Event(n));
+  window.addEventListener('keydown', (e) => {
+    if (SIDE.includes(e.key)) {
+      e.preventDefault();
+      if (e.repeat || downAt) return;
+      downAt = Date.now(); longFired = false;
+      longTimer = setTimeout(() => { longFired = true; fire('longPressStart'); }, 600);
+    } else if (e.key === 'ArrowUp') { e.preventDefault(); fire('scrollUp'); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); fire('scrollDown'); }
+    else if (e.key === 'h' || e.key === 'H') setHold(!hold);   // HOLD ohne die Maus (= Neigung) zu bewegen
+  });
+  window.addEventListener('keyup', (e) => {
+    if (!SIDE.includes(e.key) || !downAt) return;
+    clearTimeout(longTimer); downAt = 0;
+    if (longFired) fire('longPressEnd'); else fire('sideClick');
+  });
+  let lastWheel = 0;
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const now = Date.now();
+    if (now - lastWheel < 150 || !e.deltaY) return;
+    lastWheel = now;
+    fire(e.deltaY < 0 ? 'scrollUp' : 'scrollDown');
+  }, { passive: false });
+}
+
+(async () => {
+  loadQuick();
+  setMode(st.mode);
+  toast('Wasserwaage v' + APP_VERSION, 1500);
+  requestAnimationFrame(frame);
+  initSensors();
+  const m = st.mode;
+  await load();
+  if (st.mode !== m) setMode(st.mode);
+})();
+</script>
+</body>
+</html>

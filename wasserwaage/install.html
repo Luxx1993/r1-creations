@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wasserwaage installieren</title>
+<style>
+  :root { --bg: #f6f6f4; --fg: #111; --muted: #5b5b5b; --card: #fff; --line: #e2e2de; --accent: #1a7a30; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111; --fg: #f2f2f2; --muted: #a3a3a3; --card: #1b1b1b; --line: #2c2c2c; --accent: #4cd964; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin: 0 0 4px; font-size: 26px; display: flex; align-items: center; gap: 12px; }
+  h1 img { border-radius: 14px; }
+  h2 { font-size: 18px; margin: 28px 0 8px; }
+  p, li { color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .qr { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .qr img { width: 240px; height: 240px; background: #fff; border-radius: 8px; image-rendering: pixelated; }
+  .qr ol { margin: 0; padding-left: 20px; flex: 1; min-width: 200px; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  td:first-child { white-space: nowrap; font-weight: 600; color: var(--fg); }
+  code, pre { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { white-space: pre-wrap; word-break: break-all; margin: 0; color: var(--muted); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1><img src="icon.png" alt="" width="48" height="48">Wasserwaage</h1>
+  <p>Neigungs- und Wasserwaagen-App für den Rabbit R1 mit drei Modi: Linie, Libellen und 3D. Version 0.1.0.</p>
+
+  <h2>Installieren</h2>
+  <div class="card qr">
+    <img src="data:image/png;base64,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" alt="Install-QR-Code für die Wasserwaage">
+    <ol>
+      <li>Auf dem R1 die Creations-Karte öffnen.</li>
+      <li>„add via QR code“ wählen und diesen Code scannen.</li>
+      <li>Update: alte Karte zuerst deinstallieren, dann den neuen Code scannen (der R1 merkt sich die Adresse).</li>
+    </ol>
+  </div>
+  <p>Direkt im Browser öffnen: <a href="index-v0.1.0.html">index-v0.1.0.html</a> (Maus = Neigung).</p>
+
+  <h2>Bedienung</h2>
+  <div class="card">
+    <table>
+      <tr><td>Seitentaste</td><td>Modus wechseln: Linie → Libellen → 3D</td></tr>
+      <tr><td>Langer Druck</td><td>Kalibrieren („Kalibriert“)</td></tr>
+      <tr><td>Doppelklick</td><td>Kalibrierung zurücksetzen („Zurückgesetzt“)</td></tr>
+      <tr><td>Scrollrad</td><td>Einheit: Grad, % Gefälle, mm/m</td></tr>
+      <tr><td>Große Zahl antippen</td><td>HOLD (Wert einfrieren), nochmal tippen gibt frei</td></tr>
+      <tr><td>Libelle antippen</td><td>Libelle fest wählen, nochmal tippen = automatisch</td></tr>
+    </table>
+  </div>
+
+  <h2>QR-Inhalt</h2>
+  <div class="card"><pre>{
+  &quot;title&quot;: &quot;Wasserwaage&quot;,
+  &quot;url&quot;: &quot;https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/index-v0.1.0.html&quot;,
+  &quot;description&quot;: &quot;Neigung messen: Linie, Libellen, 3D&quot;,
+  &quot;iconUrl&quot;: &quot;https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/icon.png&quot;,
+  &quot;themeColor&quot;: &quot;#4cd964&quot;
+}</pre></div>
+</main>
+</body>
+</html>

@@ -1,92 +1,77 @@
-# Rabbit R1 Creations
+# Wasserwaage – Neigungsmesser für den Rabbit R1
 
-Sammlung kleiner Web-Apps („Creations“) für den Rabbit R1 (Bildschirm 240×282 px).
+Creation auf dem Branch `creation/bubble-level`, Dateien im Ordner `wasserwaage/`
+(reines HTML/CSS/JS, alles inline, kein Build-Schritt). Referenz: `docs/r1-creations.md` auf `main`.
 
-## Aufbau
-
-| Wo | Was |
+| Datei | Inhalt |
 | --- | --- |
-| `main` | Übersichtsseite, Doku (`docs/r1-creations.md`), Werkzeuge (`tools/`), Deploy-Workflow |
-| `creation/<name>` | Eine Creation pro Branch (Dateien im Branch-Root) |
+| `wasserwaage/index.html` | Die Creation (Entwicklungsstand) |
+| `wasserwaage/index-v0.1.0.html` | Versionierte Kopie, auf die der QR-Code zeigt |
+| `wasserwaage/install.html` | Install-Seite mit QR-Code, Bedienung und QR-Inhalt |
+| `wasserwaage/qr.png`, `icon.png` | Install-QR (JSON-Payload) und Icon 96×96 (`make_icon.py`) |
+| `creation.json` | Eintrag für die Übersichtsseite (`entry`: `wasserwaage/index-v0.1.0.html`) |
 
-Die Seite `https://luxx1993.github.io/r1-creations/` listet alle Creations. Jede liegt unter
-`/<name>/`, z. B. `/tally/`.
+Nach dem Deploy: `https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/install.html`
 
-## Creations
+## Modi
 
-| Name | Branch | Beschreibung |
+- **Linie** (Standard): R1 hochkant oder quer an Wand/Kante. Die Trennlinie (oben dunkel, unten grün) bleibt zur
+  Schwerkraft ausgerichtet; Wert = Abweichung zum nächsten Vielfachen von 90°. Eben (< 0,3°): ganzer Bildschirm grün.
+- **Libellen**: waagerecht (0°), senkrecht (90°) und 45°. Automatisch aktiv ist die Libelle mit der kleinsten
+  Abweichung; Antippen wählt eine fest (weißer Rahmen, „●“), nochmal Antippen = automatisch.
+- **3D**: R1 flach auflegen. Runde Libelle, Gesamtneigung groß, darunter X und Y.
+
+## Bedienung
+
+| Eingabe | Aktion | Desktop |
 | --- | --- | --- |
-| Tally | `creation/tally` | Strichlisten-Zähler mit Auto-Rotation |
-| Marble Maze | `creation/marble-maze` | Murmel-Labyrinth: 15 Level, Neigung per Beschleunigungssensor, Drehregler = Tempo (10 Stufen) |
-| Clawd | `creation/clawd` | Clawd als Haustier im Diorama: 7 Szenen und 11 Stile aus dem Claude-Fables-Plugin, Hüte, Brillen und Schleifen, Auto-Rotation |
+| Seitentaste | Modus wechseln (Linie → Libellen → 3D) | Enter, Leertaste, ←/→ |
+| Langer Druck | Kalibrieren | Taste gedrückt halten |
+| Doppelklick | Kalibrierung zurücksetzen | zweimal schnell drücken |
+| Scrollrad | Einheit °, % Gefälle, mm/m | ↑/↓ oder Mausrad |
+| Große Zahl antippen | HOLD an/aus | Klick oder `H` |
+| Neigung | – | Mausposition |
 
-### Tally installieren
+Gespeichert werden Modus, Einheit und Kalibrierung (`creationStorage.plain`, gespiegelt in `localStorage`,
+Schlüssel `wasserwaage_state`). Achtung: Eine neue Install-URL (neue Version) ist auf dem R1 ein neues Plugin
+mit leerem `creationStorage`; der `localStorage`-Spiegel trägt die Werte meist mit.
 
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+## Achsen umdrehen
 
-[![Install-QR für Tally – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/tally/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/tally)
-
-(Ein Klick auf das Bild öffnet den Branch `creation/tally` mit Screenshots und Beschreibung. Das Bild ist immer der aktuelle Code der Creation.)
-
-### Marble Maze installieren
-
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
-
-[![Install-QR für Marble Maze – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/marble-maze/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/marble-maze)
-
-Bedienung: Neigen = Kugel rollt, Drehregler = Tempo (1–10), Seitentaste = Neutrallage kalibrieren (Doppelklick = Y-Achse umkehren), langer Druck = Levelmenü.
-
-### Clawd installieren
-
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
-
-[![Install-QR für Clawd – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd)
-
-Demo-Video (30 s): [clawd-demo.mp4](https://luxx1993.github.io/r1-creations/clawd/demo/clawd-demo.mp4)
-
-Clawd ist ein Haustier ohne Pflege und ohne Level in einer endlosen Welt (keine Begrenzung nach links oder rechts): Er läuft von selbst durch die Szene, reagiert auf Berührung und schläft ein, wenn niemand da ist.
-
-- Drehregler: lenkt Clawd nach links/rechts (nach oben drehen = nach rechts). Nach einem Druck auf die Seitentaste wählt er stattdessen einen Menüpunkt (Spiel, Schlaf, Items, Welt, Optionen), ein zweiter Druck führt ihn aus. Spiel öffnet eine Auswahl: Ball (Clawd jongliert, mit Ton bei jedem Aufprall), Seilspringen oder Pfeifen; Clawd pfeift und springt Seil auch von selbst.
-- Seitentaste lang halten oder Clawd gedrückt halten: streicheln. Kurz antippen: er reagiert. Viermal schnell antippen oder schütteln: ihm wird schwindlig. Ein Tipp auf die Szene schickt ihn dorthin.
-- Welt: Ort (Wald, Weltraum, Stadt, Wüste, Vulkan, Labor, Dorf) und Stil (Original, Pixel Art, Höhle, Blaupause, Mosaik, Frutiger Aero, Kupferstich, Wandteppich, Golden Age, Ukiyo-e, Kamon) als Rolodex-Auswahl. Items: Kopf, Gesicht und Körper (Hüte, Brillen, Schnurrbart, Schleife, Schal), jeweils im Stil gezeichnet.
-- Ton (alles per WebAudio erzeugt, ohne Dateien; in Welt unter „Ton“ abschaltbar): Clawd „spricht“ in Blips, schnarcht beim Schlafen, pfeift, der Ball klackt, und je nach Stil läuft eine eigene leise Hintergrundmelodie. Auf dem R1 muss die Karte einmal berührt werden, damit der Ton starten darf.
-- Optionen: Klang (Stil, Retro, Glocken, Minimal), Lautstärke (Aus bis 100 %), Ruhezeiten (Töne nachts stumm: 22–07, 23–08, 00–06) und Bewegung (Normal/Ruhig). In „Welt“ lässt sich die Tageszeit-Reaktion („Zeit“) abschalten.
-- Tageszeit: Nach der echten Uhrzeit tönt sich die Szene (Morgenrot, Abendrot, Nacht), Clawd begrüßt dich passend, ist morgens munterer, abends ruhiger mit mehr Pfeifen, nachts langsamer und schläft schneller ein (manchmal findest du ihn schlafend), und die Musik wird nachts leiser und langsamer.
-- Szenen, Stile und Animationen stammen aus dem Claude-Fables-Plugin und sind vorgerendert (`src/` im Branch enthält Generator und Anleitung). Noch nicht auf dem echten Gerät getestet: Sensorfunktionen, Auto-Rotation und die Ladezeit der rund 4 MB Bilder.
-
-### Clawd am Desktop ausprobieren
-
-Clawd ist eine statische Seite (HTML, JavaScript und Bilder) und läuft in jedem normalen Browser, ohne Server und ohne den R1.
-
-- Online: `https://luxx1993.github.io/r1-creations/clawd/index.html` (setzt voraus, dass GitHub Pages öffentlich erreichbar ist).
-- Lokal: `git clone -b creation/clawd --single-branch https://github.com/Luxx1993/r1-creations.git clawd`, dann `index.html` im Browser öffnen (der Ordner `assets/` muss daneben liegen). Alternativ im Ordner `python3 -m http.server` starten und `http://localhost:8000/` öffnen.
-- Bedienung: Pfeiltasten = Drehregler (hoch/links und runter/rechts sind die beiden Drehrichtungen), Enter oder Leertaste = Seitentaste, `H` = streicheln, `O` = Ansicht in 90°-Schritten drehen, Maus = Touch (Klicken und Wischen).
-- Am Desktop fehlen die Sensoren (kein Schütteln, keine automatische Drehung), die Ansicht bleibt 240×282 px groß (Browser-Zoom hilft), der Spielstand liegt im `localStorage` des Browsers, und der Ton startet erst nach dem ersten Klick oder Tastendruck.
-- Weiterentwickeln: `index.html` ist generiert. Der Quelltext liegt in `src/index.src.html`, `python3 src/build.py` baut `index.html` und die versionierte Datei neu. Die Bilder entstehen mit dem Generator in `src/` aus dem Claude-Fables-Plugin (siehe `src/README.md`). Beim Weitergeben die Lizenzen beachten: Claudes 3D-Modell von ChetasLua (MIT) und die Schrift Monocraft (OFL).
-
-## Neue Creation anlegen
+Oben im Skript von `index.html`: `INVERT_X`, `INVERT_Y` (wirken auf alle Modi) und `INVERT_THETA` (nur Linie und
+Libellen). Danach `index.html` als neue Version kopieren (z. B. `index-v0.1.1.html`), QR neu erzeugen:
 
 ```bash
-git checkout -b creation/<name> main
-# index.html, icon.png (96x96), creation.json anlegen
-pip install pillow qrcode
-python3 tools/make_qr.py --title "<Titel>" --description "<Text>" \
-  --url https://luxx1993.github.io/r1-creations/<name>/index.html
-git add -A && git commit -m "Add <name>" && git push -u origin creation/<name>
+python3 tools/make_qr.py --title "Wasserwaage" --description "Neigung messen: Linie, Libellen, 3D" \
+  --url https://luxx1993.github.io/r1-creations/bubble-level/wasserwaage/index-v0.1.1.html \
+  --theme "#4cd964" --out wasserwaage/qr.png
 ```
 
-`creation.json`: `{"title":"…","description":"…","version":"0.1.0","entry":"index.html"}`.
-Der Workflow `.github/workflows/pages.yml` baut bei jedem Push auf `main` oder `creation/**` die
-Seite neu (Übersicht + ein Ordner pro Creation).
+## Testliste auf dem echten R1
 
-## Einmalig einrichten
+1. **Achsenrichtung Linie/Libellen:** R1 hochkant halten und rechts absenken. Die Blase der waagerechten Libelle muss
+   nach **links** (zur höheren Seite) wandern, die grüne Fläche im Modus Linie bleibt unten. Falsch herum →
+   `INVERT_THETA = true`. Danach quer (90°) und schräg (45°) prüfen: senkrechte bzw. 45°-Libelle wird aktiv, Blase
+   wandert zum höheren Ende.
+2. **Achsenrichtung 3D:** flach auflegen, rechte Kante anheben → Blase nach rechts. Falsch → `INVERT_X`. Obere Kante
+   anheben → Blase nach oben. Falsch → `INVERT_Y`. (Ein geänderter `INVERT_Y` betrifft auch Linie/Libellen, also
+   Punkt 1 danach wiederholen.)
+3. **Kalibrierung:** In Linie an einer bekannt geraden Kante langer Druck → „Kalibriert“, Anzeige 0.0°. Card
+   schließen und neu öffnen → Kalibrierung ist noch da. Doppelklick → „Zurückgesetzt“, kein Moduswechsel.
+   In 3D dasselbe flach auf dem Tisch. Langer Druck in falscher Lage zeigt nur den Lagehinweis.
+4. **Touch-Ziele:** jede Libelle antippen (auch knapp neben dem Rand) → weißer Rahmen und „●“; nochmal → automatisch.
+   Hintergrund antippen → nichts passiert.
+5. **HOLD:** große Zahl antippen → „HOLD“ oben rechts, Wert und Blasen stehen still; nochmal tippen → frei.
+   Seitentaste während HOLD → nächster Modus ohne HOLD.
+6. **Lagehinweis:** R1 in Linie/Libellen flach hinlegen → „—“ und „Hochkant halten“. In 3D hochkant halten →
+   „Flach auflegen“.
+7. **Scrollrad:** Einheit wechselt (°, %, mm/m) und bleibt nach Neustart erhalten.
+8. **Doppelklick-Erkennung:** Einzelklick wechselt den Modus erst nach ca. 0,35 s; zu träge oder zu schnell →
+   `DBL_MS` anpassen.
 
-Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+## Lokal testen
 
-## Hinweise
-
-- Neue Version einer Creation = neue Datei `index-v<version>.html`, alte Karte auf dem R1
-  deinstallieren, neuen QR scannen (die R1 cached die Install-URL).
-- Alle Creations teilen sich den Origin `luxx1993.github.io`: `localStorage`-Schlüssel mit
-  Creation-Namen versehen (z. B. `tally_state`).
-- Details, SDK und Erfahrungen vom echten Gerät: `docs/r1-creations.md`.
+```bash
+cd wasserwaage && python3 -m http.server 8000
+# Browser: http://localhost:8000/index.html (Fenster 240×282 reicht)
+```
