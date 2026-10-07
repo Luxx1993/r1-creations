@@ -184,14 +184,14 @@ async function press(sel, holdMs = 0) {
 const tap = (sel) => press(sel, 0);
 async function type(text) { await rpc(WS, 'Input.insertText', { text }); await sleep(30); }
 async function shot(name) {
-  fs.mkdirSync(SHOTS, { recursive: true });
+  fs.mkdirSync(path.dirname(path.join(SHOTS, name)), { recursive: true });
   try { await until(`!document.getElementById('toast').classList.contains('on')`, 'toast gone', 4000); } catch {}
   await sleep(300);
   const r = await rpc(WS, 'Page.captureScreenshot', { format: 'png', clip: { x: 0, y: 0, width: 240, height: 282, scale: 1 } });
   fs.writeFileSync(path.join(SHOTS, name + '.png'), Buffer.from(r.data, 'base64'));
   if (process.env.SHOTS_2X) {
     const r2 = await rpc(WS, 'Page.captureScreenshot', { format: 'png', clip: { x: 0, y: 0, width: 240, height: 282, scale: 3 } });
-    fs.writeFileSync(path.join(process.env.SHOTS_2X, name + '@3x.png'), Buffer.from(r2.data, 'base64'));
+    fs.writeFileSync(path.join(process.env.SHOTS_2X, name.replace(/\//g, '-') + '@3x.png'), Buffer.from(r2.data, 'base64'));
   }
 }
 
@@ -224,6 +224,18 @@ const since = (n) => log.slice(n).map((r) => r.method + ' ' + r.path);
 // ── run ─────────────────────────────────────────────────────────────────────
 async function main() {
   if (!CHROME) throw new Error('No Chrome/Chromium found (set CHROME=/path/to/chrome).');
+
+  // 0 ── German and English must be the same file (release.py keeps them in sync)
+  console.log('\n[0] Language sync');
+  const src = fs.readFileSync(path.join(ROOT, 'index.html'));
+  const ver = /const APP_VERSION = '([\d.]+)'/.exec(src.toString())[1];
+  const same = (rel) => fs.existsSync(path.join(ROOT, rel)) && fs.readFileSync(path.join(ROOT, rel)).equals(src);
+  check('en/index.html is identical to index.html (run python3 release.py)', same('en/index.html'));
+  const released = fs.existsSync(path.join(ROOT, `index-v${ver}.html`));
+  if (released) {
+    check(`index-v${ver}.html matches index.html (run python3 release.py --release)`, same(`index-v${ver}.html`));
+    check(`en/index-v${ver}.html matches index.html (run python3 release.py --release)`, same(`en/index-v${ver}.html`));
+  } else console.log(`  (v${ver} not released yet: no index-v${ver}.html)`);
   await new Promise((r) => mock.listen(MOCK_PORT, '127.0.0.1', r));
   await new Promise((r) => statics.listen(STATIC_PORT, '127.0.0.1', r));
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'r1todo-'));
@@ -545,6 +557,61 @@ async function main() {
   // 15 ── proxy
   console.log('\n[15] Vercel proxy (optional)');
   await testProxy();
+
+  // 16 ── English version (same code, served from /en/)
+  console.log('\n[16] English version');
+  await ev('localStorage.clear()');
+  await rpc(WS, 'Page.navigate', { url: `http://127.0.0.1:${STATIC_PORT}/en/index.html?n=${++nav}` });
+  await sleep(400);
+  await until(`document.readyState === 'complete' && window.__scr`, 'en load');
+  await sleep(200);
+  eq('page language is en', await ev('document.documentElement.lang'), 'en');
+  eq('setup in English', await ev(`[document.querySelector('#s-setup h2 span').textContent, document.getElementById('st-test').textContent, document.getElementById('st-save').textContent, document.getElementById('st-demo').textContent]`),
+    ['Connect Todoist', 'Test', 'Save', 'Try the demo']);
+  await ev(`document.getElementById('st-base').value = ${JSON.stringify(BASE)}; document.getElementById('st-token').value = 'wrong'`);
+  await tap('#st-test');
+  await until(`document.getElementById('st-msg').textContent.indexOf('401') >= 0`, 'en 401');
+  eq('connection test speaks English', await ev(`document.getElementById('st-msg').textContent`), '401 – invalid token.');
+  await tap('#st-demo');
+  await until(`__scr() === 'main' && __titles().length > 0`, 'en demo');
+  eq('tabs in English', await ev(`[].map.call(document.querySelectorAll('.tab .lb'), function(e){return e.textContent;})`), ['Inbox', 'Today', 'Search', 'Browse']);
+  await tap('.tab[data-view="today"]');
+  await until(`document.getElementById('title').textContent === 'Today' && __titles().length >= 5`, 'en today');
+  const enMeta = await ev(`[].map.call(document.querySelectorAll('#list .meta .d'), function(e){return e.textContent;})`);
+  check('English dates (Today, "25 Sep")', enMeta.includes('Today') && enMeta.some((m) => /^\d+ (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)$/.test(m)), JSON.stringify(enMeta));
+  check('English demo tasks', (await ev('__titles()')).includes('Order the Bosch DDC replacement quotes'));
+  await shot('en/today');
+  await tap('.tab[data-view="inbox"]');
+  await until(`document.getElementById('title').textContent === 'Inbox' && __titles().length === 4`, 'en inbox');
+  await shot('en/inbox');
+  await tap('.tab[data-view="browse"]');
+  await until(`__titles().indexOf('Work') >= 0`, 'en browse');
+  await shot('en/browse');
+  await tap('#list .card:nth-child(1)');
+  await until(`document.getElementById('title').textContent === 'Work' && __titles().length === 7`, 'en project');
+  await shot('en/project');
+  await ev(`__fire('longPressStart')`);
+  eq('listening screen in English', await ev(`document.getElementById('ls-t').textContent`), 'Listening …');
+  await ev(`__fire('longPressEnd'); onPluginMessage({ type: 'sttEnded', transcript: 'Call the architect tomorrow.' })`);
+  await until(`__scr() === 'review'`, 'en review');
+  eq('review chips in English', await ev(`[document.getElementById('ch-send').textContent, document.getElementById('ch-edit').textContent, document.getElementById('ch-discard').textContent, document.getElementById('rv-hint').textContent]`),
+    ['SEND', 'EDIT', 'DISCARD', 'Wheel picks · button confirms']);
+  eq('review target', await ev(`document.getElementById('rv-target').textContent`), '→ #Work');
+  await shot('en/review');
+  await ev(`__fire('sideClick')`);
+  await until(`__scr() === 'main' && __titles().indexOf('Call the architect') >= 0`, 'en add');
+  check('English dictation lands in the project', true);
+  await ev(`__r1.llm = []`);
+  await tap('#speak');
+  const enSaid = (await ev('__r1.llm'))[0];
+  check('read-aloud prompt in English', enSaid && enSaid.message.startsWith('Say exactly this text, with nothing added') && enSaid.message.includes('Work, 8 tasks. One: '), enSaid && enSaid.message);
+  await tap('.tab[data-view="search"]');
+  await type('bosch');
+  await until(`__titles().length === 2`, 'en search');
+  await shot('en/search');
+  await press('#title', 1150);
+  eq('hold opens setup in English too', await ev('__scr()'), 'setup');
+  await shot('en/setup');
 
   WS.close(); chrome.kill(); mock.close(); statics.close();
   console.log(`\n${'='.repeat(52)}\n  ${pass} passed, ${fails.length} failed`);

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Todoist für den R1 installieren</title>
+<title>Install Todoist for the R1</title>
 <style>
 :root { --bg: #f6f6f6; --fg: #1a1a1a; --muted: #666; --card: #fff; --red: #C24B4B; }
 @media (prefers-color-scheme: dark) { :root { --bg: #202020; --fg: #f2f2f2; --muted: #9a9a9a; --card: #282828; } }
@@ -21,17 +21,17 @@ li { margin: 4px 0; } code { font-size: 12px; }
 </head>
 <body>
 <main>
-  <h1><span>Todoist</span> für den R1</h1>
-  <p>Mit dem R1 scannen: Creations-Karte → „add via QR code“.</p>
-  <div id="qr"><img src="qr.png" alt="Install-QR"></div>
+  <h1><span>Todoist</span> for the R1</h1>
+  <p>Scan with your R1: creations card → “add via QR code”.</p>
+  <div id="qr"><img src="qr.png" alt="Install QR code"></div>
   <div class="url" id="url"></div>
   <ol>
-    <li>Alte Todoist-Karte auf dem R1 zuerst deinstallieren (der R1 cached die Install-URL).</li>
-    <li>QR scannen, Karte öffnen.</li>
-    <li>Im Setup den API-Token eintippen (Todoist → Einstellungen → Integrationen → Entwickler), „Testen“, dann „Speichern“.</li>
-    <li>Ohne Token: „Demo ansehen“. Setup später: Bildschirm ca. 1 s halten.</li>
+    <li>Uninstall an older Todoist card first (the R1 caches the install URL).</li>
+    <li>Scan the code and open the card.</li>
+    <li>In setup, type your API token (Todoist → Settings → Integrations → Developer), tap “Test”, then “Save”.</li>
+    <li>No token yet? “Try the demo”. Setup later: hold the screen for about 1 s.</li>
   </ol>
-  <p>Der Token steht nie im QR-Code und nie in einer URL.</p>
+  <p>Your token is never part of the QR code or any URL. It stays on your R1.</p>
 </main>
 <script src="https://unpkg.com/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
 <script>
@@ -42,8 +42,8 @@ var url = location.href.replace(/install\.html.*$/, '') + ENTRY + '?v=1';
 var payload = JSON.stringify({
   title: 'Todoist',
   url: url,
-  description: 'Todoist-Aufgaben auf dem R1',
-  iconUrl: url.replace(/[^/]*$/, '') + 'icon.png',
+  description: 'Todoist tasks on the R1',
+  iconUrl: url.replace(/en\/[^/]*$/, '') + 'icon.png',
   themeColor: '#C24B4B'
 });
 document.getElementById('url').textContent = url;

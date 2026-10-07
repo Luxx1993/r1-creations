@@ -1,6 +1,9 @@
 # Todoist – Aufgaben-App für den Rabbit R1
 
+**Deutsch** · [English](README.en.md)
+
 Creation für den 240×282-px-Bildschirm, die direkt mit deinem Todoist-Konto synchronisiert.
+Es gibt sie auf Deutsch (`/todoist/`) und auf Englisch (`/todoist/en/`), aus derselben Quelldatei.
 Optik nach der Todoist-Android-App im Dark Mode. Eine Datei (`index.html`), kein Build-Schritt,
 kein eigener Server nötig. Referenz: `docs/r1-creations.md`. Diese Creation lebt auf dem Branch
 `creation/todoist` und wird unter `/todoist/` ausgeliefert.
@@ -24,7 +27,9 @@ R1: Creations-Karte → „add via QR code“ → scannen.
 
 ![Install-QR](qr.png)
 
-Der QR enthält nur `{"title":"Todoist","url":".../todoist/index-v0.1.1.html?v=1","description":…,"iconUrl":…,"themeColor":"#C24B4B"}`,
+Englische Version: QR in [`en/qr.png`](en/qr.png) bzw. auf `en/install.html`, Anleitung in [README.en.md](README.en.md).
+
+Der QR enthält nur `{"title":"Todoist","url":".../todoist/index-v0.1.2.html?v=1","description":…,"iconUrl":…,"themeColor":"#C24B4B"}`,
 niemals den Token. `install.html` zeigt denselben Code im Browser und baut ihn aus der eigenen Adresse,
 funktioniert also auch auf einem anderen Host.
 
@@ -135,19 +140,32 @@ und loggt nichts und braucht keinen eigenen Schlüssel.
 Dieser Branch wird wie alle `creation/*`-Branches vom Workflow auf `main` nach
 `https://luxx1993.github.io/r1-creations/todoist/` exportiert (Push genügt).
 
-Neue Version:
+Hinweis: Der Pages-Lauf, den ein Push auf `creation/*` startet, scheitert in diesem Repo; danach den
+Workflow „Deploy Pages“ manuell auf `main` starten (Actions → Run workflow).
+
+### Deutsch und Englisch synchron halten
+
+`index.html` ist die einzige Quelle. Alle Texte stehen für beide Sprachen in der Tabelle `I18N`
+(`de` und `en`); die Sprache ergibt sich aus dem Pfad (`/en/` = Englisch, zum Testen auch `?lang=en`).
+`en/index.html` ist eine byte-gleiche Kopie.
+
+1. Änderung in `index.html` machen. Neue sichtbare Texte immer in **beide** Sprachen von `I18N`
+   eintragen und über `tx('schlüssel')` bzw. `data-t`/`data-tp`/`data-ta` ausgeben.
+2. `python3 release.py` kopiert nach `en/index.html`.
+3. `node test/harness.mjs` – schlägt fehl, wenn die englische Kopie abweicht.
+4. README.md und README.en.md gemeinsam pflegen.
+
+### Neue Version
 
 ```bash
 # APP_VERSION in index.html erhöhen, dann
-cp index.html index-v0.1.2.html
-# creation.json: "version" und "entry" anpassen, ENTRY in install.html anpassen
-python3 tools/make_qr.py --title Todoist --description "Todoist-Aufgaben auf dem R1" \
-  --url "https://luxx1993.github.io/r1-creations/todoist/index-v0.1.2.html?v=1" \
-  --icon-url https://luxx1993.github.io/r1-creations/todoist/icon.png --theme "#C24B4B"
-git commit -am "Todoist 0.1.2" && git push
+python3 release.py --release     # index-v<ver>.html, en/index-v<ver>.html, beide QR, creation.json, install-Seiten
+node test/harness.mjs
+git add -A && git commit -m "Todoist <ver>" && git push
 ```
 
-Auf dem R1 die alte Karte deinstallieren, neuen QR scannen, Token neu eingeben.
+Auf dem R1 die alte Karte deinstallieren, neuen QR scannen, Token neu eingeben. Alte `index-v….html`
+bleiben liegen, damit schon installierte Karten weiterlaufen.
 
 ## Testen
 
@@ -157,13 +175,14 @@ node test/harness.mjs      # Node 22+, Chrome/Chromium (CHROME=/pfad/zu/chrome)
 
 Fährt die echte `index.html` in Headless-Chrome gegen eine gemockte Todoist-API v1 (mit absichtlich
 kleinen Seiten für die Cursor-Logik) und stubbt `CreationVoiceHandler`, `PluginMessageHandler` und
-`creationStorage`. 96 Prüfungen: Setup und Verbindungstest (OK, 401, CORS), Heute/Eingang/Browsen/Projekt/
+`creationStorage`. 112 Prüfungen: Sprach-Sync (Deutsch = Englisch), Setup und Verbindungstest (OK, 401, CORS), Heute/Eingang/Browsen/Projekt/
 Suchen, Scrollrad und Side-Button, Doppelklick-Schutz, Erledigen per Kreis und Taste mit Rückgängig,
 Sprache → Review → Senden/Verwerfen, Plus tippen/halten, Bearbeiten, Vorlesen (max. 8, fester Wortlaut),
 Offline-Queue über einen Neustart, abgelehnte Writes, Token nur im Secure Storage, Layout 240×282,
-Layout bei 282 und 320 px Höhe, Demo-Modus, Proxy. Die Screenshots oben schreibt derselbe Lauf nach `screenshots/`.
+Layout bei 282 und 320 px Höhe, Demo-Modus, Proxy und ein englischer Durchlauf (Texte, Datumsformat,
+Vorlese-Prompt). Die Screenshots schreibt derselbe Lauf nach `screenshots/` und `screenshots/en/`.
 
-Lokal ansehen: `python3 -m http.server 8000`, dann `http://localhost:8000/index.html` (Demo-Modus).
+Lokal ansehen: `python3 -m http.server 8000`, dann `http://localhost:8000/index.html` bzw. `/en/index.html` (Demo-Modus).
 
 ## Auf dem echten R1
 
@@ -187,11 +206,14 @@ Noch offen:
 
 | Pfad | Inhalt |
 | --- | --- |
-| `index.html` | die Creation (Arbeitskopie) |
-| `index-v0.1.1.html` | versionierte Kopie, auf die der QR zeigt (`index-v0.1.0.html` bleibt für alte Karten) |
+| `index.html` | die Creation (einzige Quelle, beide Sprachen) |
+| `index-v0.1.2.html` | versionierte Kopie, auf die der QR zeigt (ältere bleiben für installierte Karten) |
 | `install.html` | Install-Seite mit QR |
+| `en/` | englische Version: `index.html` (Kopie), `index-v….html`, `install.html`, `qr.png` |
+| `release.py` | Sprach-Sync und Releases (versionierte Dateien, QR-Codes) |
+| `README.en.md` | englische Anleitung |
 | `qr.png`, `icon.png`, `make_icon.py` | Install-QR, Icon (96×96) und sein Generator |
 | `creation.json` | Metadaten für die Übersichtsseite |
 | `proxy/` | optionaler Vercel-CORS-Proxy (`api/todoist.js`, `vercel.json`) |
 | `test/harness.mjs` | End-to-End-Test mit Mock-API und Screenshots |
-| `screenshots/` | 240×282-Screenshots aus dem Test |
+| `screenshots/`, `screenshots/en/` | 240×282-Screenshots aus dem Test |
