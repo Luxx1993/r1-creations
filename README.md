@@ -36,6 +36,11 @@ Gespeichert werden Modus, Einheit und Kalibrierung (`creationStorage.plain`, ges
 Schlüssel `wasserwaage_state`). Achtung: Eine neue Install-URL (neue Version) ist auf dem R1 ein neues Plugin
 mit leerem `creationStorage`; der `localStorage`-Spiegel trägt die Werte meist mit.
 
+## Vorzeichen der Anzeige
+
+Wie in der Vorschau: positive Werte = rechte (bzw. in 3D bei Y: untere) Seite liegt höher. Die Konstante `SHOW`
+(Standard `-1`) dreht nur die Zahl, nicht die Blase.
+
 ## Achsen umdrehen
 
 Oben im Skript von `index.html`: `INVERT_X`, `INVERT_Y` (wirken auf alle Modi) und `INVERT_THETA` (nur Linie und

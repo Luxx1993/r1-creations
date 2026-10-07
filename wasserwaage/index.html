@@ -16,7 +16,7 @@
   .hit { fill: #000; fill-opacity: 0; }
   .mode { display: none; }
   .mode.on { display: inline; }
-  .mk { stroke: #1a7a30; stroke-width: 2; stroke-linecap: round; }
+  .mk { stroke: #1a7a30; stroke-width: 1.5; }
   .mk.lv { stroke: #fff; }
   .halo { paint-order: stroke; stroke: #111; stroke-opacity: .35; stroke-width: 4px; stroke-linejoin: round; }
 </style>
@@ -41,20 +41,20 @@
   <g id="m-vials" class="mode">
     <g id="v2" transform="translate(148 154) rotate(-45)">
       <rect id="v2r" x="-75" y="-17" width="150" height="34" rx="17" fill="#4cd964"/>
-      <line class="mk" x1="-15" y1="-13" x2="-15" y2="13"/>
-      <line class="mk" x1="15" y1="-13" x2="15" y2="13"/>
+      <line class="mk" x1="-15" y1="-17" x2="-15" y2="17"/>
+      <line class="mk" x1="15" y1="-17" x2="15" y2="17"/>
       <circle id="v2b" cx="0" cy="0" r="11" fill="#d7f7de"/>
     </g>
     <g id="v0">
       <rect id="v0r" x="30" y="24" width="180" height="34" rx="17" fill="#4cd964"/>
-      <line class="mk" x1="105" y1="28" x2="105" y2="54"/>
-      <line class="mk" x1="135" y1="28" x2="135" y2="54"/>
+      <line class="mk" x1="105" y1="24" x2="105" y2="58"/>
+      <line class="mk" x1="135" y1="24" x2="135" y2="58"/>
       <circle id="v0b" cx="120" cy="41" r="11" fill="#d7f7de"/>
     </g>
     <g id="v1">
       <rect id="v1r" x="24" y="84" width="34" height="140" rx="17" fill="#4cd964"/>
-      <line class="mk" x1="28" y1="139" x2="54" y2="139"/>
-      <line class="mk" x1="28" y1="169" x2="54" y2="169"/>
+      <line class="mk" x1="24" y1="139" x2="58" y2="139"/>
+      <line class="mk" x1="24" y1="169" x2="58" y2="169"/>
       <circle id="v1b" cx="41" cy="154" r="11" fill="#d7f7de"/>
     </g>
     <text id="vLbl" x="120" y="246" font-size="14" text-anchor="middle" dominant-baseline="central"></text>
@@ -69,20 +69,20 @@
   <g id="m-3d" class="mode">
     <circle cx="120" cy="112" r="88" fill="#4cd964"/>
     <g stroke="#1a7a30" fill="none">
-      <line x1="32" y1="112" x2="208" y2="112" stroke-width="1.5"/>
-      <line x1="120" y1="24" x2="120" y2="200" stroke-width="1.5"/>
-      <circle cx="120" cy="112" r="55" stroke-width="1.5"/>
-      <circle cx="120" cy="112" r="18" stroke-width="2" stroke-dasharray="4 3"/>
+      <line x1="32" y1="112" x2="208" y2="112" stroke-width="1"/>
+      <line x1="120" y1="24" x2="120" y2="200" stroke-width="1"/>
+      <circle cx="120" cy="112" r="55" stroke-width="0.8"/>
+      <circle cx="120" cy="112" r="18" stroke-width="1" stroke-dasharray="3 3"/>
     </g>
     <circle id="b3" cx="120" cy="112" r="9" fill="#d7f7de" stroke="#fff" stroke-width="0"/>
     <text id="tLbl" x="120" y="220" font-size="14" text-anchor="middle" dominant-baseline="central"></text>
     <text id="tVal" x="120" y="247" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
-    <text x="120" y="272" font-size="15" text-anchor="middle" dominant-baseline="central"><tspan id="tX"></tspan><tspan id="tY" dx="16"></tspan></text>
+    <text x="120" y="272" font-size="14" opacity="0.85" text-anchor="middle" dominant-baseline="central"><tspan id="tX"></tspan><tspan id="tY" dx="16"></tspan></text>
     <rect class="hit" data-hit="value" x="40" y="226" width="160" height="44"/>
   </g>
 
   <!-- Overlays -->
-  <text id="hold" x="232" y="16" font-size="13" font-weight="700" text-anchor="end" display="none">HOLD</text>
+  <text id="hold" x="232" y="24" font-size="13" font-weight="600" text-anchor="end" display="none">HOLD</text>
   <g id="toast" display="none">
     <rect x="40" y="121" width="160" height="40" rx="20" fill="#111" stroke="#4cd964" stroke-width="2"/>
     <text id="toastT" x="120" y="141" font-size="16" font-weight="600" text-anchor="middle" dominant-baseline="central"></text>
@@ -96,6 +96,9 @@ const APP_VERSION = '0.1.0';
 const INVERT_X = false;
 const INVERT_Y = false;
 const INVERT_THETA = false;
+// Vorzeichen der angezeigten Zahlen (wie in der Vorschau): + = rechte bzw. untere Seite liegt höher.
+// Ändert nur die Zahl, nicht die Richtung der Blase.
+const SHOW = -1;
 
 const SMOOTH = 0.2;          // Tiefpass-Faktor pro Sensorwert (60 Hz)
 const FRAME_MS = 40;         // neu zeichnen mit 25 Hz
@@ -282,7 +285,7 @@ function draw(m) {
 function drawLine(s) {
   const a = devStep(s.th, 90);
   $('lnRot').setAttribute('transform', 'rotate(' + (-a).toFixed(2) + ' 120 141)');
-  setVal($('lnVal'), s.flat ? null : a, 40);
+  setVal($('lnVal'), s.flat ? null : SHOW * a, 40);
   show('lnHint', s.flat);
   $('bg').setAttribute('fill', !s.flat && isLevel(a) ? '#4cd964' : '#111');
 }
@@ -330,7 +333,7 @@ function drawVials(s) {
   const lbl = $('vLbl');
   if (s.flat) { lbl.textContent = 'Hochkant halten'; lbl.setAttribute('opacity', 1); }
   else { lbl.textContent = (pick >= 0 ? '● ' : '') + 'Abw. ' + VIALS[act].ziel + '°'; lbl.setAttribute('opacity', 0.7); }
-  setVal($('vVal'), s.flat ? null : ds[act], 26);
+  setVal($('vVal'), s.flat ? null : SHOW * ds[act], 26);
 }
 
 // MODUS 3: 3D. Blase = (X, Y) × 7 px pro Grad zur höheren Seite, Vektor auf 79 px begrenzt.
@@ -342,13 +345,13 @@ function draw3d(s) {
   const b = $('b3');
   b.setAttribute('cx', (120 + bx).toFixed(1));
   b.setAttribute('cy', (112 + by).toFixed(1));
-  b.setAttribute('stroke-width', isLevel(s.tot) ? 2.5 : 0);
+  b.setAttribute('stroke-width', isLevel(s.tot) ? 2 : 0);
   const lbl = $('tLbl');
   lbl.textContent = s.upright ? 'Flach auflegen' : 'Gesamt';
   lbl.setAttribute('opacity', s.upright ? 1 : 0.7);
   setVal($('tVal'), s.tot, 30);
-  $('tX').textContent = 'X ' + short(s.X);
-  $('tY').textContent = 'Y ' + short(s.Y);
+  $('tX').textContent = 'X ' + short(SHOW * s.X);
+  $('tY').textContent = 'Y ' + short(SHOW * s.Y);
 }
 
 // ---- Touch: Ziel über unsichtbare Flächen (class="hit", data-hit) bestimmen
