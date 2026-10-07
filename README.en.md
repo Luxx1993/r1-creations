@@ -1,6 +1,6 @@
 # Todoist for the Rabbit R1
 
-[Deutsch](README.de.md) · **English**
+[Deutsch](README.md) · **English**
 
 A creation for the Rabbit R1 (240×282 px screen) that syncs directly with your own Todoist account.
 It looks like the Todoist Android app in dark mode. One file, no build step, no server of yours
