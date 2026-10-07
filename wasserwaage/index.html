@@ -16,6 +16,8 @@
   .hit { fill: #000; fill-opacity: 0; }
   .mode { display: none; }
   .mode.on { display: inline; }
+  .mk { stroke: #1a7a30; stroke-width: 2; stroke-linecap: round; }
+  .mk.lv { stroke: #fff; }
   .halo { paint-order: stroke; stroke: #111; stroke-opacity: .35; stroke-width: 4px; stroke-linejoin: round; }
 </style>
 </head>
@@ -36,7 +38,32 @@
   </g>
 
   <!-- MODUS 2: LIBELLEN -->
-  <g id="m-vials" class="mode"></g>
+  <g id="m-vials" class="mode">
+    <g id="v2" transform="translate(148 154) rotate(-45)">
+      <rect id="v2r" x="-75" y="-17" width="150" height="34" rx="17" fill="#4cd964"/>
+      <line class="mk" x1="-15" y1="-13" x2="-15" y2="13"/>
+      <line class="mk" x1="15" y1="-13" x2="15" y2="13"/>
+      <circle id="v2b" cx="0" cy="0" r="11" fill="#d7f7de"/>
+    </g>
+    <g id="v0">
+      <rect id="v0r" x="30" y="24" width="180" height="34" rx="17" fill="#4cd964"/>
+      <line class="mk" x1="105" y1="28" x2="105" y2="54"/>
+      <line class="mk" x1="135" y1="28" x2="135" y2="54"/>
+      <circle id="v0b" cx="120" cy="41" r="11" fill="#d7f7de"/>
+    </g>
+    <g id="v1">
+      <rect id="v1r" x="24" y="84" width="34" height="140" rx="17" fill="#4cd964"/>
+      <line class="mk" x1="28" y1="139" x2="54" y2="139"/>
+      <line class="mk" x1="28" y1="169" x2="54" y2="169"/>
+      <circle id="v1b" cx="41" cy="154" r="11" fill="#d7f7de"/>
+    </g>
+    <text id="vLbl" x="120" y="246" font-size="14" text-anchor="middle" dominant-baseline="central"></text>
+    <text id="vVal" x="120" y="269" font-size="26" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
+    <rect class="hit" data-hit="v2" x="-90" y="-36" width="180" height="72" transform="translate(148 154) rotate(-45)"/>
+    <rect class="hit" data-hit="v0" x="20" y="10" width="200" height="62"/>
+    <rect class="hit" data-hit="v1" x="12" y="76" width="58" height="156"/>
+    <rect class="hit" data-hit="value" x="40" y="250" width="160" height="32"/>
+  </g>
 
   <!-- MODUS 3: 3D -->
   <g id="m-3d" class="mode"></g>
@@ -220,6 +247,7 @@ function setMode(m) {
   MODES.forEach((id, i) => $(id).classList.toggle('on', i === m));
   $('bg').setAttribute('fill', '#111');
   hold = false;
+  pick = -1;
   $('hold').setAttribute('display', 'none');
 }
 let shown = null;              // bei HOLD eingefrorene Messwerte
@@ -227,6 +255,7 @@ function draw(m) {
   if (!hold || !shown) shown = m;
   const s = shown;
   if (st.mode === 0) drawLine(s);
+  else if (st.mode === 1) drawVials(s);
 }
 
 // MODUS 1: Linie. a = Abweichung zum nächsten Vielfachen von 90°; die Trennlinie dreht sich
@@ -254,6 +283,53 @@ function toast(msg, ms = 1200) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $('toast').setAttribute('display', 'none'), ms);
 }
+
+// MODUS 2: Libellen. Jede Libelle zeigt d = dev(θ, Sollwinkel). Die Blase wandert 8 px pro Grad
+// zur höheren Seite: Richtung = Lage der Libellenachse u zur Schwerkraft g (Bildschirmkoordinaten).
+const VIALS = [
+  { id: 'v0', ziel: 0,  ux: 1,        uy: 0,         max: 73, cx: 120, cy: 41 },   // waagerecht
+  { id: 'v1', ziel: 90, ux: 0,        uy: 1,         max: 53, cx: 41,  cy: 154 },  // senkrecht
+  { id: 'v2', ziel: 45, ux: Math.SQRT1_2, uy: -Math.SQRT1_2, max: 58, cx: 0, cy: 0 }, // 45°, lokal gedreht
+];
+let pick = -1;                 // fest gewählte Libelle (-1 = automatisch), wird nicht gespeichert
+function drawVials(s) {
+  const gx = Math.sin(s.th / DEG), gy = Math.cos(s.th / DEG);
+  const ds = VIALS.map((v) => dev(s.th, v.ziel));
+  let act = pick;
+  if (act < 0) { act = 0; for (let i = 1; i < 3; i++) if (Math.abs(ds[i]) < Math.abs(ds[act])) act = i; }
+  const level = !s.flat && isLevel(ds[act]);
+  VIALS.forEach((v, i) => {
+    const off = clamp(-8 * Math.asin(clamp(v.ux * gx + v.uy * gy, -1, 1)) * DEG, -v.max, v.max);
+    const b = $(v.id + 'b');
+    if (i === 1) b.setAttribute('cy', (v.cy + off).toFixed(1));
+    else b.setAttribute('cx', (v.cx + off).toFixed(1));
+    $(v.id).setAttribute('opacity', i === act ? 1 : 0.35);
+    $(v.id + 'r').setAttribute('stroke', i === pick ? '#fff' : 'none');
+    $(v.id + 'r').setAttribute('stroke-width', 3);
+    $(v.id).querySelectorAll('.mk').forEach((m) => m.classList.toggle('lv', i === act && level));
+  });
+  const lbl = $('vLbl');
+  if (s.flat) { lbl.textContent = 'Hochkant halten'; lbl.setAttribute('opacity', 1); }
+  else { lbl.textContent = (pick >= 0 ? '● ' : '') + 'Abw. ' + VIALS[act].ziel + '°'; lbl.setAttribute('opacity', 0.7); }
+  setVal($('vVal'), s.flat ? null : ds[act], 26);
+}
+
+// ---- Touch: Ziel über unsichtbare Flächen (class="hit", data-hit) bestimmen
+function onTap(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const hit = el && el.getAttribute && el.getAttribute('data-hit');
+  if (!hit) return;                                   // Hintergrund: nichts
+  if (hit[0] === 'v' && hit !== 'value') {
+    const i = +hit.slice(1);
+    pick = pick === i ? -1 : i;
+  }
+}
+document.body.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  if (t) onTap(t.clientX, t.clientY);
+}, { passive: false });
+window.addEventListener('mousedown', (e) => onTap(e.clientX, e.clientY));
 
 // ---- Bedienung
 window.addEventListener('sideClick', () => { setMode((st.mode + 1) % 3); save(); });
