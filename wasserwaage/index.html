@@ -16,6 +16,7 @@
   .hit { fill: #000; fill-opacity: 0; }
   .mode { display: none; }
   .mode.on { display: inline; }
+  .halo { paint-order: stroke; stroke: #111; stroke-opacity: .35; stroke-width: 4px; stroke-linejoin: round; }
 </style>
 </head>
 <body>
@@ -23,7 +24,16 @@
   <rect id="bg" x="0" y="0" width="240" height="282" fill="#111"/>
 
   <!-- MODUS 1: LINIE -->
-  <g id="m-line" class="mode"></g>
+  <g id="m-line" class="mode">
+    <g id="lnRot">
+      <rect x="-300" y="141" width="840" height="500" fill="#4cd964"/>
+      <line x1="20" y1="141" x2="64" y2="141" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      <line x1="176" y1="141" x2="220" y2="141" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text id="lnVal" class="halo" x="120" y="222" font-size="40" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
+    <text id="lnHint" class="halo" x="120" y="260" font-size="14" text-anchor="middle" dominant-baseline="central" display="none">Hochkant halten</text>
+    <rect class="hit" data-hit="value" x="30" y="194" width="180" height="56"/>
+  </g>
 
   <!-- MODUS 2: LIBELLEN -->
   <g id="m-vials" class="mode"></g>
@@ -73,15 +83,22 @@ const unwrap = (raw) => {
   if (raw && typeof raw === 'object') raw = raw.value !== undefined ? raw.value : null;
   return typeof raw === 'string' && raw ? dec(raw) : null;
 };
+function sanitize() {
+  st.mode = clamp(Math.round(st.mode) || 0, 0, 2);
+  st.unit = clamp(Math.round(st.unit) || 0, 0, 2);
+  for (const k of ['offT', 'offX', 'offY']) if (!Number.isFinite(st[k])) st[k] = 0;
+}
+function loadQuick() {        // sofort aus dem localStorage-Spiegel, damit beim Start nichts leer bleibt
+  try { const v = unwrap(localStorage.getItem(KEY)); if (v) st = Object.assign(st, v); } catch (e) {}
+  sanitize();
+}
 async function load() {
   for (let i = 0; i < 15 && !cs(); i++) await new Promise((r) => setTimeout(r, 100));
   let v = null;
   try { if (cs()) v = unwrap(await cs().getItem(KEY)); } catch (e) {}
   if (!v) { try { v = unwrap(localStorage.getItem(KEY)); } catch (e) {} }
   if (v) st = Object.assign(st, v);
-  st.mode = clamp(Math.round(st.mode) || 0, 0, 2);
-  st.unit = clamp(Math.round(st.unit) || 0, 0, 2);
-  for (const k of ['offT', 'offX', 'offY']) if (!Number.isFinite(st[k])) st[k] = 0;
+  sanitize();
 }
 let saveTimer = null;
 function flush() {
@@ -172,15 +189,54 @@ function measure() {
   return { thRaw: lastTh, th: lastTh - st.offT, flat, upright, Xr, Yr };
 }
 
+// ---- Zahlen: Gradzahl immer mit Nachkommastelle, echtes Minuszeichen; % und mm/m über tan
+const UNITS = ['°', '%', 'mm/m'];
+function fmt(deg) {
+  let v = deg, d = 1;
+  if (st.unit > 0) {
+    v = Math.tan(deg / DEG) * (st.unit === 1 ? 100 : 1000);
+    if (Math.abs(v) >= 100) d = 0;
+  }
+  if (!Number.isFinite(v) || Math.abs(v) > 99999) return '∞';
+  let s = v.toFixed(d);
+  if (/^-0(\.0+)?$/.test(s)) s = s.slice(1);
+  return s.replace('-', '−');
+}
+const shownDeg = (deg) => Math.round(deg * 10) / 10;      // so wie angezeigt (eine Nachkommastelle)
+const isLevel = (deg) => Math.abs(shownDeg(deg)) < LEVEL_DEG;
+// Wert mit Einheit in ein <text> schreiben; % und mm/m kleiner hinter der Zahl
+function setVal(el, deg, size) {
+  if (deg === null) { el.textContent = '—'; return; }
+  const n = fmt(deg);
+  if (st.unit === 0 || n === '∞') { el.textContent = n + (st.unit === 0 ? '°' : ''); return; }
+  el.innerHTML = n + '<tspan font-size="' + Math.round(size * 0.55) + '" dx="3">' + UNITS[st.unit] + '</tspan>';
+}
+const show = (id, on) => $(id).setAttribute('display', on ? 'inline' : 'none');
+
 // ---- Anzeige
 let hold = false;
 function setMode(m) {
   st.mode = m;
   MODES.forEach((id, i) => $(id).classList.toggle('on', i === m));
+  $('bg').setAttribute('fill', '#111');
   hold = false;
   $('hold').setAttribute('display', 'none');
 }
+let shown = null;              // bei HOLD eingefrorene Messwerte
 function draw(m) {
+  if (!hold || !shown) shown = m;
+  const s = shown;
+  if (st.mode === 0) drawLine(s);
+}
+
+// MODUS 1: Linie. a = Abweichung zum nächsten Vielfachen von 90°; die Trennlinie dreht sich
+// um -a um die Bildmitte und bleibt so zur Schwerkraft ausgerichtet.
+function drawLine(s) {
+  const a = devStep(s.th, 90);
+  $('lnRot').setAttribute('transform', 'rotate(' + (-a).toFixed(2) + ' 120 141)');
+  setVal($('lnVal'), s.flat ? null : a, 40);
+  show('lnHint', s.flat);
+  $('bg').setAttribute('fill', !s.flat && isLevel(a) ? '#4cd964' : '#111');
 }
 let lastDraw = 0;
 function frame(now) {
@@ -210,11 +266,14 @@ if (typeof PluginMessageHandler === 'undefined') {
 }
 
 (async () => {
-  await load();
+  loadQuick();
   setMode(st.mode);
-  initSensors();
   toast('Wasserwaage v' + APP_VERSION, 1500);
   requestAnimationFrame(frame);
+  initSensors();
+  const m = st.mode;
+  await load();
+  if (st.mode !== m) setMode(st.mode);
 })();
 </script>
 </body>
