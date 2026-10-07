@@ -14,4 +14,5 @@ This repo is a collection of Rabbit R1 creations. Read @docs/r1-creations.md bef
 
 - German (`/todoist/`) and English (`/todoist/en/`) are one app. `index.html` is the only source; every visible string goes into both `de` and `en` of the `I18N` table and is output via `tx()` or `data-t`/`data-tp`/`data-ta`. Never edit `en/index.html` or any `index-v*.html` by hand.
 - After every change: `python3 release.py` (syncs `en/index.html`), then `node test/harness.mjs` (fails if the copies differ). New version: bump `APP_VERSION`, `python3 release.py --release`.
-- Keep `README.md` (German) and `README.en.md` (English) in step for every user-facing change.
+- Keep `README.de.md` (German) and `README.en.md` (English) in step for every user-facing change. `README.md` is the repo overview from `main`.
+- Since PR #1 the Todoist files are also on `main` (branch merged). A new creation branch made from `main` must delete them first (`index*.html`, `en/`, `install.html`, `creation.json`, `qr.png`, `icon.png`, `make_icon.py`, `release.py`, `proxy/`, `test/`, `screenshots/`, `README.*.md`).
