@@ -972,7 +972,8 @@ function onTranscript(text) {
   clearTimeout(listenGuard);
   S.listening = false;
   const desktop = text === null;
-  text = (text || '').trim();
+  // speech recognition ends sentences with a period; task titles should not
+  text = (text || '').trim().replace(/[.!?,;:]+$/, '').trim();
   if (S.listenMode === 'search') {
     show('main');
     if (text) { $('q').value = text; S.search = text; renderList(); }

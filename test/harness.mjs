@@ -369,6 +369,11 @@ async function main() {
   eq('Quick Add got the spoken text', qa && qa.body, { text: 'Angebot Heizung prüfen morgen' });
   check('moved into the open project', log.slice(n0).some((r) => /\/move$/.test(r.path) && r.body && r.body.project_id === '200'));
   check('date parsed by Todoist shows as Morgen', (await ev(`document.querySelector('#list .card.sel .meta').textContent`)).includes('Morgen'));
+  // trailing punctuation from speech recognition is dropped
+  await ev(`__fire('longPressStart'); __fire('longPressEnd'); onPluginMessage({ type: 'sttEnded', transcript: 'Test 1, 2, 3.' })`);
+  await until(`__scr() === 'review'`, 'review punct');
+  eq('trailing period removed from the transcript', await ev(`document.getElementById('rv-text').value`), 'Test 1, 2, 3');
+  await tap('#ch-discard');
   // discard path
   await ev(`__fire('longPressStart'); __fire('longPressEnd'); onPluginMessage({ type: 'sttEnded', transcript: 'Wegwerfen' })`);
   await until(`__scr() === 'review'`, 'review 2');

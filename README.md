@@ -168,14 +168,15 @@ Lokal ansehen: `python3 -m http.server 8000`, dann `http://localhost:8000/index.
 ## Auf dem echten R1
 
 Bestätigt (v0.1.0): Installation per QR, Token-Setup, direkter API-Zugriff ohne Proxy (CORS ok), Sync
-(grüner Punkt), Anlegen, Eingang, Suchen, Layout und Farben. Der Webview ist 240×282 px groß und liegt
+(grüner Punkt), Anlegen, Eingang, Suchen, Layout und Farben. v0.1.1: Layout ohne Lücke oben,
+Sprachaufnahme per PTT (`CreationVoiceHandler`) → Review → Senden funktioniert. Der Webview ist 240×282 px groß und liegt
 *unter* der OS-Leiste; die in v0.1.0 freigehaltenen 38 px oben waren unnötig und sind in v0.1.1 weg.
 Die App misst die Höhe selbst (`fitScreen()`): Meldet ein Webview mehr als 282 px, gilt der Überschuss
 oben als von der Leiste verdeckt. Das Setup zeigt unten die gemessene Größe (z. B. `240×282`).
 
 Noch offen:
 
-- **Sprache**: `CreationVoiceHandler` (PTT halten, Plus halten) und die Qualität deutscher Transkripte.
+- **Plus halten** als Alternative zu PTT.
 - **Vorlesen**: ob das R1-LLM den Text wörtlich spricht oder ausschmückt.
 - **Quick Add auf Deutsch**: ob „morgen“ erkannt wird, hängt von der Spracheinstellung des Todoist-Kontos ab.
 - `creationStorage.secure` auf dem Gerät (fällt sonst auf `.plain` zurück, nie auf `localStorage`).
