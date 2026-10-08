@@ -238,7 +238,7 @@ function safeEqual(a, b) {
 
 const CSP = [
   "default-src 'none'", "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com", "style-src 'unsafe-inline'",
-  "img-src 'self' data: https://*.redgifs.com", "media-src 'self' https://*.redgifs.com", "connect-src 'self'",
+  "img-src 'self' data: https://*.redgifs.com", "media-src 'self' https://*.redgifs.com", "connect-src 'self' https://api.redgifs.com",
   "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'",
 ].join('; ');
 

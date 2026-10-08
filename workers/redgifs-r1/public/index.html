@@ -161,9 +161,19 @@ function dbgRender() {
     `gap ${dbg.gap}ms min ${dbg.minGap || '-'}ms\n` +
     `side ${dbg.side} dbl-ign ${dbg.sideDbl} lp ${dbg.lpStart}/${dbg.lpEnd}\n` +
     `ptr ${dbg.ptr} stt ${dbg.stt} media ${mediaMode}${USE_HD ? ' hd' : ' sd'}\n` +
-    `vid rs${v.readyState} ns${v.networkState} ${v.dataset.mode || ''} ${screen}`;
+    `vid rs${v.readyState} ns${v.networkState} ${v.dataset.mode || ''} ${screen}\n` +
+    `direct API (CORS): ${corsTest}`;
 }
-if (DEBUG) { $('dbg').style.display = 'block'; setInterval(dbgRender, 500); }
+// Debug only: can this WebView read api.redgifs.com directly (i.e. it ignores CORS)? If so, the
+// device could talk to RedGifs with its own IP and no relay would be needed.
+let corsTest = 'n/a';
+if (DEBUG) {
+  $('dbg').style.display = 'block'; setInterval(dbgRender, 500);
+  corsTest = 'testing';
+  fetch('https://api.redgifs.com/v1/tags').then((r) => r.json())
+    .then((b) => { corsTest = b && b.tags ? 'OK (' + b.tags.length + ' tags)' : 'odd response'; })
+    .catch(() => { corsTest = 'blocked'; });
+}
 
 // ---------- API ----------
 async function api(path) {
