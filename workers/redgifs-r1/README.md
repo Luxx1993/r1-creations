@@ -74,6 +74,17 @@ npx wrangler deploy                      # gibt https://r1-rg.<dein-subdomain>.w
 Danach am Rechner `https://r1-rg.<subdomain>.workers.dev/install?k=<SCHLÜSSEL>` öffnen. Die Seite zeigt den Install-QR.
 Kontrolle: `…/api/status?k=<SCHLÜSSEL>` zeigt Token-Alter, Abrufe pro Stunde und `wrong_sender`.
 
+### Alternative: nur im Cloudflare-Dashboard (ohne Rechner)
+
+1. dash.cloudflare.com → Workers & Pages → Create → Import a repository → GitHub verbinden, `Luxx1993/r1-creations` wählen.
+2. Name **`r1-rg`** (muss zu `wrangler.toml` passen), Build command leer, Deploy command `npx wrangler deploy`,
+   Path/Root directory **`/workers/redgifs-r1`**, API token automatisch anlegen lassen.
+3. Worker → Settings → Build → Branch control: Production branch = der Branch, auf dem dieser Ordner liegt
+   (solange PR #3 nicht gemergt ist: `ccr-218661c5-52xyn7`). „Retry build“ baut den alten Branch erneut,
+   ein neuer Commit auf dem Branch startet den richtigen Build.
+4. Worker → Settings → Variables and Secrets → Add → Secret `ACCESS_KEY` (nur Buchstaben/Ziffern) → Deploy.
+5. `https://r1-rg.<subdomain>.workers.dev/install?k=<SCHLÜSSEL>` öffnen und den QR mit dem R1 scannen.
+
 Ohne `wrangler login` (z. B. CI): Umgebungsvariablen `CLOUDFLARE_API_TOKEN` (Vorlage „Edit Cloudflare Workers“) und
 `CLOUDFLARE_ACCOUNT_ID` setzen.
 
