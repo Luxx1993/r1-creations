@@ -18,7 +18,7 @@
 <script>
 // Clawd, a pet diorama. Scenery, styles and Clawd's animations come from the
 // Claude Fables plugin (baked to images by src/r1assets.ts).
-const APP_VERSION = '0.12.2';
+const APP_VERSION = '0.12.3';
 const KEY = 'clawd:state';          // namespaced: all creations share one origin
 const MANI = /*@MANI@*/null;
 const LOOKS = /*@LOOKS@*/null;
@@ -834,7 +834,6 @@ function draw() {
   }
   if (R.dim > .01) { ctx.globalAlpha = R.dim; rect(0, 0, W, H + 80, '#05060f'); ctx.globalAlpha = 1; }
   ctx.restore();
-  txt('v' + APP_VERSION + ' ' + R.storageTag, W - INR - 5, TOP + 8, { size: 7, halo: true, align: 'right', alpha: .6 });
   if (R.panel) drawPanel(); else drawMenu();
   if (!R.bg || !R.sheet || !ready) {
     rect(0, 130, W, 24, '#000'); ctx.fillStyle = '#fff'; ctx.font = 'bold 10px ' + MONO;
