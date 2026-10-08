@@ -9,14 +9,27 @@ permissions:
   contents: read
   pages: write
   id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  actions: write
 
 jobs:
-  deploy:
+  # The github-pages environment only lets main deploy. A push to a creation
+  # branch therefore just starts this workflow again on main, which rebuilds the
+  # whole site (hub page plus every creation/* branch) and deploys it.
+  trigger:
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
+    steps:
+      - name: Rebuild the site from main
+        run: gh workflow run pages.yml --ref main --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
