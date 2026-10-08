@@ -64,6 +64,8 @@ Gleiche Creation, alle Texte auf Englisch (eigener Speicherstand). Auf dem R1: C
 
 Im Browser: `https://luxx1993.github.io/r1-creations/clawd-en/index.html`
 
+Demo-Video (English, 30 s): [clawd-demo-en.mp4](https://luxx1993.github.io/r1-creations/clawd-en/demo/clawd-demo-en.mp4)
+
 ### Clawd am Desktop ausprobieren
 
 Clawd ist eine statische Seite (HTML, JavaScript und Bilder) und läuft in jedem normalen Browser, ohne Server und ohne den R1.
