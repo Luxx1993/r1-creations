@@ -23,6 +23,7 @@ assert.equal((await get(w, '/api/trending', null)).status, 404);
 assert.equal((await get(w, '/api/trending', 'wrong')).status, 404);
 assert.equal((await get(w, '/', null)).status, 404);
 assert.equal((await get(w, '/robots.txt', null)).status, 200);
+assert.deepEqual(await (await get(w, '/health', null)).json(), { ok: true, keyConfigured: true, keyLength: 10 });
 assert.match(await (await get(w, '/robots.txt', null)).text(), /Disallow: \//);
 assert.equal((await get(w, '/icon.png', null)).headers.get('x-robots-tag'), 'noindex, nofollow, noarchive');
 const page = await get(w, '/?k=secret-key', null);

@@ -245,6 +245,8 @@ export default {
     const url = new URL(req.url);
     if (req.method !== 'GET' && req.method !== 'HEAD') return finish(new Response('Method not allowed', { status: 405 }));
     if (url.pathname === '/robots.txt') return finish(new Response('User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain' } }));
+    // Public setup check: says only whether a key is configured, never which.
+    if (url.pathname === '/health') return finish(json({ ok: true, keyConfigured: !!env.ACCESS_KEY, keyLength: (env.ACCESS_KEY || '').length }));
     if (!PUBLIC_PATHS.has(url.pathname)) {
       const key = req.headers.get('x-access-key') || url.searchParams.get('k') || '';
       if (!safeEqual(key, env.ACCESS_KEY)) return finish(new Response('Not found', { status: 404 }));
