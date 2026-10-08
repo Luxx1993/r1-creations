@@ -19,6 +19,7 @@ Die Seite `https://luxx1993.github.io/r1-creations/` listet alle Creations. Jede
 | Tally | `creation/tally` | Strichlisten-Zähler mit Auto-Rotation |
 | Marble Maze | `creation/marble-maze` | Murmel-Labyrinth: 15 Level, Neigung per Beschleunigungssensor, Drehregler = Tempo (10 Stufen) |
 | Clawd | `creation/clawd` | Clawd als Haustier im Diorama: 7 Szenen und 11 Stile aus dem Claude-Fables-Plugin, Hüte, Brillen und Schleifen, Auto-Rotation |
+| Clawd (English) | `creation/clawd-en` | Englische Fassung von Clawd: gleiche Funktionen, alle Texte auf Englisch |
 | Todoist | `creation/todoist` | Todoist-Aufgaben mit Sync: Heute, Eingang, Projekte, Suche, Sprach-Eingabe per PTT, Offline-Queue, Vorlesen. Deutsch und Englisch |
 
 ### Tally installieren
@@ -54,6 +55,14 @@ Clawd ist ein Haustier ohne Pflege und ohne Level in einer endlosen Welt (keine 
 - Optionen: Klang (Stil, Retro, Glocken, Minimal), Lautstärke (Aus bis 100 %), Ruhezeiten (Töne nachts stumm: 22–07, 23–08, 00–06) und Bewegung (Normal/Ruhig). In „Welt“ lässt sich die Tageszeit-Reaktion („Zeit“) abschalten.
 - Tageszeit: Nach der echten Uhrzeit tönt sich die Szene (Morgenrot, Abendrot, Nacht), Clawd begrüßt dich passend, ist morgens munterer, abends ruhiger mit mehr Pfeifen, nachts langsamer und schläft schneller ein (manchmal findest du ihn schlafend), und die Musik wird nachts leiser und langsamer.
 - Szenen, Stile und Animationen stammen aus dem Claude-Fables-Plugin und sind vorgerendert (`src/` im Branch enthält Generator und Anleitung). Noch nicht auf dem echten Gerät getestet: Sensorfunktionen, Auto-Rotation und die Ladezeit der rund 4 MB Bilder.
+
+### Clawd (English) installieren
+
+Gleiche Creation, alle Texte auf Englisch (eigener Speicherstand). Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+
+[![Install-QR für Clawd (English) – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd-en/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd-en)
+
+Im Browser: `https://luxx1993.github.io/r1-creations/clawd-en/index.html`
 
 ### Clawd am Desktop ausprobieren
 
