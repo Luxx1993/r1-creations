@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, height=282, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Wasserwaage</title>
+<title>Bubble Level</title>
 <style>
   html, body { margin: 0; width: 240px; height: 282px; overflow: hidden;
                background: #111; color: #fff;
@@ -33,7 +33,7 @@
       <line x1="176" y1="141" x2="220" y2="141" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
     </g>
     <text id="lnVal" class="halo" x="120" y="222" font-size="40" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
-    <text id="lnHint" class="halo" x="120" y="260" font-size="14" text-anchor="middle" dominant-baseline="central" display="none">Hochkant halten</text>
+    <text id="lnHint" class="halo" x="120" y="260" font-size="14" text-anchor="middle" dominant-baseline="central" display="none">Hold upright</text>
     <rect class="hit" data-hit="value" x="30" y="194" width="180" height="56"/>
   </g>
 
@@ -112,7 +112,7 @@ const FRAME_MS = 40;         // neu zeichnen mit 25 Hz
 const LEVEL_DEG = 0.3;       // darunter gilt die Anzeige als eben
 const FLAT_G = 0.85;         // |az| darüber: R1 liegt flach (Linie/Libellen)
 const UPRIGHT_G = 0.5;       // |az| darunter: R1 steht (3D)
-const KEY = 'wasserwaage_state';
+const KEY = 'bubble_level_en_state';
 const MODES = ['m-line', 'm-vials', 'm-3d'];
 const DEG = 180 / Math.PI;
 
@@ -361,8 +361,8 @@ function drawVials(s) {
     $(v.id).querySelectorAll('.mk').forEach((m) => m.classList.toggle('lv', i === act && level));
   });
   const lbl = $('vLbl');
-  if (s.flat) { lbl.textContent = 'Hochkant halten'; lbl.setAttribute('opacity', 1); }
-  else { lbl.textContent = (pick >= 0 ? '● ' : '') + 'Abw. ' + VIALS[act].ziel + '°'; lbl.setAttribute('opacity', 0.7); }
+  if (s.flat) { lbl.textContent = 'Hold upright'; lbl.setAttribute('opacity', 1); }
+  else { lbl.textContent = (pick >= 0 ? '● ' : '') + 'Off ' + VIALS[act].ziel + '°'; lbl.setAttribute('opacity', 0.7); }
   setVal($('vVal'), s.flat ? null : SHOW * dv, 26);
 }
 
@@ -378,7 +378,7 @@ function draw3d(s) {
   const tot = stab('tot', s.tot);
   b.setAttribute('stroke-width', isLevel('3d', tot) ? 2 : 0);
   const lbl = $('tLbl');
-  lbl.textContent = s.upright ? 'Flach auflegen' : 'Gesamt';
+  lbl.textContent = s.upright ? 'Lay it flat' : 'Total';
   lbl.setAttribute('opacity', s.upright ? 1 : 0.7);
   setVal($('tVal'), tot, 30);
   $('tX').textContent = 'X ' + short(SHOW * stab('x', s.X));
@@ -416,20 +416,20 @@ function calibrate() {
   const m = measure();
   setHold(false);
   if (st.mode === 2) {
-    if (m.upright) { toast('Flach auflegen'); return; }
+    if (m.upright) { toast('Lay it flat'); return; }
     st.offX = m.Xr; st.offY = m.Yr;
   } else {
-    if (m.flat) { toast('Hochkant halten'); return; }
+    if (m.flat) { toast('Hold upright'); return; }
     st.offT = devStep(m.thRaw, 45);          // Abweichung zum nächsten Vielfachen von 45°
   }
   save();
-  toast('Kalibriert');
+  toast('Calibrated');
 }
 function resetCal() {
   st.offT = st.offX = st.offY = 0;
   setHold(false);
   save();
-  toast('Zurückgesetzt');
+  toast('Reset');
 }
 window.addEventListener('sideClick', () => {
   if (Date.now() - lastLong < 700) return;   // Loslassen nach langem Druck zählt nicht als Klick
@@ -444,7 +444,7 @@ window.addEventListener('longPressStart', () => {
 window.addEventListener('longPressEnd', () => { lastLong = Date.now(); });
 
 // Scrollrad: Einheit °, % Gefälle, mm/m (gilt für alle Modi, wird gespeichert)
-const UNIT_NAMES = ['Grad °', 'Gefälle %', 'mm/m'];
+const UNIT_NAMES = ['Degrees °', 'Slope %', 'mm/m'];
 function wheel(dir) {
   st.unit = mod(st.unit + dir, 3);
   save();
@@ -488,7 +488,7 @@ if (typeof PluginMessageHandler === 'undefined') {
 (async () => {
   loadQuick();
   setMode(st.mode);
-  toast('Wasserwaage v' + APP_VERSION, 1500);
+  toast('Bubble Level v' + APP_VERSION, 1500);
   requestAnimationFrame(frame);
   initSensors();
   const m = st.mode;

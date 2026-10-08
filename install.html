@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install Bubble Level</title>
+<style>
+  :root { --bg: #f6f6f4; --fg: #111; --muted: #5b5b5b; --card: #fff; --line: #e2e2de; --accent: #1a7a30; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111; --fg: #f2f2f2; --muted: #a3a3a3; --card: #1b1b1b; --line: #2c2c2c; --accent: #4cd964; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin: 0 0 4px; font-size: 26px; display: flex; align-items: center; gap: 12px; }
+  h1 img { border-radius: 14px; }
+  h2 { font-size: 18px; margin: 28px 0 8px; }
+  p, li { color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .qr { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .qr img { width: 520px; max-width: 100%; height: auto; background: #fff; border-radius: 8px; image-rendering: pixelated; }
+  .qr ol { margin: 0; padding-left: 20px; flex: 1; min-width: 200px; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  td:first-child { white-space: nowrap; font-weight: 600; color: var(--fg); }
+  code, pre { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { white-space: pre-wrap; word-break: break-all; margin: 0; color: var(--muted); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1><img src="icon.png" alt="" width="48" height="48">Bubble Level</h1>
+  <p>Inclinometer and spirit level for the Rabbit R1 with three modes: line, vials and 3D. Version 0.1.1.</p>
+
+  <h2>Install</h2>
+  <div class="card qr">
+    <img src="qr.png" alt="Install QR code for Bubble Level">
+    <ol>
+      <li>Open the creations card on the R1.</li>
+      <li>Choose “add via QR code” and scan this code.</li>
+      <li>Updating: uninstall the old card first, then scan the new code (the R1 remembers the address).</li>
+    </ol>
+  </div>
+  <p>Open it in a browser: <a href="index-v0.1.1.html">index-v0.1.1.html</a> (mouse = tilt).</p>
+
+  <h2>Controls</h2>
+  <div class="card">
+    <table>
+      <tr><td>Side button</td><td>Switch mode: line → vials → 3D</td></tr>
+      <tr><td>Long press</td><td>Calibrate (“Calibrated”)</td></tr>
+      <tr><td>Double click</td><td>Reset calibration (“Reset”)</td></tr>
+      <tr><td>Scroll wheel</td><td>Unit: degrees, % slope, mm/m</td></tr>
+      <tr><td>Tap the big number</td><td>HOLD (freeze the value), tap again to release</td></tr>
+      <tr><td>Tap a vial</td><td>Lock that vial, tap again = automatic</td></tr>
+    </table>
+  </div>
+
+  <h2>QR content</h2>
+  <div class="card"><pre>{
+  &quot;title&quot;: &quot;Bubble Level&quot;,
+  &quot;url&quot;: &quot;https://luxx1993.github.io/r1-creations/bubble-level-en/index-v0.1.1.html&quot;,
+  &quot;description&quot;: &quot;Inclinometer&quot;,
+  &quot;iconUrl&quot;: &quot;https://luxx1993.github.io/r1-creations/bubble-level-en/icon.png&quot;,
+  &quot;themeColor&quot;: &quot;#4cd964&quot;
+}</pre></div>
+</main>
+</body>
+</html>

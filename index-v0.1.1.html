@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, height=282, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Wasserwaage</title>
+<title>Bubble Level</title>
 <style>
   html, body { margin: 0; width: 240px; height: 282px; overflow: hidden;
                background: #111; color: #fff;
@@ -33,7 +33,7 @@
       <line x1="176" y1="141" x2="220" y2="141" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
     </g>
     <text id="lnVal" class="halo" x="120" y="222" font-size="40" font-weight="700" text-anchor="middle" dominant-baseline="central"></text>
-    <text id="lnHint" class="halo" x="120" y="260" font-size="14" text-anchor="middle" dominant-baseline="central" display="none">Hochkant halten</text>
+    <text id="lnHint" class="halo" x="120" y="260" font-size="14" text-anchor="middle" dominant-baseline="central" display="none">Hold upright</text>
     <rect class="hit" data-hit="value" x="30" y="194" width="180" height="56"/>
   </g>
 
@@ -89,7 +89,7 @@
   </g>
 </svg>
 <script>
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '0.1.1';
 
 // ---- Achsen: falls die Blase auf dem echten R1 zur tieferen statt zur höheren Seite wandert,
 // hier umdrehen. X/Y wirken auf alle Modi, THETA nur auf Linie und Libellen.
@@ -100,12 +100,19 @@ const INVERT_THETA = false;
 // Ändert nur die Zahl, nicht die Richtung der Blase.
 const SHOW = -1;
 
-const SMOOTH = 0.2;          // Tiefpass-Faktor pro Sensorwert (60 Hz)
+// Glättung in zwei Stufen (pro Sensorwert, 60 Hz): eine schnelle Stufe erkennt Bewegung,
+// die langsame liefert die Anzeige. Bewegt sich das Gerät deutlich (> MOVE_G), folgt sie sofort.
+const SMOOTH_FAST = 0.2;
+const SMOOTH_SLOW = 0.02;     // in Ruhe: Zeitkonstante ca. 0,8 s
+const MOVE_G = 0.03;          // ca. 1,7°: darüber gilt das Gerät als bewegt
+const SETTLE_MS = 400;        // nach einer Bewegung so lange schnell nachführen
+const HYST_DEG = 0.08;        // Anzeige springt erst, wenn der Wert so weit vom angezeigten Zehntel weg ist
+const LEVEL_OFF_DEG = 0.45;   // "eben" endet erst ab hier (Hysterese)
 const FRAME_MS = 40;         // neu zeichnen mit 25 Hz
 const LEVEL_DEG = 0.3;       // darunter gilt die Anzeige als eben
 const FLAT_G = 0.85;         // |az| darüber: R1 liegt flach (Linie/Libellen)
 const UPRIGHT_G = 0.5;       // |az| darunter: R1 steht (3D)
-const KEY = 'wasserwaage_state';
+const KEY = 'bubble_level_en_state';
 const MODES = ['m-line', 'm-vials', 'm-3d'];
 const DEG = 180 / Math.PI;
 
@@ -157,10 +164,19 @@ document.addEventListener('visibilitychange', () => { if (saveTimer) flush(); })
 // ---- Sensor: geglättete Schwerkraft in g. Bildschirmkoordinaten: x nach rechts, y nach unten.
 const acc = { x: 0, y: 1, z: 0 };
 let gotReal = false;
+const fast = { x: 0, y: 1, z: 0 };
+let movingUntil = 0;
 function sample(x, y, z) {
-  acc.x += (x - acc.x) * SMOOTH;
-  acc.y += (y - acc.y) * SMOOTH;
-  acc.z += (z - acc.z) * SMOOTH;
+  fast.x += (x - fast.x) * SMOOTH_FAST;
+  fast.y += (y - fast.y) * SMOOTH_FAST;
+  fast.z += (z - fast.z) * SMOOTH_FAST;
+  const d = Math.max(Math.abs(fast.x - acc.x), Math.abs(fast.y - acc.y), Math.abs(fast.z - acc.z));
+  const now = Date.now();
+  if (d > MOVE_G) movingUntil = now + SETTLE_MS;
+  const k = now < movingUntil ? 0.3 : SMOOTH_SLOW;
+  acc.x += (fast.x - acc.x) * k;
+  acc.y += (fast.y - acc.y) * k;
+  acc.z += (fast.z - acc.z) * k;
 }
 function onAccel(d) {
   if (!d) return;
@@ -252,7 +268,20 @@ function fmt(deg) {
   return s.replace('-', '−');
 }
 const shownDeg = (deg) => Math.round(deg * 10) / 10;      // so wie angezeigt (eine Nachkommastelle)
-const isLevel = (deg) => Math.abs(shownDeg(deg)) < LEVEL_DEG;
+// Angezeigte Werte mit Hysterese: ein neues Zehntel erscheint erst, wenn der Messwert mehr als
+// HYST_DEG vom angezeigten Wert entfernt ist (Rundungsgrenze liegt bei 0,05). In Ruhe steht so
+// immer der korrekt gerundete Wert, nahe an der Grenze flackert die letzte Stelle nicht. Eben-Zustand: an unter LEVEL_DEG, aus ab LEVEL_OFF_DEG.
+const stable = {}, levelOn = {};
+function stab(key, deg) {
+  const p = stable[key];
+  if (p === undefined || (shownDeg(deg) !== p && Math.abs(deg - p) > HYST_DEG)) stable[key] = shownDeg(deg);
+  return stable[key];
+}
+function isLevel(key, deg) {
+  const a = Math.abs(shownDeg(deg));
+  levelOn[key] = levelOn[key] ? a < LEVEL_OFF_DEG : a < LEVEL_DEG;
+  return levelOn[key];
+}
 // Wert mit Einheit in ein <text> schreiben; % und mm/m kleiner hinter der Zahl
 function setVal(el, deg, size) {
   if (deg === null) { el.textContent = '—'; return; }
@@ -283,11 +312,11 @@ function draw(m) {
 // MODUS 1: Linie. a = Abweichung zum nächsten Vielfachen von 90°; die Trennlinie dreht sich
 // um -a um die Bildmitte und bleibt so zur Schwerkraft ausgerichtet.
 function drawLine(s) {
-  const a = devStep(s.th, 90);
+  const a = devStep(s.th, 90), av = stab('ln', a);
   $('lnRot').setAttribute('transform', 'rotate(' + (-a).toFixed(2) + ' 120 141)');
-  setVal($('lnVal'), s.flat ? null : SHOW * a, 40);
+  setVal($('lnVal'), s.flat ? null : SHOW * av, 40);
   show('lnHint', s.flat);
-  $('bg').setAttribute('fill', !s.flat && isLevel(a) ? '#4cd964' : '#111');
+  $('bg').setAttribute('fill', !s.flat && isLevel('ln', av) ? '#4cd964' : '#111');
 }
 let lastDraw = 0;
 function frame(now) {
@@ -319,7 +348,8 @@ function drawVials(s) {
   const ds = VIALS.map((v) => dev(s.th, v.ziel));
   let act = pick;
   if (act < 0) { act = 0; for (let i = 1; i < 3; i++) if (Math.abs(ds[i]) < Math.abs(ds[act])) act = i; }
-  const level = !s.flat && isLevel(ds[act]);
+  const dv = stab('v', ds[act]);
+  const level = !s.flat && isLevel('v', dv);
   VIALS.forEach((v, i) => {
     const off = clamp(-8 * Math.asin(clamp(v.ux * gx + v.uy * gy, -1, 1)) * DEG, -v.max, v.max);
     const b = $(v.id + 'b');
@@ -331,9 +361,9 @@ function drawVials(s) {
     $(v.id).querySelectorAll('.mk').forEach((m) => m.classList.toggle('lv', i === act && level));
   });
   const lbl = $('vLbl');
-  if (s.flat) { lbl.textContent = 'Hochkant halten'; lbl.setAttribute('opacity', 1); }
-  else { lbl.textContent = (pick >= 0 ? '● ' : '') + 'Abw. ' + VIALS[act].ziel + '°'; lbl.setAttribute('opacity', 0.7); }
-  setVal($('vVal'), s.flat ? null : SHOW * ds[act], 26);
+  if (s.flat) { lbl.textContent = 'Hold upright'; lbl.setAttribute('opacity', 1); }
+  else { lbl.textContent = (pick >= 0 ? '● ' : '') + 'Off ' + VIALS[act].ziel + '°'; lbl.setAttribute('opacity', 0.7); }
+  setVal($('vVal'), s.flat ? null : SHOW * dv, 26);
 }
 
 // MODUS 3: 3D. Blase = (X, Y) × 7 px pro Grad zur höheren Seite, Vektor auf 79 px begrenzt.
@@ -345,13 +375,14 @@ function draw3d(s) {
   const b = $('b3');
   b.setAttribute('cx', (120 + bx).toFixed(1));
   b.setAttribute('cy', (112 + by).toFixed(1));
-  b.setAttribute('stroke-width', isLevel(s.tot) ? 2 : 0);
+  const tot = stab('tot', s.tot);
+  b.setAttribute('stroke-width', isLevel('3d', tot) ? 2 : 0);
   const lbl = $('tLbl');
-  lbl.textContent = s.upright ? 'Flach auflegen' : 'Gesamt';
+  lbl.textContent = s.upright ? 'Lay it flat' : 'Total';
   lbl.setAttribute('opacity', s.upright ? 1 : 0.7);
-  setVal($('tVal'), s.tot, 30);
-  $('tX').textContent = 'X ' + short(SHOW * s.X);
-  $('tY').textContent = 'Y ' + short(SHOW * s.Y);
+  setVal($('tVal'), tot, 30);
+  $('tX').textContent = 'X ' + short(SHOW * stab('x', s.X));
+  $('tY').textContent = 'Y ' + short(SHOW * stab('y', s.Y));
 }
 
 // ---- Touch: Ziel über unsichtbare Flächen (class="hit", data-hit) bestimmen
@@ -385,20 +416,20 @@ function calibrate() {
   const m = measure();
   setHold(false);
   if (st.mode === 2) {
-    if (m.upright) { toast('Flach auflegen'); return; }
+    if (m.upright) { toast('Lay it flat'); return; }
     st.offX = m.Xr; st.offY = m.Yr;
   } else {
-    if (m.flat) { toast('Hochkant halten'); return; }
+    if (m.flat) { toast('Hold upright'); return; }
     st.offT = devStep(m.thRaw, 45);          // Abweichung zum nächsten Vielfachen von 45°
   }
   save();
-  toast('Kalibriert');
+  toast('Calibrated');
 }
 function resetCal() {
   st.offT = st.offX = st.offY = 0;
   setHold(false);
   save();
-  toast('Zurückgesetzt');
+  toast('Reset');
 }
 window.addEventListener('sideClick', () => {
   if (Date.now() - lastLong < 700) return;   // Loslassen nach langem Druck zählt nicht als Klick
@@ -413,7 +444,7 @@ window.addEventListener('longPressStart', () => {
 window.addEventListener('longPressEnd', () => { lastLong = Date.now(); });
 
 // Scrollrad: Einheit °, % Gefälle, mm/m (gilt für alle Modi, wird gespeichert)
-const UNIT_NAMES = ['Grad °', 'Gefälle %', 'mm/m'];
+const UNIT_NAMES = ['Degrees °', 'Slope %', 'mm/m'];
 function wheel(dir) {
   st.unit = mod(st.unit + dir, 3);
   save();
@@ -457,7 +488,7 @@ if (typeof PluginMessageHandler === 'undefined') {
 (async () => {
   loadQuick();
   setMode(st.mode);
-  toast('Wasserwaage v' + APP_VERSION, 1500);
+  toast('Bubble Level v' + APP_VERSION, 1500);
   requestAnimationFrame(frame);
   initSensors();
   const m = st.mode;
