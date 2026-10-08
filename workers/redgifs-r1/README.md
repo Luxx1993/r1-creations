@@ -105,6 +105,32 @@ Ohne `wrangler login` (z. B. CI): Umgebungsvariablen `CLOUDFLARE_API_TOKEN` (Vor
 
 Schlüssel wechseln: `npx wrangler secret put ACCESS_KEY`, dann neu installieren.
 
+## Relay auf dem NAS (nötig, weil RedGifs Cloudflare drosselt)
+
+Getestet am 2026-10-08: Vom Worker aus klappt der Token-Abruf, aber `/v2/gifs/search` antwortet sofort mit
+`429 RateLimited`. Alle Cloudflare Worker teilen sich gegenüber RedGifs eine Absenderadresse. Deshalb gehen die
+API-Aufrufe über `relay/` (Docker auf dem NAS, Heim-IP). Der Worker bleibt Adresse, Schlüsselprüfung und App.
+Videos lädt der R1 weiterhin direkt vom CDN.
+
+```
+R1 ──► Worker (Schlüssel, App, Cache) ──► Relay auf dem NAS (Tailscale Funnel, HTTPS) ──► api.redgifs.com
+R1 ──────────────────────────── Videos direkt ──────────────────────────────────────────► media.redgifs.com
+```
+
+1. **Tailscale** (kostenlos): Konto anlegen. Admin-Konsole → DNS: *MagicDNS* und *HTTPS Certificates* aktivieren.
+   Access controls: In der Policy muss `"nodeAttrs": [{"target": ["autogroup:member"], "attr": ["funnel"]}]`
+   stehen (bei neuen Tailnets Standard). Settings → Keys → **Generate auth key**.
+2. **Auf dem NAS** einen Ordner anlegen (z. B. `docker/r1-relay`) mit `relay.mjs`, `serve.json`,
+   `docker-compose.yml` und `.env` (aus `.env.example`): `TS_AUTHKEY=` und `RELAY_SECRET=` (32 Buchstaben/Ziffern).
+   Dann `docker compose up -d` bzw. im NAS-UI als Compose-Projekt starten.
+3. Test: `https://r1-relay.<tailnet>.ts.net/healthz` → `{"ok":true}` (Tailnet-Name steht in der Tailscale-Konsole unter DNS).
+4. **Worker** → Settings → Runtime variables and secrets:
+   `RELAY_URL` = `https://r1-relay.<tailnet>.ts.net` (Text) und `RELAY_SECRET` = derselbe Wert wie auf dem NAS (Secret).
+5. `/health` am Worker zeigt `"relay": true`. Danach lädt die App.
+
+Das Relay leitet nur `GET /v1/…` und `/v2/…` an `api.redgifs.com` weiter, nur mit richtigem `X-Relay-Secret`,
+und protokolliert keine Inhalte. Ohne `RELAY_URL` ruft der Worker RedGifs wie bisher direkt auf.
+
 ## Bedienung
 
 | Eingabe | Feed | Explore / Niches | Suche |

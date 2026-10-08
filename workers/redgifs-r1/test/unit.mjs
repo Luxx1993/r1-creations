@@ -23,8 +23,8 @@ assert.equal((await get(w, '/api/trending', null)).status, 404);
 assert.equal((await get(w, '/api/trending', 'wrong')).status, 404);
 assert.equal((await get(w, '/', null)).status, 404);
 assert.equal((await get(w, '/robots.txt', null)).status, 200);
-assert.deepEqual(await (await get(w, '/health', null)).json(), { ok: true, keyConfigured: true, keyLength: 10 });
-assert.deepEqual(await (await get(w, '/health?k=secret-key', null)).json(), { ok: true, keyConfigured: true, keyLength: 10, givenLength: 10, keyMatches: true });
+assert.deepEqual(await (await get(w, '/health', null)).json(), { ok: true, keyConfigured: true, keyLength: 10, relay: false });
+assert.deepEqual(await (await get(w, '/health?k=secret-key', null)).json(), { ok: true, keyConfigured: true, keyLength: 10, relay: false, givenLength: 10, keyMatches: true });
 assert.equal((await (await get(w, '/health?k=nope', null)).json()).keyMatches, false);
 assert.equal((await get(w, '/', null)).headers.get('cache-control'), 'no-store');
 assert.match(await (await get(w, '/robots.txt', null)).text(), /Disallow: \//);
@@ -92,4 +92,19 @@ for (const bad of ['http://media.redgifs.com/a.mp4', 'https://evil.com/a.mp4', '
   assert.equal((await m(bad)).status, 400, bad);
 }
 assert.equal((await get(w, '/media?u=' + encodeURIComponent('https://media.redgifs.com/a.mp4'), null)).status, 404);
+// relay mode: every RedGifs API call (token included) goes to RELAY_URL with the relay secret
+const relayed = [];
+reset();
+w = await load((input, init) => {
+  const u = new URL(String(input));
+  if (u.hostname === 'relay.test') { relayed.push({ path: u.pathname + u.search, secret: init.headers['X-Relay-Secret'], ua: init.headers['User-Agent'] });
+    return mock(new URL('https://api.redgifs.com' + u.pathname + u.search), init); }
+  if (u.hostname === 'api.redgifs.com') throw new Error('direct API call in relay mode');
+  return apiFetch(input, init);
+});
+const renv = { ...env, RELAY_URL: 'https://relay.test/', RELAY_SECRET: 'relay-secret-123456' };
+res = await w.fetch(new Request('https://w.test/api/trending', { headers: { 'x-access-key': 'secret-key' } }), renv);
+assert.equal(res.status, 200);
+assert.deepEqual(relayed.map((x) => x.path.split('?')[0]), ['/v2/auth/temporary', '/v2/gifs/search']);
+assert.ok(relayed.every((x) => x.secret === 'relay-secret-123456' && x.ua.includes('Mozilla')));
 console.log('unit: all assertions passed');

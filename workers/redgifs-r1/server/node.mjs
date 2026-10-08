@@ -46,7 +46,7 @@ const ASSETS = {
     return new Response(await readFile(file), { headers: { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream' } });
   },
 };
-const env = { ACCESS_KEY: process.env.ACCESS_KEY, ASSETS };
+const env = { ACCESS_KEY: process.env.ACCESS_KEY, RELAY_URL: process.env.RELAY_URL, RELAY_SECRET: process.env.RELAY_SECRET, ASSETS };
 
 http.createServer(async (req, res) => {
   try {

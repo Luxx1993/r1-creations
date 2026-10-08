@@ -32,6 +32,15 @@ async function kvPut(env, key, value, ttlS) {
   mem.kv.set(key, value);
 }
 
+// RedGifs throttles the address shared by all Cloudflare Workers, so API calls can go through a
+// relay with its own IP (relay/ in this repo). Media still loads directly on the device.
+function upstream(env, path, headers) {
+  if (env.RELAY_URL) {
+    return fetch(env.RELAY_URL.replace(/\/+$/, '') + path, { headers: { ...headers, 'X-Relay-Secret': env.RELAY_SECRET || '' } });
+  }
+  return fetch(API + path, { headers });
+}
+
 const now = () => Date.now();
 const sec = () => Math.floor(Date.now() / 1000);
 
@@ -61,7 +70,7 @@ async function fetchToken(env) {
   }
   log.push(now());
   await kvPut(env, 'token_log', log, 3600);
-  const r = await fetch(API + '/v2/auth/temporary', { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+  const r = await upstream(env, '/v2/auth/temporary', { 'User-Agent': UA, Accept: 'application/json' });
   if (r.status === 429) throw new HttpError(429, 'rate_limited', await setBackoff(env, r, 'token'));
   if (!r.ok) throw new HttpError(502, 'token_failed', { upstream: r.status });
   const body = await r.json();
@@ -100,9 +109,8 @@ async function bumpStat(env, key) {
 // ---------- upstream API ----------
 async function api(env, path, { auth = true } = {}) {
   await checkBackoff(env);
-  const call = async (tok) => fetch(API + path, {
-    headers: { 'User-Agent': UA, Accept: 'application/json', ...(tok ? { Authorization: 'Bearer ' + tok } : {}) },
-  });
+  const call = async (tok) => upstream(env, path,
+    { 'User-Agent': UA, Accept: 'application/json', ...(tok ? { Authorization: 'Bearer ' + tok } : {}) });
   let tok = auth ? await getToken(env) : null;
   let r = await call(tok);
   if (auth && (r.status === 401 || r.status === 403)) {
@@ -197,7 +205,7 @@ const routes = {
     return {
       token: t ? { addr: t.addr, ageMin: Math.round((now() - t.at) / 60000), expiresInMin: Math.round((t.exp - sec()) / 60) } : null,
       tokenFetchesLastHour: log.length, maxPerHour: MAX_TOKEN_FETCHES_PER_HOUR,
-      backoff: await kvGet(env, 'backoff'), last429: await kvGet(env, 'last_429'), stats: (await kvGet(env, 'stats')) || {}, kv: !!env.TOKEN_KV,
+      backoff: await kvGet(env, 'backoff'), last429: await kvGet(env, 'last_429'), stats: (await kvGet(env, 'stats')) || {}, kv: !!env.TOKEN_KV, relay: env.RELAY_URL ? new URL(env.RELAY_URL).hostname : null,
     };
   },
 };
@@ -255,7 +263,7 @@ export default {
     // Public setup check: says only whether a key is configured, never which.
     if (url.pathname === '/health') {
       const given = url.searchParams.get('k');
-      return finish(json({ ok: true, keyConfigured: !!env.ACCESS_KEY, keyLength: (env.ACCESS_KEY || '').length,
+      return finish(json({ ok: true, keyConfigured: !!env.ACCESS_KEY, keyLength: (env.ACCESS_KEY || '').length, relay: !!env.RELAY_URL,
         ...(given !== null ? { givenLength: given.length, keyMatches: safeEqual(given, env.ACCESS_KEY) } : {}) }));
     }
     if (!PUBLIC_PATHS.has(url.pathname)) {
