@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
-<title>Marble Maze</title>
+<title>Murmel-Labyrinth</title>
 <style>
   html, body { margin: 0; width: 240px; height: 282px; overflow: hidden;
                background: #000; color: #fff; font: 14px system-ui, sans-serif;
@@ -36,7 +36,7 @@
 </div>
 <script>
 const APP_VERSION = '0.2.0';
-const KEY = 'marble_maze_state';
+const KEY = 'marble_maze_de_state';
 const W = 240, H = 224;
 const LEVELS = 15;
 const $ = (id) => document.getElementById(id);
@@ -181,7 +181,7 @@ function setup(level) {
 }
 
 function updateHud() {
-  $('lv').textContent = 'L' + L.level + ' S' + state.speed;
+  $('lv').textContent = 'L' + L.level + ' T' + state.speed;
   const b = state.best[L.level];
   $('tm').textContent = elapsed.toFixed(1) + 's' + (b ? ' / ' + b.toFixed(1) : '');
   $('ver').textContent = 'v' + APP_VERSION + ' ' + mode + (hasAcc ? ' a' : ' k') + (state.invY ? ' y-' : '');
@@ -260,9 +260,9 @@ function win() {
   state.level = last ? 1 : L.level + 1;
   save();
   const m = $('msg');
-  m.innerHTML = '<b>' + (last ? 'All ' + LEVELS + ' done!' : 'Level ' + L.level + ' done!') + '</b>' +
-    elapsed.toFixed(1) + 's' + (rec ? ' - new best' : '') +
-    '<small>click = ' + (last ? 'back to level 1' : 'next level') + '</small>';
+  m.innerHTML = '<b>' + (last ? 'Alle ' + LEVELS + ' geschafft!' : 'Level ' + L.level + ' geschafft!') + '</b>' +
+    elapsed.toFixed(1) + 's' + (rec ? ' - neuer Rekord' : '') +
+    '<small>Klick = ' + (last ? 'zurück zu Level 1' : 'nächstes Level') + '</small>';
   m.style.display = 'block';
   updateHud();
 }
@@ -278,7 +278,7 @@ function frame(ts) {
     if (started) elapsed = (ts - t0) / 1000;
     for (const [hx, hy] of L.holes) {
       if (Math.hypot(ball.x - hx, ball.y - hy) < L.cell * 0.2) {
-        ball.x = L.sx; ball.y = L.sy; ball.vx = ball.vy = 0; falls++; toast('fell in a hole!');
+        ball.x = L.sx; ball.y = L.sy; ball.vx = ball.vy = 0; falls++; toast('ins Loch gefallen!');
         break;
       }
     }
@@ -297,8 +297,8 @@ function frame(ts) {
 let menu = false, menuLv = 1;
 function showMenu() {
   const m = $('msg'), b = state.best[menuLv];
-  m.innerHTML = '<b>Level ' + menuLv + ' / ' + LEVELS + '</b>' + (b ? 'best ' + b.toFixed(1) + 's' : 'not solved yet') +
-    '<small>wheel = pick, click = start<br>long press = close</small>';
+  m.innerHTML = '<b>Level ' + menuLv + ' / ' + LEVELS + '</b>' + (b ? 'Rekord ' + b.toFixed(1) + 's' : 'noch nicht gelöst') +
+    '<small>Rad = wählen, Klick = Start<br>lang drücken = schließen</small>';
   m.style.display = 'block';
 }
 function openMenu() { menu = true; menuLv = L.level; showMenu(); }
@@ -314,16 +314,16 @@ function onClick() {
   if (won) { goLevel(state.level); lastWasCal = false; return; }
   if (lastWasCal && now - lastClick < 400) {      // double click: flip the Y axis
     state.invY = !state.invY; save(); recalibrate(); lastWasCal = false;
-    toast('Y axis ' + (state.invY ? 'inverted' : 'normal'));
+    toast('Y-Achse ' + (state.invY ? 'umgekehrt' : 'normal'));
     return;
   }
-  recalibrate(); lastClick = now; lastWasCal = true; toast('calibrated');
+  recalibrate(); lastClick = now; lastWasCal = true; toast('kalibriert');
 }
 function onWheel(dir) {
   if (menu) { menuLv = Math.max(1, Math.min(state.max, menuLv + dir)); showMenu(); return; }
   const s = Math.max(1, Math.min(10, state.speed + dir));
-  if (s === state.speed) { toast('speed ' + s + (s === 10 ? ' (max)' : ' (min)')); return; }
-  state.speed = s; save(); toast('speed ' + s + ' / 10'); updateHud();
+  if (s === state.speed) { toast('Tempo ' + s + (s === 10 ? ' (max)' : ' (min)')); return; }
+  state.speed = s; save(); toast('Tempo ' + s + ' / 10'); updateHud();
 }
 window.addEventListener('sideClick', onClick);
 window.addEventListener('scrollUp', () => onWheel(1));
