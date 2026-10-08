@@ -83,6 +83,9 @@ Kontrolle: `…/api/status?k=<SCHLÜSSEL>` zeigt Token-Alter, Abrufe pro Stunde 
    (solange PR #3 nicht gemergt ist: `ccr-218661c5-52xyn7`). „Retry build“ baut den alten Branch erneut,
    ein neuer Commit auf dem Branch startet den richtigen Build.
 4. Worker → Settings → Variables and Secrets → Add → Secret `ACCESS_KEY` (nur Buchstaben/Ziffern) → Deploy.
+   Alternativ den Schlüssel als **Build**-Secret `ACCESS_KEY` anlegen und als Deploy command `npm run deploy` setzen:
+   `scripts/sync-secret.mjs` überträgt ihn dann bei jedem Build als Laufzeit-Secret (Wert wird nie ausgegeben).
+   Prüfen: `/health` zeigt `keyConfigured: true`.
 5. `https://r1-rg.<subdomain>.workers.dev/install?k=<SCHLÜSSEL>` öffnen und den QR mit dem R1 scannen.
 
 Ohne `wrangler login` (z. B. CI): Umgebungsvariablen `CLOUDFLARE_API_TOKEN` (Vorlage „Edit Cloudflare Workers“) und
