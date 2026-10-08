@@ -1,30 +1,15 @@
-# RG Clips relay for a NAS: one self-contained file, nothing else to upload.
-# UGREEN (UGOS Pro): Docker -> Project -> Create, paste this file, replace the two HIER-EINTRAGEN values.
+# RG Clips relay for a NAS: one self-contained file, nothing else to upload, no ports to open.
+# The container connects OUT to your Cloudflare worker and fetches RedGifs lists with your home IP.
+# UGREEN (UGOS Pro): Docker -> Project -> Create, paste this file, fill in the two values below.
 # Other NAS / CLI: save as docker-compose.yml in an empty folder, then `docker compose up -d`.
 services:
-  tailscale:                             # gives the relay a fixed public HTTPS address (Tailscale Funnel)
-    image: tailscale/tailscale:latest
-    hostname: r1-relay                   # -> https://r1-relay.<your-tailnet>.ts.net
-    environment:
-      TS_AUTHKEY: "HIER-EINTRAGEN"       # Tailscale auth key, starts with tskey-auth-
-      TS_STATE_DIR: /var/lib/tailscale
-      TS_USERSPACE: "true"               # no /dev/net/tun or extra privileges needed
-      TS_SERVE_CONFIG: /tmp/serve.json
-      SERVE_JSON: '{"TCP":{"443":{"HTTPS":true}},"Web":{"$${TS_CERT_DOMAIN}:443":{"Handlers":{"/":{"Proxy":"http://127.0.0.1:8080"}}}},"AllowFunnel":{"$${TS_CERT_DOMAIN}:443":true}}'
-    entrypoint: ["/bin/sh", "-c", "printf '%s' \"$$SERVE_JSON\" > /tmp/serve.json && exec /usr/local/bin/containerboot"]
-    volumes:
-      - ./ts-state:/var/lib/tailscale
-    restart: unless-stopped
-
-  relay:                                 # forwards the worker's RedGifs API calls from your home IP
+  relay:
     image: node:22-alpine
-    network_mode: service:tailscale
-    depends_on: [tailscale]
     environment:
-      RELAY_SECRET: "HIER-EINTRAGEN"     # 32 letters/digits, same value as RELAY_SECRET in the worker
-      PORT: "8080"
+      WORKER_URL: "https://r1-rg.HIER-EINTRAGEN.workers.dev"   # your worker address
+      RELAY_SECRET: "HIER-EINTRAGEN"     # 32 letters/digits, same value as secret RELAY_SECRET in the worker
       # relay.mjs from this repo, pinned to a commit and checked against its SHA-256
-      RELAY_SRC: https://raw.githubusercontent.com/Luxx1993/r1-creations/fbb8a5afa0da31c92ad82eb45cecbb93a1e7b0c3/workers/redgifs-r1/relay/relay.mjs
-      RELAY_SHA256: 2b6cac996d365b25c9d8187c8d5c206f666cfad903b3351e6ff47c9e7da1b3c2
+      RELAY_SRC: https://raw.githubusercontent.com/Luxx1993/r1-creations/8f82f2733c8852bf5fb74fda93fc6dd0bfc10d43/workers/redgifs-r1/relay/relay.mjs
+      RELAY_SHA256: 1eed8ee632237ce35175f9d461c10c63dca2e44814ae4d085fb24242fb0749e2
     entrypoint: ["/bin/sh", "-c", "wget -qO /tmp/relay.mjs \"$$RELAY_SRC\" && echo \"$$RELAY_SHA256  /tmp/relay.mjs\" | sha256sum -c - && exec node /tmp/relay.mjs"]
     restart: unless-stopped

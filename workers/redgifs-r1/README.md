@@ -108,30 +108,29 @@ Schlüssel wechseln: `npx wrangler secret put ACCESS_KEY`, dann neu installieren
 ## Relay auf dem NAS (nötig, weil RedGifs Cloudflare drosselt)
 
 Getestet am 2026-10-08: Vom Worker aus klappt der Token-Abruf, aber `/v2/gifs/search` antwortet sofort mit
-`429 RateLimited`. Alle Cloudflare Worker teilen sich gegenüber RedGifs eine Absenderadresse. Deshalb gehen die
-API-Aufrufe über `relay/` (Docker auf dem NAS, Heim-IP). Der Worker bleibt Adresse, Schlüsselprüfung und App.
-Videos lädt der R1 weiterhin direkt vom CDN.
+`429 RateLimited`. Alle Cloudflare Worker teilen sich gegenüber RedGifs eine Absenderadresse. Deshalb holt ein
+kleiner Container zu Hause (`relay/`) die Clip-Listen mit der Heim-IP.
+
+Das Relay verbindet sich **von sich aus** per WebSocket mit dem Worker (`/relay/connect`) und hält die Leitung
+offen. Ein Durable Object (`RelayHub`) reicht jede RedGifs-Anfrage darüber weiter. Es braucht keine Port-Freigabe,
+keinen Tunnel und keinen öffentlichen DNS-Namen. Videos lädt der R1 weiterhin direkt vom CDN.
 
 ```
-R1 ──► Worker (Schlüssel, App, Cache) ──► Relay auf dem NAS (Tailscale Funnel, HTTPS) ──► api.redgifs.com
+R1 ──► Worker (Schlüssel, App, Cache) ──► RelayHub ◄══ WebSocket ══ Relay auf dem NAS ──► api.redgifs.com
 R1 ──────────────────────────── Videos direkt ──────────────────────────────────────────► media.redgifs.com
 ```
 
-1. **Tailscale** (kostenlos): Konto anlegen. Admin-Konsole → DNS: *MagicDNS* und *HTTPS Certificates* aktivieren.
-   Access controls: In der Policy muss `"nodeAttrs": [{"target": ["autogroup:member"], "attr": ["funnel"]}]`
-   stehen (bei neuen Tailnets Standard). Settings → Keys → **Generate auth key**.
-2. **Auf dem NAS** nur `relay/docker-compose.yml` als Compose-Projekt anlegen (UGREEN UGOS Pro: Docker → Projekt →
-   Erstellen, Inhalt einfügen) und die zwei Werte `HIER-EINTRAGEN` ersetzen: Tailscale-Auth-Key und `RELAY_SECRET`
-   (32 Buchstaben/Ziffern). Weitere Dateien sind nicht nötig: Der Container lädt `relay.mjs` von GitHub, festgelegt
-   auf einen Commit und per SHA-256 geprüft. Wird `relay.mjs` geändert, müssen Commit und Hash in der Compose-Datei
-   mitgezogen werden.
-3. Test: `https://r1-relay.<tailnet>.ts.net/healthz` → `{"ok":true}` (Tailnet-Name steht in der Tailscale-Konsole unter DNS).
-4. **Worker** → Settings → Runtime variables and secrets:
-   `RELAY_URL` = `https://r1-relay.<tailnet>.ts.net` (Text) und `RELAY_SECRET` = derselbe Wert wie auf dem NAS (Secret).
-5. `/health` am Worker zeigt `"relay": true`. Danach lädt die App.
+1. **Worker** → Settings → Runtime variables and secrets: Secret `RELAY_SECRET` (32 Buchstaben/Ziffern).
+   Ohne `RELAY_SECRET` fragt der Worker RedGifs direkt.
+2. **NAS**: `relay/docker-compose.yml` als Compose-Projekt anlegen (UGREEN UGOS Pro: Docker → Projekt → Erstellen)
+   und `WORKER_URL` sowie `RELAY_SECRET` (derselbe Wert) eintragen. Weitere Dateien sind nicht nötig: Der Container
+   lädt `relay.mjs` von GitHub, festgelegt auf einen Commit und per SHA-256 geprüft. Wird `relay.mjs` geändert,
+   müssen Commit und Hash in der Compose-Datei mitgezogen werden.
+3. `/health` am Worker zeigt `"relay": {"connected": 1, …}`. Das Container-Log zeigt `connected to https://…`.
 
-Das Relay leitet nur `GET /v1/…` und `/v2/…` an `api.redgifs.com` weiter, nur mit richtigem `X-Relay-Secret`,
-und protokolliert keine Inhalte. Ohne `RELAY_URL` ruft der Worker RedGifs wie bisher direkt auf.
+Das Relay nimmt nur Anfragen an `/v1/…` und `/v2/…` von `api.redgifs.com` an, verbindet sich bei Abbruch selbst neu
+(2 s bis 60 s Abstand) und protokolliert keine Inhalte. Ist es nicht verbunden, zeigt die App
+„NAS-Relay nicht verbunden“.
 
 ## Bedienung
 
