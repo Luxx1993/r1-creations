@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
@@ -19,7 +19,7 @@
 // Clawd, a pet diorama. Scenery, styles and Clawd's animations come from the
 // Claude Fables plugin (baked to images by src/r1assets.ts).
 const APP_VERSION = '0.12.2';
-const KEY = 'clawd:state';          // namespaced: all creations share one origin
+const KEY = 'clawd-en:state';          // namespaced: all creations share one origin
 const MANI = /*@MANI@*/null;
 const LOOKS = /*@LOOKS@*/null;
 // the canvas is 240x282 upright and 282x240 when the device is held sideways (see layout()); the OS bar always stays on the
@@ -34,11 +34,11 @@ let BGF, WORLD, ITEM_W, PH, PY;   // set by layout(): the cropped scenery fills 
 const K = 0.95 * 1.1;               // Clawd sheet px -> logical px
 const CELLW = MANI.cw * MANI.scale, CELLH = MANI.ch * MANI.scale;
 const SCENES = ['forest', 'space', 'city', 'desert', 'volcano', 'lab', 'night'];
-const SCENE_DE = { forest: 'Wald', space: 'Weltraum', city: 'Stadt', desert: 'Wüste', volcano: 'Vulkan', lab: 'Labor', night: 'Dorf' };
-const LOOK_DE = { pixel: 'Pixel Art', original: 'Original', cave: 'Höhle', blueprint: 'Blaupause', mosaic: 'Mosaik', aero: 'Frutiger Aero', engraving: 'Kupferstich', tapestry: 'Wandteppich', golden: 'Golden Age', ukiyoe: 'Ukiyo-e', kamon: 'Kamon' };
-const HATS = ['Nichts', 'Partyhut', 'Zylinder', 'Krone', 'Mütze', 'Propeller'];
-const FACES = ['Nichts', 'Brille', 'Sonnenbrille', 'Schnurrbart'];
-const BODIES = ['Nichts', 'Schleife', 'Schal'];
+const SCENE_NAME = { forest: 'Forest', space: 'Moon', city: 'City', desert: 'Desert', volcano: 'Volcano', lab: 'Lab', night: 'Village' };
+const LOOK_NAME = { pixel: 'Pixel Art', original: 'Original', cave: 'Cave', blueprint: 'Blueprint', mosaic: 'Mosaic', aero: 'Frutiger Aero', engraving: 'Copperplate', tapestry: 'Tapestry', golden: 'Golden Age', ukiyoe: 'Ukiyo-e', kamon: 'Kamon' };
+const HATS = ['None', 'Party hat', 'Top hat', 'Crown', 'Beanie', 'Propeller'];
+const FACES = ['None', 'Glasses', 'Sunglasses', 'Moustache'];
+const BODIES = ['None', 'Bow', 'Scarf'];
 
 const cv = document.getElementById('c');
 const DPR = Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
@@ -359,10 +359,10 @@ function tintAt(h) {
 }
 const tod = () => (S.tod ? R.tod : 'day');
 const TOD_QUIPS = {
-  morning: ['Guten Morgen!', 'Kaffee?', 'Frisch ans Werk!', 'Neuer Tag, neuer Commit!'],
-  day: ['git push!', 'Kompiliert!', 'Ship it!', 'Tests grün!'],
-  evening: ['Schöner Abend!', 'Feierabend?', 'git commit!', 'Zeit für Musik!'],
-  night: ['Gähn…', 'Nur noch ein Commit…', 'Sollten wir schlafen?', 'Mir fallen die Augen zu…'],
+  morning: ['Good morning!', 'Coffee?', 'Let\'s get going!', 'New day, new commit!'],
+  day: ['git push!', 'It compiles!', 'Ship it!', 'Tests are green!'],
+  evening: ['Lovely evening!', 'Done for today?', 'git commit!', 'Time for music!'],
+  night: ['Yawn…', 'Just one more commit…', 'Bedtime?', 'So sleepy…'],
 };
 const ACTS = {   // what Clawd likes to do at which time of day
   morning: [['walk', 46], ['wave', 14], ['spin', 10], ['dance', 8], ['happy', 10], ['whistle', 5], ['rope', 7]],
@@ -373,7 +373,7 @@ const ACTS = {   // what Clawd likes to do at which time of day
 const todSpeed = () => ({ morning: 1.15, day: 1, evening: .9, night: .65 }[tod()]);
 const todSleepAfter = () => ({ morning: 150, day: 120, evening: 80, night: 25 }[tod()]);
 const todWait = () => ({ morning: .8, day: 1, evening: 1.25, night: 1.7 }[tod()]);
-const TOD_HELLO = { morning: 'Guten Morgen!', day: 'Hallo!', evening: 'Guten Abend!', night: 'Gähn… hallo.' };
+const TOD_HELLO = { morning: 'Good morning!', day: 'Hello!', evening: 'Good evening!', night: 'Yawn… hi.' };
 
 // ---------- sound (all synthesised with WebAudio, no files) ----------
 let AC = null, master = null, musicG = null, musTimer = 0, musNext = 0, musStep = 0, musDeg = 2, musDuck = 1;
@@ -494,9 +494,9 @@ function startAct(anim, dur, text) { setMode('act', { act: { anim, dur } }); if 
 function wake(grumpy) {
   R.sleeping = false;
   idle(1.5);
-  say(grumpy ? 'Hey! Ich schlief!' : 'Guten Morgen!', 2);
+  say(grumpy ? 'Hey! I was asleep!' : 'Good morning!', 2);
 }
-const QUIPS = ['git push!', 'Kompiliert!', 'Kein Bug :)', 'npm i …', 'Ship it!', 'Hallo!', 'Tests grün!', 'Schick sieht das aus!'];
+const QUIPS = ['git push!', 'It compiles!', 'No bugs :)', 'npm i …', 'Ship it!', 'Hello!', 'Tests are green!', 'Looking sharp!'];
 function hearts(n) {
   for (let i = 0; i < n; i++) R.P.push({ kind: 'heart', x: R.x + rnd(-16, 16), y: feetY() - 90, vx: rnd(-10, 10), vy: -30 - i * 4, life: 1.2 });
 }
@@ -508,14 +508,14 @@ function tapReact() {
   if (R.sleeping) return wake(true);
   if (R.mode === 'dizzy') return;
   R.taps = R.taps.filter(t => R.time - t < 1.4); R.taps.push(R.time);
-  if (R.taps.length >= 4) { R.taps = []; setMode('dizzy'); return say('Hör auf, mir wird schwindlig!', 2); }
+  if (R.taps.length >= 4) { R.taps = []; setMode('dizzy'); return say('Stop, I\'m getting dizzy!', 2); }
   hearts(1);
-  if (S.calm) return startAct(Math.random() < .5 ? 'happy' : 'wave', 1.4, pick(['Hihi!', 'Hallo!']));
+  if (S.calm) return startAct(Math.random() < .5 ? 'happy' : 'wave', 1.4, pick(['Hehe!', 'Hello!']));
   const r = Math.random();
-  if (r < .3) startAct('wave', 1.6, pick(['Hallo!', 'Hi!', 'Na du!']));
-  else if (r < .55) startAct('happy', 1.4, pick(['Hihi!', 'Kitzelt!', 'Mehr!']));
+  if (r < .3) startAct('wave', 1.6, pick(['Hello!', 'Hi!', 'Hey you!']));
+  else if (r < .55) startAct('happy', 1.4, pick(['Hehe!', 'That tickles!', 'More!']));
   else if (r < .75) startAct('spin', 1.2, 'Wheee!');
-  else if (r < .9) startAct('celebrate', 1.4, 'Juhu!');
+  else if (r < .9) startAct('celebrate', 1.4, 'Yay!');
   else startAct('dance', 1.8, pick(QUIPS));
 }
 const oneQuip = () => (Math.random() < .6 ? pick(TOD_QUIPS[tod()]) : pick(QUIPS));
@@ -531,28 +531,28 @@ function act(i) {
   if (i === 4) return openPanel('options');
   if (busyNow()) return;
   if (i === 0) return openPanel('games');
-  else { R.sleeping = true; setMode('sleep'); say('Gute Nacht…'); }
+  else { R.sleeping = true; setMode('sleep'); say('Good night…'); }
 }
 // pickers: each column is an endless drum (rolodex) that rolls to its value
 const PANELS = {
   games: [
-    { label: 'Spiel', list: () => ['Ball', 'Seilspringen', 'Pfeifen'], get: () => R.gameSel, set: i => { R.gameSel = i; } },
+    { label: 'Game', list: () => ['Ball', 'Skipping rope', 'Whistling'], get: () => R.gameSel, set: i => { R.gameSel = i; } },
   ],
   world: [
-    { label: 'Ort', list: () => SCENES.map(k => SCENE_DE[k]), get: () => SCENES.indexOf(S.scene), set: i => { S.scene = SCENES[i]; loadWorld(); } },
-    { label: 'Stil', list: () => LOOKS.map(l => LOOK_DE[l.name] || l.name), get: () => LOOKS.findIndex(l => l.name === S.look), set: i => { S.look = LOOKS[i].name; loadWorld(); } },
-    { label: 'Zeit', list: () => ['Echtzeit', 'Aus'], get: () => (S.tod ? 0 : 1), set: i => { S.tod = i === 0; R.tod = todPeriod(hourNow()); } },
+    { label: 'Place', list: () => SCENES.map(k => SCENE_NAME[k]), get: () => SCENES.indexOf(S.scene), set: i => { S.scene = SCENES[i]; loadWorld(); } },
+    { label: 'Style', list: () => LOOKS.map(l => LOOK_NAME[l.name] || l.name), get: () => LOOKS.findIndex(l => l.name === S.look), set: i => { S.look = LOOKS[i].name; loadWorld(); } },
+    { label: 'Time', list: () => ['Real time', 'Off'], get: () => (S.tod ? 0 : 1), set: i => { S.tod = i === 0; R.tod = todPeriod(hourNow()); } },
   ],
   options: [
-    { label: 'Klang', list: () => ['Stil', 'Retro', 'Glocken', 'Minimal'], get: () => S.pack, set: i => { S.pack = i; audioUnlock(); snd('preview'); } },
-    { label: 'Laut', list: () => ['Aus', '25 %', '50 %', '75 %', '100 %'], get: () => S.vol, set: i => { S.vol = i; audioUnlock(); applyAudio(); snd('preview'); } },
-    { label: 'Ruhe', list: () => ['Aus', '22–07', '23–08', '00–06'], get: () => S.quiet, set: i => { S.quiet = i; applyAudio(); } },
-    { label: 'Bewegung', list: () => ['Normal', 'Ruhig'], get: () => S.calm, set: i => { S.calm = i; if (i) R.amb = []; else makeAmbient(); } },
+    { label: 'Sound', list: () => ['Style', 'Retro', 'Bells', 'Minimal'], get: () => S.pack, set: i => { S.pack = i; audioUnlock(); snd('preview'); } },
+    { label: 'Volume', list: () => ['Off', '25 %', '50 %', '75 %', '100 %'], get: () => S.vol, set: i => { S.vol = i; audioUnlock(); applyAudio(); snd('preview'); } },
+    { label: 'Quiet', list: () => ['Off', '10pm-7am', '11pm-8am', '12am-6am'], get: () => S.quiet, set: i => { S.quiet = i; applyAudio(); } },
+    { label: 'Motion', list: () => ['Normal', 'Calm'], get: () => S.calm, set: i => { S.calm = i; if (i) R.amb = []; else makeAmbient(); } },
   ],
   items: [
-    { label: 'Kopf', list: () => HATS, get: () => S.hat, set: i => { S.hat = i; } },
-    { label: 'Gesicht', list: () => FACES, get: () => S.face, set: i => { S.face = i; } },
-    { label: 'Körper', list: () => BODIES, get: () => S.body, set: i => { S.body = i; } },
+    { label: 'Head', list: () => HATS, get: () => S.hat, set: i => { S.hat = i; } },
+    { label: 'Face', list: () => FACES, get: () => S.face, set: i => { S.face = i; } },
+    { label: 'Body', list: () => BODIES, get: () => S.body, set: i => { S.body = i; } },
   ],
 };
 const mod = (v, n) => ((v % n) + n) % n;
@@ -608,8 +608,8 @@ function update(dt) {
     if (p !== R.tod) {
       R.tod = p;
       if (S.tod && ready && !R.panel && R.mode !== 'play' && R.mode !== 'rope') {
-        if (R.sleeping && p === 'morning') { wake(false); say('Guten Morgen!', 2.5); }
-        else if (!R.sleeping) { say({ morning: 'Guten Morgen!', day: 'Guten Tag!', evening: 'Guten Abend!', night: 'Gähn… Schlafenszeit?' }[p], 3); if (p === 'morning') startAct('wave', 1.6); }
+        if (R.sleeping && p === 'morning') { wake(false); say('Good morning!', 2.5); }
+        else if (!R.sleeping) { say({ morning: 'Good morning!', day: 'Good afternoon!', evening: 'Good evening!', night: 'Yawn… bedtime?' }[p], 3); if (p === 'morning') startAct('wave', 1.6); }
       }
     }
   }
@@ -638,7 +638,7 @@ function update(dt) {
   }
   if (m === 'idle') {
     R.wait -= dt;
-    if (R.time - R.lastTouch > todSleepAfter()) { R.sleeping = true; setMode('sleep'); return say(tod() === 'night' ? 'Gute Nacht…' : 'zZz…'); }   // nobody around: he dozes off, sooner at night
+    if (R.time - R.lastTouch > todSleepAfter()) { R.sleeping = true; setMode('sleep'); return say(tod() === 'night' ? 'Good night…' : 'zZz…'); }   // nobody around: he dozes off, sooner at night
     if (R.wait <= 0) {
       if (Math.random() < .3) say(oneQuip());
       R.wait = rnd(1.5, 4) * todWait() * (S.calm ? 1.5 : 1);
@@ -650,7 +650,7 @@ function update(dt) {
         R.fast = false; setMode('walk');
       } else if (act === 'rope') setMode('rope', { jumps: 0 });
       else if (act === 'whistle') whistle();
-      else if (act === 'shrug') startAct('shrug', 1.8, tod() === 'night' ? 'Gähn…' : '…?');
+      else if (act === 'shrug') startAct('shrug', 1.8, tod() === 'night' ? 'Yawn…' : '…?');
       else startAct(act, act === 'dance' ? 2 : act === 'spin' ? 1.2 : act === 'wave' ? 1.6 : 1.4);
     }
   } else if (m === 'walk') {
@@ -664,11 +664,11 @@ function update(dt) {
     const bn = Math.floor(R.t / .7); if (bn !== R.bn) { R.bn = bn; snd('bounce'); }
     const nx = R.cx + Math.sin(R.t * 1.5) * 60;
     R.look = Math.sign(nx - R.x) || R.look; R.x = nx;
-    if (R.t >= 4.2) { say('Das war toll!'); startAct('happy', 1.4); }
+    if (R.t >= 4.2) { say('That was fun!'); startAct('happy', 1.4); }
   } else if (m === 'rope') {
     const j = Math.floor(R.t / .7);
     if (j !== R.jumps) { R.jumps = j; snd('land'); if (j > 0) R.P.push({ kind: 'text', text: String(j), s: 11, x: R.x + 22, y: fy - 100, vx: 6, vy: -22, life: 1 }); }
-    if (R.t >= 5.6) { say('Geschafft!'); startAct('happy', 1.4); }
+    if (R.t >= 5.6) { say('Done it!'); startAct('happy', 1.4); }
   } else if (m === 'sleep') {
     if (R.time - R.lastSnore > 2.9) { R.lastSnore = R.time; snd('snore'); }
     if (Math.floor(R.t) !== Math.floor(R.t - dt))
@@ -748,7 +748,7 @@ function drawBubble(c) {
   txt(text, bx + w / 2, by + h / 2 + 1, { size, fill: u.ink, align: 'center' });
 }
 
-const MENU_LABELS = () => ['Spiel', R.sleeping ? 'Wecken' : 'Schlaf', 'Items', 'Welt', 'Optionen'];
+const MENU_LABELS = () => ['Play', R.sleeping ? 'Wake' : 'Sleep', 'Items', 'World', 'Options'];
 // [ ] mark what the wheel is on; they slide from one option to the next
 function brackets(key, l, r, y) {
   R.brkT = { l, r, y };
@@ -838,7 +838,7 @@ function draw() {
   if (R.panel) drawPanel(); else drawMenu();
   if (!R.bg || !R.sheet || !ready) {
     rect(0, 130, W, 24, '#000'); ctx.fillStyle = '#fff'; ctx.font = 'bold 10px ' + MONO;
-    ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.fillText('Lade…', W / 2, 142); ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.fillText('Loading…', W / 2, 142); ctx.textAlign = 'left';
   }
 }
 
@@ -897,7 +897,7 @@ async function boot() {
     loadWorld();
   }
   R.tod = todPeriod(hourNow());
-  say(!s ? 'Hallo, ich bin Clawd!' : S.tod ? TOD_HELLO[R.tod] : 'Hallo wieder!', 2.5);
+  say(!s ? 'Hi, I\'m Clawd!' : S.tod ? TOD_HELLO[R.tod] : 'Hello again!', 2.5);
   ready = true; R.lastTouch = R.time; saveNow();
   if (S.tod && R.tod === 'night' && Math.random() < .5) { R.sleeping = true; setMode('sleep'); say('zZz…', 2); }   // found him asleep
 }
@@ -994,7 +994,7 @@ function onAccel(d) {
   if (R.jerk > 2.5 && R.shakeCool <= 0 && ready && !R.panel) {
     R.shakeCool = 4; R.jerk = 0; touched();
     if (R.sleeping) wake(true);
-    else if (R.mode === 'idle' || R.mode === 'walk') { setMode('dizzy'); say('Uff… schwindlig'); }
+    else if (R.mode === 'idle' || R.mode === 'walk') { setMode('dizzy'); say('Whoa… dizzy'); }
   }
 }
 (async function initSensors() {

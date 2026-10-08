@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
@@ -19,7 +19,7 @@
 // Clawd, a pet diorama. Scenery, styles and Clawd's animations come from the
 // Claude Fables plugin (baked to images by src/r1assets.ts).
 const APP_VERSION = '0.12.2';
-const KEY = 'clawd:state';          // namespaced: all creations share one origin
+const KEY = 'clawd-en:state';          // namespaced: all creations share one origin
 const MANI = {"cw":70,"ch":66,"scale":2,"bgscale":2.5,"sw":320,"h":128,"floors":{"forest":104,"space":96,"city":104,"desert":104,"volcano":104,"lab":104,"night":104},"motions":{"idle":{"row":0,"frames":12,"dur":6},"walk":{"row":1,"frames":6,"dur":0.64},"sleep":{"row":2,"frames":6,"dur":3.2},"celebrate":{"row":3,"frames":8,"dur":0.7},"dance":{"row":4,"frames":8,"dur":0.9},"wave":{"row":5,"frames":6,"dur":0.8},"shrug":{"row":6,"frames":10,"dur":1.8},"spin":{"row":7,"frames":8,"dur":0.8},"rope":{"row":8,"frames":8,"dur":0.7},"whistle":{"row":9,"frames":8,"dur":1.6},"happy":{"row":10,"frames":8,"dur":1.2},"dizzy":{"row":11,"frames":8,"dur":0.9},"pet":{"row":12,"frames":6,"dur":1}},"anchors":{"idle":[[69.5,40.5,88.6,66.1,70.5,59.7,50.8,-0.011,1],[69.5,39.9,88.3,66.5,70.5,59.2,50.6,-0.011,1],[69.5,39.4,88.1,66.8,70.5,58.9,50.4,-0.01,1],[69.2,39.2,90.1,67.5,75.4,59.6,49,-0.017,1],[69.2,39.4,90.1,67.4,75.4,58.8,49.1,-0.016,1],[69,39.9,91.6,67.7,80.2,59.1,47.2,-0.023,1],[67.5,40.6,92.2,70.6,74.5,59.7,49.5,-0.069,1],[67.5,41.2,92.5,70.2,74.6,60.2,49.7,-0.07,1],[69.2,39.3,90.1,67.5,75.4,58.7,49,-0.016,1],[69.3,36.7,88.9,69.2,75.4,55.6,48.3,-0.014,1],[69.2,37.5,89.2,68.6,75.4,56.2,48.6,-0.014,1],[69.2,41.1,91,66.3,75.5,60.2,49.6,-0.017,1]],"walk":[[68.7,40.5,91.9,68.2,80.6,59.5,43,-0.037,1],[67.9,39,92.1,70.1,80.2,58,43.2,-0.066,1],[67.9,39,92.1,70.1,80.2,58,43.2,-0.066,1],[68.7,40.5,91.9,68.2,80.6,59.5,43,-0.037,1],[70.3,37.9,92,67.6,81,58,42.9,-0.003,1],[70.3,37.9,92,67.6,81,58,42.9,-0.003,1]],"sleep":[[70,47.7,88.6,69.5,73.5,70,50.7,-0.014,1],[69,45.7,87.5,73.5,73,68.4,50.1,-0.048,1],[69,45.7,87.5,73.5,73,68.4,50.1,-0.048,1],[70,47.7,88.6,69.5,73.5,70,50.7,-0.014,1],[71,49.6,90.8,68,73.9,71.5,51.3,0.02,1],[71,49.6,90.8,68,73.9,71.5,51.3,0.02,1]],"celebrate":[[70,40.5,86.7,64.8,70,58.7,51.6,0,1],[70,27.2,85.1,66.8,70,45.7,50.8,0,1],[70,16.2,83.7,70.6,70,34.9,50.2,0,1],[70,9.1,83.2,73.8,70,27.8,49.8,0,1],[70,6.6,83.1,74.8,70,25.3,49.6,0,1],[70,9.1,83.2,73.8,70,27.8,49.8,0,1],[70,16.2,83.7,70.6,70,34.9,50.2,0,1],[70,27.2,85.1,66.8,70,45.7,50.8,0,1]],"dance":[[69.2,40.5,90.7,66.7,75.5,58.7,49.4,-0.016,1],[75.6,28.6,95.6,68.8,86.1,50.4,44.5,0.079,1],[77.2,23.5,96.4,71.7,90.3,47,41.7,0.13,1],[75.6,28.6,95.6,68.8,86.1,50.4,44.5,0.079,1],[69.2,40.5,90.7,66.7,75.5,58.7,49.4,-0.016,1],[61.8,32.7,90.9,72.1,64.4,50.6,51.7,-0.088,1],[61.1,23.9,93.1,74.6,59.8,47.2,51.8,-0.121,1],[61.8,32.7,90.9,72.1,64.4,50.6,51.7,-0.088,1]],"wave":[[69.2,40.5,90.7,66.7,75.5,58.7,49.4,-0.016,1],[68,40.5,91.3,69.4,74.8,58.7,49.5,-0.052,1],[68,40.5,91.3,69.4,74.8,58.7,49.5,-0.052,1],[69.2,40.5,90.7,66.7,75.5,58.7,49.4,-0.016,1],[70.4,40.5,91.4,66.4,76.2,58.7,49.3,0.02,1],[70.4,40.5,91.4,66.4,76.2,58.7,49.3,0.02,1]],"shrug":[[69.2,40.5,90.7,66.7,75.5,59.7,49.4,-0.017,1],[68.1,39.7,90.7,69.7,74.9,59,49.2,-0.049,1],[66,38.3,93.2,75.1,48.5,55.9,11.6,1.402,1],[64.9,37.6,94.5,78,47.9,56.1,11.7,1.372,1],[64.9,37.6,94.5,78,47.9,56.1,11.7,1.372,1],[64.9,37.6,94.5,78,47.9,56.1,11.7,1.372,1],[64.9,37.6,94.5,78,47.9,56.1,11.7,1.372,1],[64.9,37.6,94.5,78,47.9,56.1,11.7,1.372,1],[66,38.3,93.2,75.1,48.5,55.9,11.6,1.402,1],[68.1,39.7,90.7,69.7,74.9,59,49.2,-0.049,1]],"spin":[[68.7,40.5,91.9,68.2,80.6,59.5,43,-0.037,1],[69.3,38.4,59.8,69.1,90.1,56.7,9.7,-0.264,1],[71.3,40.5,78.6,69.6,72.2,60.7,35.4,0,0],[70.7,38.4,90,66.3,68.9,58,40.5,0,0],[68.7,40.5,91.9,68.2,69.6,60.4,41.4,0,0],[69.3,38.4,59.8,69.1,67.6,58.7,26.9,0,0],[71.3,40.5,78.6,69.6,52.5,59.2,24.7,0.101,1],[70.7,38.4,90,66.3,65.3,57.5,50,0.013,1]],"rope":[[69.5,42.6,88.2,66.1,73.3,60.9,50.8,-0.01,1],[71.4,32.9,87.6,67.1,73.3,51.3,50.4,-0.007,1],[71.3,24,87.1,68.8,73.3,43.1,50.1,-0.003,1],[71.3,18,86.8,70,73.3,37.6,49.9,-0.001,1],[71.3,15.9,86.7,70.4,73.3,35.6,49.8,-0.001,1],[71.3,18,86.8,70,73.3,37.6,49.9,-0.001,1],[71.3,24,87.1,68.8,73.3,43.1,50.1,-0.003,1],[71.4,32.9,87.6,67.1,73.3,51.3,50.4,-0.007,1]],"whistle":[[70.4,39,90.5,66.3,75,58.8,49.2,-0.016,1],[69.8,35,92.6,71.4,75.4,54.9,47.4,-0.056,1],[69.6,36.9,94.9,71,75.9,58.8,47.5,-0.077,1],[69.8,39.9,95,67.9,75.8,60.8,48.8,-0.06,1],[70.4,39,90.5,66.3,75,58.8,49.2,-0.016,1],[71.7,35.1,87.8,67.9,74.4,54.9,49.5,0.027,1],[71.9,37,89.3,67.4,74.1,58.8,50.5,0.041,1],[71.7,40.2,90.3,63.9,74.5,60.8,50.9,0.024,1]],"happy":[[69.1,40.5,91.5,67,76.5,58.7,48.4,-0.02,1],[68.4,39.2,91.5,68.6,76.1,57.3,48.5,-0.041,1],[68,38.1,92,69.2,76,56.1,48.6,-0.05,1],[68.4,37.3,91.6,68.5,76.1,55.3,48.6,-0.04,1],[69.1,37,91.6,66.7,76.6,55,48.5,-0.017,1],[69.8,37.2,91.6,66.6,77,55.3,48.5,0.006,1],[71.4,36.7,92,66.6,77.1,56.1,48.4,0.015,1],[69.8,39.1,91.5,66.6,77,57.3,48.4,0.004,1]],"dizzy":[[69.4,40.5,89.6,66.3,49.3,60,0,0.822,1],[68.8,39.3,93.2,72.9,50.3,60.9,0,0.651,1],[68.6,40.9,94.9,75.5,50.8,63.3,0,0.579,1],[68.8,39.3,93.2,72.9,50.3,60.9,0,0.651,1],[69.4,40.5,89.6,66.3,49.3,60,0,0.822,1],[69.8,35.6,93.1,69.9,48.5,56.4,0,0.992,1],[69,35.6,94.7,72.5,48.2,57,0,1.061,1],[69.8,35.6,93.1,69.9,48.5,56.4,0,0.992,1]],"pet":[[69.4,41.7,89.6,66.4,74.4,59.9,50.2,-0.013,1],[67.8,39.6,89.7,71.2,73.5,58.2,49.6,-0.057,1],[67.8,39.6,89.7,71.2,73.5,58.2,49.6,-0.057,1],[69.4,41.7,89.6,66.4,74.4,59.9,50.2,-0.013,1],[70.8,43.8,91.9,65.1,75.3,61.6,50.7,0.031,1],[70.8,43.8,91.9,65.1,75.3,61.6,50.7,0.031,1]]}};
 const LOOKS = [{"name":"pixel","label":"Pixel Art","card":"#f6f1e7","ink":"#2b2420","accent":"#d97757","edge":"#1b1b2b"},{"name":"original","label":"Original","card":"#f6f1e7","ink":"#2b2420","accent":"#d97757","edge":"#1b1b2b"},{"name":"cave","label":"Cave Painting","card":"#e2d2b0","ink":"#2e2119","accent":"#1b130f","edge":"#cdb892"},{"name":"blueprint","label":"Blueprint","card":"#173e80","ink":"#e8f0ff","accent":"#e8f0ff","edge":"#1f4f9a"},{"name":"mosaic","label":"Mosaic","card":"#f1ead8","ink":"#2c2723","accent":"#a5452f","edge":"#e8dec6"},{"name":"aero","label":"Frutiger Aero","card":"#f4fbff","ink":"#14385a","accent":"#ffffff","edge":"#0d78dc"},{"name":"engraving","label":"Copperplate Engraving","card":"#f6f0e2","ink":"#1c1611","accent":"#1c1611","edge":"#f2ebda"},{"name":"tapestry","label":"Millefleur Tapestry","card":"#efe2c0","ink":"#2a2418","accent":"#efe2c0","edge":"#2f4a6a"},{"name":"golden","label":"Golden Age Comic","card":"#fffbe8","ink":"#16120f","accent":"#16120f","edge":"#f1dfa9"},{"name":"ukiyoe","label":"Ukiyo-e","card":"#f3ead6","ink":"#1a2238","accent":"#1a2238","edge":"#e9dcc0"},{"name":"kamon","label":"Kamon","card":"#1a1816","ink":"#eee7d7","accent":"#eee7d7","edge":"#1a1816"}];
 // the canvas is 240x282 upright and 282x240 when the device is held sideways (see layout()); the OS bar always stays on the
@@ -34,11 +34,11 @@ let BGF, WORLD, ITEM_W, PH, PY;   // set by layout(): the cropped scenery fills 
 const K = 0.95 * 1.1;               // Clawd sheet px -> logical px
 const CELLW = MANI.cw * MANI.scale, CELLH = MANI.ch * MANI.scale;
 const SCENES = ['forest', 'space', 'city', 'desert', 'volcano', 'lab', 'night'];
-const SCENE_DE = { forest: 'Wald', space: 'Weltraum', city: 'Stadt', desert: 'Wüste', volcano: 'Vulkan', lab: 'Labor', night: 'Dorf' };
-const LOOK_DE = { pixel: 'Pixel Art', original: 'Original', cave: 'Höhle', blueprint: 'Blaupause', mosaic: 'Mosaik', aero: 'Frutiger Aero', engraving: 'Kupferstich', tapestry: 'Wandteppich', golden: 'Golden Age', ukiyoe: 'Ukiyo-e', kamon: 'Kamon' };
-const HATS = ['Nichts', 'Partyhut', 'Zylinder', 'Krone', 'Mütze', 'Propeller'];
-const FACES = ['Nichts', 'Brille', 'Sonnenbrille', 'Schnurrbart'];
-const BODIES = ['Nichts', 'Schleife', 'Schal'];
+const SCENE_NAME = { forest: 'Forest', space: 'Moon', city: 'City', desert: 'Desert', volcano: 'Volcano', lab: 'Lab', night: 'Village' };
+const LOOK_NAME = { pixel: 'Pixel Art', original: 'Original', cave: 'Cave', blueprint: 'Blueprint', mosaic: 'Mosaic', aero: 'Frutiger Aero', engraving: 'Copperplate', tapestry: 'Tapestry', golden: 'Golden Age', ukiyoe: 'Ukiyo-e', kamon: 'Kamon' };
+const HATS = ['None', 'Party hat', 'Top hat', 'Crown', 'Beanie', 'Propeller'];
+const FACES = ['None', 'Glasses', 'Sunglasses', 'Moustache'];
+const BODIES = ['None', 'Bow', 'Scarf'];
 
 const cv = document.getElementById('c');
 const DPR = Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
@@ -359,10 +359,10 @@ function tintAt(h) {
 }
 const tod = () => (S.tod ? R.tod : 'day');
 const TOD_QUIPS = {
-  morning: ['Guten Morgen!', 'Kaffee?', 'Frisch ans Werk!', 'Neuer Tag, neuer Commit!'],
-  day: ['git push!', 'Kompiliert!', 'Ship it!', 'Tests grün!'],
-  evening: ['Schöner Abend!', 'Feierabend?', 'git commit!', 'Zeit für Musik!'],
-  night: ['Gähn…', 'Nur noch ein Commit…', 'Sollten wir schlafen?', 'Mir fallen die Augen zu…'],
+  morning: ['Good morning!', 'Coffee?', 'Let\'s get going!', 'New day, new commit!'],
+  day: ['git push!', 'It compiles!', 'Ship it!', 'Tests are green!'],
+  evening: ['Lovely evening!', 'Done for today?', 'git commit!', 'Time for music!'],
+  night: ['Yawn…', 'Just one more commit…', 'Bedtime?', 'So sleepy…'],
 };
 const ACTS = {   // what Clawd likes to do at which time of day
   morning: [['walk', 46], ['wave', 14], ['spin', 10], ['dance', 8], ['happy', 10], ['whistle', 5], ['rope', 7]],
@@ -373,7 +373,7 @@ const ACTS = {   // what Clawd likes to do at which time of day
 const todSpeed = () => ({ morning: 1.15, day: 1, evening: .9, night: .65 }[tod()]);
 const todSleepAfter = () => ({ morning: 150, day: 120, evening: 80, night: 25 }[tod()]);
 const todWait = () => ({ morning: .8, day: 1, evening: 1.25, night: 1.7 }[tod()]);
-const TOD_HELLO = { morning: 'Guten Morgen!', day: 'Hallo!', evening: 'Guten Abend!', night: 'Gähn… hallo.' };
+const TOD_HELLO = { morning: 'Good morning!', day: 'Hello!', evening: 'Good evening!', night: 'Yawn… hi.' };
 
 // ---------- sound (all synthesised with WebAudio, no files) ----------
 let AC = null, master = null, musicG = null, musTimer = 0, musNext = 0, musStep = 0, musDeg = 2, musDuck = 1;
@@ -494,9 +494,9 @@ function startAct(anim, dur, text) { setMode('act', { act: { anim, dur } }); if 
 function wake(grumpy) {
   R.sleeping = false;
   idle(1.5);
-  say(grumpy ? 'Hey! Ich schlief!' : 'Guten Morgen!', 2);
+  say(grumpy ? 'Hey! I was asleep!' : 'Good morning!', 2);
 }
-const QUIPS = ['git push!', 'Kompiliert!', 'Kein Bug :)', 'npm i …', 'Ship it!', 'Hallo!', 'Tests grün!', 'Schick sieht das aus!'];
+const QUIPS = ['git push!', 'It compiles!', 'No bugs :)', 'npm i …', 'Ship it!', 'Hello!', 'Tests are green!', 'Looking sharp!'];
 function hearts(n) {
   for (let i = 0; i < n; i++) R.P.push({ kind: 'heart', x: R.x + rnd(-16, 16), y: feetY() - 90, vx: rnd(-10, 10), vy: -30 - i * 4, life: 1.2 });
 }
@@ -508,14 +508,14 @@ function tapReact() {
   if (R.sleeping) return wake(true);
   if (R.mode === 'dizzy') return;
   R.taps = R.taps.filter(t => R.time - t < 1.4); R.taps.push(R.time);
-  if (R.taps.length >= 4) { R.taps = []; setMode('dizzy'); return say('Hör auf, mir wird schwindlig!', 2); }
+  if (R.taps.length >= 4) { R.taps = []; setMode('dizzy'); return say('Stop, I\'m getting dizzy!', 2); }
   hearts(1);
-  if (S.calm) return startAct(Math.random() < .5 ? 'happy' : 'wave', 1.4, pick(['Hihi!', 'Hallo!']));
+  if (S.calm) return startAct(Math.random() < .5 ? 'happy' : 'wave', 1.4, pick(['Hehe!', 'Hello!']));
   const r = Math.random();
-  if (r < .3) startAct('wave', 1.6, pick(['Hallo!', 'Hi!', 'Na du!']));
-  else if (r < .55) startAct('happy', 1.4, pick(['Hihi!', 'Kitzelt!', 'Mehr!']));
+  if (r < .3) startAct('wave', 1.6, pick(['Hello!', 'Hi!', 'Hey you!']));
+  else if (r < .55) startAct('happy', 1.4, pick(['Hehe!', 'That tickles!', 'More!']));
   else if (r < .75) startAct('spin', 1.2, 'Wheee!');
-  else if (r < .9) startAct('celebrate', 1.4, 'Juhu!');
+  else if (r < .9) startAct('celebrate', 1.4, 'Yay!');
   else startAct('dance', 1.8, pick(QUIPS));
 }
 const oneQuip = () => (Math.random() < .6 ? pick(TOD_QUIPS[tod()]) : pick(QUIPS));
@@ -531,28 +531,28 @@ function act(i) {
   if (i === 4) return openPanel('options');
   if (busyNow()) return;
   if (i === 0) return openPanel('games');
-  else { R.sleeping = true; setMode('sleep'); say('Gute Nacht…'); }
+  else { R.sleeping = true; setMode('sleep'); say('Good night…'); }
 }
 // pickers: each column is an endless drum (rolodex) that rolls to its value
 const PANELS = {
   games: [
-    { label: 'Spiel', list: () => ['Ball', 'Seilspringen', 'Pfeifen'], get: () => R.gameSel, set: i => { R.gameSel = i; } },
+    { label: 'Game', list: () => ['Ball', 'Skipping rope', 'Whistling'], get: () => R.gameSel, set: i => { R.gameSel = i; } },
   ],
   world: [
-    { label: 'Ort', list: () => SCENES.map(k => SCENE_DE[k]), get: () => SCENES.indexOf(S.scene), set: i => { S.scene = SCENES[i]; loadWorld(); } },
-    { label: 'Stil', list: () => LOOKS.map(l => LOOK_DE[l.name] || l.name), get: () => LOOKS.findIndex(l => l.name === S.look), set: i => { S.look = LOOKS[i].name; loadWorld(); } },
-    { label: 'Zeit', list: () => ['Echtzeit', 'Aus'], get: () => (S.tod ? 0 : 1), set: i => { S.tod = i === 0; R.tod = todPeriod(hourNow()); } },
+    { label: 'Place', list: () => SCENES.map(k => SCENE_NAME[k]), get: () => SCENES.indexOf(S.scene), set: i => { S.scene = SCENES[i]; loadWorld(); } },
+    { label: 'Style', list: () => LOOKS.map(l => LOOK_NAME[l.name] || l.name), get: () => LOOKS.findIndex(l => l.name === S.look), set: i => { S.look = LOOKS[i].name; loadWorld(); } },
+    { label: 'Time', list: () => ['Real time', 'Off'], get: () => (S.tod ? 0 : 1), set: i => { S.tod = i === 0; R.tod = todPeriod(hourNow()); } },
   ],
   options: [
-    { label: 'Klang', list: () => ['Stil', 'Retro', 'Glocken', 'Minimal'], get: () => S.pack, set: i => { S.pack = i; audioUnlock(); snd('preview'); } },
-    { label: 'Laut', list: () => ['Aus', '25 %', '50 %', '75 %', '100 %'], get: () => S.vol, set: i => { S.vol = i; audioUnlock(); applyAudio(); snd('preview'); } },
-    { label: 'Ruhe', list: () => ['Aus', '22–07', '23–08', '00–06'], get: () => S.quiet, set: i => { S.quiet = i; applyAudio(); } },
-    { label: 'Bewegung', list: () => ['Normal', 'Ruhig'], get: () => S.calm, set: i => { S.calm = i; if (i) R.amb = []; else makeAmbient(); } },
+    { label: 'Sound', list: () => ['Style', 'Retro', 'Bells', 'Minimal'], get: () => S.pack, set: i => { S.pack = i; audioUnlock(); snd('preview'); } },
+    { label: 'Volume', list: () => ['Off', '25 %', '50 %', '75 %', '100 %'], get: () => S.vol, set: i => { S.vol = i; audioUnlock(); applyAudio(); snd('preview'); } },
+    { label: 'Quiet', list: () => ['Off', '10pm-7am', '11pm-8am', '12am-6am'], get: () => S.quiet, set: i => { S.quiet = i; applyAudio(); } },
+    { label: 'Motion', list: () => ['Normal', 'Calm'], get: () => S.calm, set: i => { S.calm = i; if (i) R.amb = []; else makeAmbient(); } },
   ],
   items: [
-    { label: 'Kopf', list: () => HATS, get: () => S.hat, set: i => { S.hat = i; } },
-    { label: 'Gesicht', list: () => FACES, get: () => S.face, set: i => { S.face = i; } },
-    { label: 'Körper', list: () => BODIES, get: () => S.body, set: i => { S.body = i; } },
+    { label: 'Head', list: () => HATS, get: () => S.hat, set: i => { S.hat = i; } },
+    { label: 'Face', list: () => FACES, get: () => S.face, set: i => { S.face = i; } },
+    { label: 'Body', list: () => BODIES, get: () => S.body, set: i => { S.body = i; } },
   ],
 };
 const mod = (v, n) => ((v % n) + n) % n;
@@ -608,8 +608,8 @@ function update(dt) {
     if (p !== R.tod) {
       R.tod = p;
       if (S.tod && ready && !R.panel && R.mode !== 'play' && R.mode !== 'rope') {
-        if (R.sleeping && p === 'morning') { wake(false); say('Guten Morgen!', 2.5); }
-        else if (!R.sleeping) { say({ morning: 'Guten Morgen!', day: 'Guten Tag!', evening: 'Guten Abend!', night: 'Gähn… Schlafenszeit?' }[p], 3); if (p === 'morning') startAct('wave', 1.6); }
+        if (R.sleeping && p === 'morning') { wake(false); say('Good morning!', 2.5); }
+        else if (!R.sleeping) { say({ morning: 'Good morning!', day: 'Good afternoon!', evening: 'Good evening!', night: 'Yawn… bedtime?' }[p], 3); if (p === 'morning') startAct('wave', 1.6); }
       }
     }
   }
@@ -638,7 +638,7 @@ function update(dt) {
   }
   if (m === 'idle') {
     R.wait -= dt;
-    if (R.time - R.lastTouch > todSleepAfter()) { R.sleeping = true; setMode('sleep'); return say(tod() === 'night' ? 'Gute Nacht…' : 'zZz…'); }   // nobody around: he dozes off, sooner at night
+    if (R.time - R.lastTouch > todSleepAfter()) { R.sleeping = true; setMode('sleep'); return say(tod() === 'night' ? 'Good night…' : 'zZz…'); }   // nobody around: he dozes off, sooner at night
     if (R.wait <= 0) {
       if (Math.random() < .3) say(oneQuip());
       R.wait = rnd(1.5, 4) * todWait() * (S.calm ? 1.5 : 1);
@@ -650,7 +650,7 @@ function update(dt) {
         R.fast = false; setMode('walk');
       } else if (act === 'rope') setMode('rope', { jumps: 0 });
       else if (act === 'whistle') whistle();
-      else if (act === 'shrug') startAct('shrug', 1.8, tod() === 'night' ? 'Gähn…' : '…?');
+      else if (act === 'shrug') startAct('shrug', 1.8, tod() === 'night' ? 'Yawn…' : '…?');
       else startAct(act, act === 'dance' ? 2 : act === 'spin' ? 1.2 : act === 'wave' ? 1.6 : 1.4);
     }
   } else if (m === 'walk') {
@@ -664,11 +664,11 @@ function update(dt) {
     const bn = Math.floor(R.t / .7); if (bn !== R.bn) { R.bn = bn; snd('bounce'); }
     const nx = R.cx + Math.sin(R.t * 1.5) * 60;
     R.look = Math.sign(nx - R.x) || R.look; R.x = nx;
-    if (R.t >= 4.2) { say('Das war toll!'); startAct('happy', 1.4); }
+    if (R.t >= 4.2) { say('That was fun!'); startAct('happy', 1.4); }
   } else if (m === 'rope') {
     const j = Math.floor(R.t / .7);
     if (j !== R.jumps) { R.jumps = j; snd('land'); if (j > 0) R.P.push({ kind: 'text', text: String(j), s: 11, x: R.x + 22, y: fy - 100, vx: 6, vy: -22, life: 1 }); }
-    if (R.t >= 5.6) { say('Geschafft!'); startAct('happy', 1.4); }
+    if (R.t >= 5.6) { say('Done it!'); startAct('happy', 1.4); }
   } else if (m === 'sleep') {
     if (R.time - R.lastSnore > 2.9) { R.lastSnore = R.time; snd('snore'); }
     if (Math.floor(R.t) !== Math.floor(R.t - dt))
@@ -748,7 +748,7 @@ function drawBubble(c) {
   txt(text, bx + w / 2, by + h / 2 + 1, { size, fill: u.ink, align: 'center' });
 }
 
-const MENU_LABELS = () => ['Spiel', R.sleeping ? 'Wecken' : 'Schlaf', 'Items', 'Welt', 'Optionen'];
+const MENU_LABELS = () => ['Play', R.sleeping ? 'Wake' : 'Sleep', 'Items', 'World', 'Options'];
 // [ ] mark what the wheel is on; they slide from one option to the next
 function brackets(key, l, r, y) {
   R.brkT = { l, r, y };
@@ -838,7 +838,7 @@ function draw() {
   if (R.panel) drawPanel(); else drawMenu();
   if (!R.bg || !R.sheet || !ready) {
     rect(0, 130, W, 24, '#000'); ctx.fillStyle = '#fff'; ctx.font = 'bold 10px ' + MONO;
-    ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.fillText('Lade…', W / 2, 142); ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.fillText('Loading…', W / 2, 142); ctx.textAlign = 'left';
   }
 }
 
@@ -897,7 +897,7 @@ async function boot() {
     loadWorld();
   }
   R.tod = todPeriod(hourNow());
-  say(!s ? 'Hallo, ich bin Clawd!' : S.tod ? TOD_HELLO[R.tod] : 'Hallo wieder!', 2.5);
+  say(!s ? 'Hi, I\'m Clawd!' : S.tod ? TOD_HELLO[R.tod] : 'Hello again!', 2.5);
   ready = true; R.lastTouch = R.time; saveNow();
   if (S.tod && R.tod === 'night' && Math.random() < .5) { R.sleeping = true; setMode('sleep'); say('zZz…', 2); }   // found him asleep
 }
@@ -994,7 +994,7 @@ function onAccel(d) {
   if (R.jerk > 2.5 && R.shakeCool <= 0 && ready && !R.panel) {
     R.shakeCool = 4; R.jerk = 0; touched();
     if (R.sleeping) wake(true);
-    else if (R.mode === 'idle' || R.mode === 'walk') { setMode('dizzy'); say('Uff… schwindlig'); }
+    else if (R.mode === 'idle' || R.mode === 'walk') { setMode('dizzy'); say('Whoa… dizzy'); }
   }
 }
 (async function initSensors() {
