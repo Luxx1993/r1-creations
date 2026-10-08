@@ -11,7 +11,7 @@ p.add_argument("--out", default="qr.png")
 a = p.parse_args()
 
 icon = a.icon_url or a.url.rsplit("/", 1)[0] + "/icon.png"
-payload = {"title": "Tally", "url": a.url, "description": "Simple tally counter",
+payload = {"title": "Tally", "url": a.url, "description": "Einfacher Zähler",
            "iconUrl": icon, "themeColor": "#FE5000"}
 text = json.dumps(payload, separators=(",", ":"))
 print(text)

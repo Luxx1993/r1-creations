@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
@@ -30,14 +30,14 @@
 </head>
 <body>
 <div id="app">
-  <div id="label">Coffee</div>
+  <div id="label">Kaffee</div>
   <div id="count">0</div>
   <div id="flash"></div>
   <div id="ver"></div>
 </div>
 <script>
 const APP_VERSION = '0.2.4';
-const KEY = 'tally_state';
+const KEY = 'tally_de_state';
 const $ = (id) => document.getElementById(id);
 const enc = (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o))));
 const dec = (s) => JSON.parse(decodeURIComponent(escape(atob(s))));
