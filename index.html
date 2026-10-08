@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
@@ -25,7 +25,7 @@
 </head>
 <body>
 <main>
-  <h1>Claude · <span id="hint">Taste lang: markieren</span></h1>
+  <h1>Claude · <span id="hint">hold button: mark</span></h1>
   <div id="list"></div>
 </main>
 <div id="msg"></div>
@@ -33,7 +33,7 @@
 <script src="links.js?v=1.6.0"></script>
 <script>
   const APP_VERSION = "1.6.0";
-  const KEY = "claudestart.state.v1";           // Namespace: gemeinsamer Origin
+  const KEY = "claudestart-en.state.v1";           // Namespace: gemeinsamer Origin
   const MARKS = ["", "ok", "bad"], SYMBOL = { "": "○", ok: "✓", bad: "✗" };
   const LINKS = window.LINKS || [];
   let state = { marks: {}, opened: {} };
@@ -97,7 +97,7 @@
   function open(i) {
     const l = order[i];
     if (!l) return;
-    if (l.url.indexOf("<") >= 0) { toast("Erst Adresse in links.js eintragen"); return; }
+    if (l.url.indexOf("<") >= 0) { toast("Add the address in links.js first"); return; }
     state.opened[l.url] = Date.now(); save();
     location.href = l.url;
   }
@@ -108,7 +108,7 @@
     if (next) state.marks[l.url] = next; else delete state.marks[l.url];
     save();
     const m = els[i].querySelector(".mark"); m.className = "mark " + next; m.textContent = SYMBOL[next];
-    toast({ "": "ungetestet ○", ok: "läuft ✓", bad: "weiß/schwarz/Fehler ✗" }[next]);
+    toast({ "": "untested ○", ok: "works ✓", bad: "white/black/error ✗" }[next]);
   }
 
   // Drehregler und Seitentaste (Seitentaste lang: markieren)

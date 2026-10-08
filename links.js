@@ -1,20 +1,20 @@
-// Linkliste für "Claude Start".
-// Neuen Eintrag ergänzen: eine Zeile kopieren, title/url/note ändern.
-// Eintrag entfernen: die Zeile löschen. Jede Zeile endet mit einem Komma.
-// Eigener Chat: bei "Eigener Chat" die Adresse https://claude.ai/chat/<id> eintragen.
+// Link list for "Claude Start".
+// Add an entry: copy a line and change title/url/note.
+// Remove an entry: delete the line. Every line ends with a comma.
+// Your own chat: put the address https://claude.ai/chat/<id> in "My chat".
 window.LINKS = [
-  { title: "Neuer Chat",    url: "https://claude.ai/new",      note: "Frage stellen" },
-  { title: "Letzte Chats",  url: "https://claude.ai/recents",  note: "weiterschreiben" },
-  { title: "Projekte",      url: "https://claude.ai/projects", note: "Ordner und Wissen" },
-  { title: "Startseite",    url: "https://claude.ai/",         note: "claude.ai" },
-  { title: "Anmelden",      url: "https://claude.ai/login",    note: "Konto wählen" },
-  { title: "Einstellungen", url: "https://claude.ai/settings", note: "Konto und Konnektoren" },
-  { title: "Hilfe",         url: "https://support.claude.com/", note: "Hilfe-Center" },
-  { title: "clau.de",       url: "https://clau.de/",           note: "Test: Ziel unbekannt" },
-  { title: "Eigener Chat",  url: "https://claude.ai/chat/<id>", note: "Link in links.js eintragen" },
-  { title: "ChatGPT",       url: "https://chatgpt.com/",       note: "Zum Vergleich" },
-  { title: "Funktionstest", url: "features.html",              note: "Was fehlt dem Webview?" },
-  { title: "PC-Fernzugriff", url: "https://remotedesktop.google.com/access", note: "Test: eigener PC mit Chrome" },
-  { title: "Sprachtest",    url: "voice.html",                 note: "Sprechen und Vorlesen" },
-  { title: "Browser-Test",  url: "browser.html",               note: "Version und Mikrofon" }
+  { title: "New chat",      url: "https://claude.ai/new",      note: "Ask a question" },
+  { title: "Recent chats",  url: "https://claude.ai/recents",  note: "Pick up where you left off" },
+  { title: "Projects",      url: "https://claude.ai/projects", note: "Folders and knowledge" },
+  { title: "Home",          url: "https://claude.ai/",         note: "claude.ai" },
+  { title: "Log in",        url: "https://claude.ai/login",    note: "Choose an account" },
+  { title: "Settings",      url: "https://claude.ai/settings", note: "Account and connectors" },
+  { title: "Help",          url: "https://support.claude.com/", note: "Help center" },
+  { title: "clau.de",       url: "https://clau.de/",           note: "Test: unknown target" },
+  { title: "My chat",       url: "https://claude.ai/chat/<id>", note: "Put the link in links.js" },
+  { title: "ChatGPT",       url: "https://chatgpt.com/",       note: "For comparison" },
+  { title: "Feature test",  url: "features.html",              note: "What is the WebView missing?" },
+  { title: "Remote PC",     url: "https://remotedesktop.google.com/access", note: "Test: your own PC with Chrome" },
+  { title: "Voice test",    url: "voice.html",                 note: "Speech in and out" },
+  { title: "Browser test",  url: "browser.html",               note: "Version and microphone" }
 ];

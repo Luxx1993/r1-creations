@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=240, initial-scale=1, user-scalable=no">
-<title>Browser-Test</title>
+<title>Browser test</title>
 <style>
   :root { --bg:#15171c; --fg:#f1efe9; --muted:#8b909c; --ok:#7fb7a4; --bad:#e08a7a; --card:#232730; }
   * { box-sizing: border-box; }
@@ -24,7 +24,7 @@
 </style>
 </head>
 <body>
-<h1>Browser-Test</h1>
+<h1>Browser test</h1>
 
 <div class="box">
   <div class="row"><span>Browser</span><span id="eng" class="big">?</span></div>
@@ -32,13 +32,13 @@
 </div>
 
 <div class="box">
-  <div class="row"><span>Fenster</span><span id="win"></span></div>
-  <div class="row"><span>Pixeldichte</span><span id="dpr"></span></div>
+  <div class="row"><span>Window</span><span id="win"></span></div>
+  <div class="row"><span>Pixel ratio</span><span id="dpr"></span></div>
 </div>
 
 <div class="box" id="feat"></div>
 
-<button id="micbtn">Mikrofon testen</button>
+<button id="micbtn">Test microphone</button>
 <div id="mic"></div>
 
 <div id="ver">v1.1.0</div>
@@ -49,7 +49,7 @@
   $("ua").textContent = ua;
 
   // Browser-Version aus dem User-Agent lesen
-  let eng = "unbekannt";
+  let eng = "unknown";
   const m = ua.match(/(Chrome|Firefox|Version)\/([\d.]+)/);
   if (m) eng = (m[1] === "Version" ? "Safari " : m[1] + " ") + m[2].split(".")[0];
   const wv = /; wv\)/.test(ua) ? " (WebView)" : "";
@@ -76,9 +76,9 @@
     ["CSS :has()", () => CSS.supports("selector(:has(a))")],
     ["CSS Container Queries", () => CSS.supports("container-type: inline-size")],
     ["CSS dvh", () => CSS.supports("height: 100dvh")],
-    ["Mikrofon-API", () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)],
-    ["Spracherkennung", () => !!(window.SpeechRecognition || window.webkitSpeechRecognition)],
-    ["Sprachausgabe", () => typeof speechSynthesis !== "undefined"]
+    ["Microphone API", () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)],
+    ["Speech recognition", () => !!(window.SpeechRecognition || window.webkitSpeechRecognition)],
+    ["Speech synthesis", () => typeof speechSynthesis !== "undefined"]
   ];
 
   const feat = $("feat");
@@ -91,26 +91,26 @@
     const a = document.createElement("span"); a.textContent = name;
     const b = document.createElement("span");
     b.className = ok ? "ok" : "bad";
-    b.textContent = ok ? "ja" : "fehlt";
+    b.textContent = ok ? "yes" : "missing";
     row.append(a, b);
     feat.appendChild(row);
   });
   const sum = document.createElement("div");
   sum.style.cssText = "margin-top:6px;color:var(--muted);font-size:12px;";
-  sum.textContent = missing === 0 ? "Alle geprüften Funktionen vorhanden." : missing + " von " + checks.length + " Funktionen fehlen.";
+  sum.textContent = missing === 0 ? "All checked features are available." : missing + " of " + checks.length + " features are missing.";
   feat.appendChild(sum);
 
   // Mikrofon-Test (braucht einen Fingertipp)
   $("micbtn").addEventListener("click", async () => {
     const out = $("mic");
-    out.textContent = "Frage Mikrofon an ...";
+    out.textContent = "Asking for the microphone ...";
     try {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       s.getTracks().forEach((t) => t.stop());
-      out.textContent = "Mikrofon: erlaubt und verfügbar.";
+      out.textContent = "Microphone: allowed and available.";
       out.style.color = "var(--ok)";
     } catch (e) {
-      out.textContent = "Mikrofon: " + (e && e.name ? e.name : "Fehler");
+      out.textContent = "Microphone: " + (e && e.name ? e.name : "error");
       out.style.color = "var(--bad)";
     }
   });
