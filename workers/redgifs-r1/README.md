@@ -120,9 +120,11 @@ R1 ─────────────────────────�
 1. **Tailscale** (kostenlos): Konto anlegen. Admin-Konsole → DNS: *MagicDNS* und *HTTPS Certificates* aktivieren.
    Access controls: In der Policy muss `"nodeAttrs": [{"target": ["autogroup:member"], "attr": ["funnel"]}]`
    stehen (bei neuen Tailnets Standard). Settings → Keys → **Generate auth key**.
-2. **Auf dem NAS** einen Ordner anlegen (z. B. `docker/r1-relay`) mit `relay.mjs`, `serve.json`,
-   `docker-compose.yml` und `.env` (aus `.env.example`): `TS_AUTHKEY=` und `RELAY_SECRET=` (32 Buchstaben/Ziffern).
-   Dann `docker compose up -d` bzw. im NAS-UI als Compose-Projekt starten.
+2. **Auf dem NAS** nur `relay/docker-compose.yml` als Compose-Projekt anlegen (UGREEN UGOS Pro: Docker → Projekt →
+   Erstellen, Inhalt einfügen) und die zwei Werte `HIER-EINTRAGEN` ersetzen: Tailscale-Auth-Key und `RELAY_SECRET`
+   (32 Buchstaben/Ziffern). Weitere Dateien sind nicht nötig: Der Container lädt `relay.mjs` von GitHub, festgelegt
+   auf einen Commit und per SHA-256 geprüft. Wird `relay.mjs` geändert, müssen Commit und Hash in der Compose-Datei
+   mitgezogen werden.
 3. Test: `https://r1-relay.<tailnet>.ts.net/healthz` → `{"ok":true}` (Tailnet-Name steht in der Tailscale-Konsole unter DNS).
 4. **Worker** → Settings → Runtime variables and secrets:
    `RELAY_URL` = `https://r1-relay.<tailnet>.ts.net` (Text) und `RELAY_SECRET` = derselbe Wert wie auf dem NAS (Secret).
