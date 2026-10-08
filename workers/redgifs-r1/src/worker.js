@@ -32,13 +32,88 @@ async function kvPut(env, key, value, ttlS) {
   mem.kv.set(key, value);
 }
 
-// RedGifs throttles the address shared by all Cloudflare Workers, so API calls can go through a
-// relay with its own IP (relay/ in this repo). Media still loads directly on the device.
-function upstream(env, path, headers) {
-  if (env.RELAY_URL) {
-    return fetch(env.RELAY_URL.replace(/\/+$/, '') + path, { headers: { ...headers, 'X-Relay-Secret': env.RELAY_SECRET || '' } });
+// RedGifs throttles the address shared by all Cloudflare Workers, so API calls go to a relay on a home
+// machine (relay/ in this repo). The relay connects *out* to this worker over a WebSocket and keeps the
+// line open; a Durable Object hands each API request to it. No inbound ports, DNS or tunnels needed.
+// Media still loads directly on the device. Without RELAY_SECRET the worker calls RedGifs itself.
+const useRelay = (env) => !!(env.RELAY_HUB && env.RELAY_SECRET);
+const hub = (env) => env.RELAY_HUB.get(env.RELAY_HUB.idFromName('hub'));
+
+async function upstream(env, path, headers) {
+  if (!useRelay(env)) return fetch(API + path, { headers });
+  const r = await hub(env).fetch('https://hub/req', { method: 'POST', body: JSON.stringify({ path, headers }) });
+  if (r.status === 503 || r.status === 504) {
+    const code = await r.json().then((b) => b.error, () => '');
+    if (code === 'relay_offline' || code === 'relay_timeout') throw new HttpError(503, code);
   }
-  return fetch(API + path, { headers });
+  return r;
+}
+
+const RELAY_TIMEOUT_MS = 15000;
+
+export class RelayHub {
+  constructor(ctx, env) {
+    this.ctx = ctx; this.env = env; this.pending = new Map();
+    // Keep-alive pings are answered without waking the object.
+    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+  }
+  relays() {
+    return this.ctx.getWebSockets().map((ws) => ({ ws, a: ws.deserializeAttachment() || {} }))
+      .filter((x) => x.a.auth).sort((x, y) => y.a.at - x.a.at).map((x) => x.ws);
+  }
+  async fetch(req) {
+    const url = new URL(req.url);
+    if (url.pathname === '/connect') {
+      if (req.headers.get('Upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
+      const [client, server] = Object.values(new WebSocketPair());
+      this.ctx.acceptWebSocket(server);
+      server.serializeAttachment({ auth: false, at: Date.now() });
+      return new Response(null, { status: 101, webSocket: client });
+    }
+    if (url.pathname === '/status') {
+      const r = this.relays();
+      return Response.json({ connected: r.length, since: r[0] ? new Date(r[0].deserializeAttachment().at).toISOString() : null });
+    }
+    if (url.pathname === '/req') {
+      const ws = this.relays()[0];
+      if (!ws) return Response.json({ error: 'relay_offline' }, { status: 503 });
+      const { path, headers } = await req.json();
+      const id = crypto.randomUUID();
+      const res = new Promise((resolve) => {
+        const t = setTimeout(() => { this.pending.delete(id); resolve(Response.json({ error: 'relay_timeout' }, { status: 504 })); }, RELAY_TIMEOUT_MS);
+        this.pending.set(id, { resolve, t });
+      });
+      ws.send(JSON.stringify({ type: 'req', id, path, headers }));
+      return res;
+    }
+    return new Response('not found', { status: 404 });
+  }
+  async webSocketMessage(ws, data) {
+    let m;
+    try { m = JSON.parse(data); } catch { return; }
+    const a = ws.deserializeAttachment() || {};
+    if (m.type === 'hello') {
+      if (safeEqual(String(m.secret || ''), this.env.RELAY_SECRET)) {
+        ws.serializeAttachment({ auth: true, at: Date.now() });
+        ws.send(JSON.stringify({ type: 'welcome' }));
+        for (const old of this.relays().slice(1)) old.close(4000, 'replaced');   // keep only the newest relay
+      } else ws.close(4001, 'bad secret');
+      return;
+    }
+    if (!a.auth || m.type !== 'res') return;
+    const p = this.pending.get(m.id);
+    if (!p) return;
+    clearTimeout(p.t); this.pending.delete(m.id);
+    const h = { 'content-type': m.ct || 'application/json' };
+    if (m.ra) h['retry-after'] = String(m.ra);
+    p.resolve(new Response(m.body ?? '', { status: m.status || 502, headers: h }));
+  }
+  async webSocketClose(ws, code) { try { ws.close(code === 1005 ? 1000 : code, 'bye'); } catch {} }
+  async webSocketError(ws) { try { ws.close(1011, 'error'); } catch {} }
+}
+
+async function relayStatus(env) {
+  try { return await (await hub(env).fetch('https://hub/status')).json(); } catch { return { connected: 0 }; }
 }
 
 const now = () => Date.now();
@@ -68,9 +143,9 @@ async function fetchToken(env) {
   if (log.length >= MAX_TOKEN_FETCHES_PER_HOUR) {
     throw new HttpError(503, 'token_limit', { retryAfter: Math.ceil((log[0] + 3600e3 - now()) / 1000) });
   }
-  log.push(now());
-  await kvPut(env, 'token_log', log, 3600);
   const r = await upstream(env, '/v2/auth/temporary', { 'User-Agent': UA, Accept: 'application/json' });
+  log.push(now());                                   // count only requests that reached RedGifs
+  await kvPut(env, 'token_log', log, 3600);
   if (r.status === 429) throw new HttpError(429, 'rate_limited', await setBackoff(env, r, 'token'));
   if (!r.ok) throw new HttpError(502, 'token_failed', { upstream: r.status });
   const body = await r.json();
@@ -205,7 +280,7 @@ const routes = {
     return {
       token: t ? { addr: t.addr, ageMin: Math.round((now() - t.at) / 60000), expiresInMin: Math.round((t.exp - sec()) / 60) } : null,
       tokenFetchesLastHour: log.length, maxPerHour: MAX_TOKEN_FETCHES_PER_HOUR,
-      backoff: await kvGet(env, 'backoff'), last429: await kvGet(env, 'last_429'), stats: (await kvGet(env, 'stats')) || {}, kv: !!env.TOKEN_KV, relay: env.RELAY_URL ? new URL(env.RELAY_URL).hostname : null,
+      backoff: await kvGet(env, 'backoff'), last429: await kvGet(env, 'last_429'), stats: (await kvGet(env, 'stats')) || {}, kv: !!env.TOKEN_KV, relay: useRelay(env) ? await relayStatus(env) : null,
     };
   },
 };
@@ -263,8 +338,14 @@ export default {
     // Public setup check: says only whether a key is configured, never which.
     if (url.pathname === '/health') {
       const given = url.searchParams.get('k');
-      return finish(json({ ok: true, keyConfigured: !!env.ACCESS_KEY, keyLength: (env.ACCESS_KEY || '').length, relay: !!env.RELAY_URL,
+      return finish(json({ ok: true, keyConfigured: !!env.ACCESS_KEY, keyLength: (env.ACCESS_KEY || '').length,
+        relay: useRelay(env) ? await relayStatus(env) : false,
         ...(given !== null ? { givenLength: given.length, keyMatches: safeEqual(given, env.ACCESS_KEY) } : {}) }));
+    }
+    // The home relay dials in here; it authenticates with RELAY_SECRET in its first message.
+    if (url.pathname === '/relay/connect') {
+      if (!useRelay(env)) return finish(new Response('Not found', { status: 404 }));
+      return hub(env).fetch('https://hub/connect', { headers: req.headers });
     }
     if (!PUBLIC_PATHS.has(url.pathname)) {
       const key = req.headers.get('x-access-key') || url.searchParams.get('k') || '';

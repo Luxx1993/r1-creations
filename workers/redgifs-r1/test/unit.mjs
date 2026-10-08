@@ -92,19 +92,34 @@ for (const bad of ['http://media.redgifs.com/a.mp4', 'https://evil.com/a.mp4', '
   assert.equal((await m(bad)).status, 400, bad);
 }
 assert.equal((await get(w, '/media?u=' + encodeURIComponent('https://media.redgifs.com/a.mp4'), null)).status, 404);
-// relay mode: every RedGifs API call (token included) goes to RELAY_URL with the relay secret
+// relay mode: every RedGifs API call (token included) goes through the relay hub (Durable Object),
+// never directly; without a connected relay the app gets relay_offline.
 const relayed = [];
+let relayOnline = false;
 reset();
 w = await load((input, init) => {
-  const u = new URL(String(input));
-  if (u.hostname === 'relay.test') { relayed.push({ path: u.pathname + u.search, secret: init.headers['X-Relay-Secret'], ua: init.headers['User-Agent'] });
-    return mock(new URL('https://api.redgifs.com' + u.pathname + u.search), init); }
-  if (u.hostname === 'api.redgifs.com') throw new Error('direct API call in relay mode');
+  if (new URL(String(input)).hostname === 'api.redgifs.com') throw new Error('direct API call in relay mode');
   return apiFetch(input, init);
 });
-const renv = { ...env, RELAY_URL: 'https://relay.test/', RELAY_SECRET: 'relay-secret-123456' };
-res = await w.fetch(new Request('https://w.test/api/trending', { headers: { 'x-access-key': 'secret-key' } }), renv);
+const fakeHub = { fetch: async (url, init = {}) => {
+  const p = new URL(url).pathname;
+  if (p === '/status') return Response.json({ connected: relayOnline ? 1 : 0 });
+  if (p === '/connect') return new Response('upgrade', { status: 200 });
+  if (!relayOnline) return Response.json({ error: 'relay_offline' }, { status: 503 });
+  const { path, headers } = JSON.parse(init.body);
+  relayed.push({ path, ua: headers['User-Agent'], auth: headers.Authorization });
+  return mock(new URL('https://api.redgifs.com' + path), { headers });
+} };
+const renv = { ...env, RELAY_SECRET: 'relay-secret-123456', RELAY_HUB: { idFromName: () => 'id', get: () => fakeHub } };
+const rget = (path) => w.fetch(new Request('https://w.test' + path, { headers: { 'x-access-key': 'secret-key' } }), renv);
+res = await rget('/api/trending');
+assert.equal(res.status, 503); assert.equal((await res.json()).error, 'relay_offline');
+assert.equal((await (await rget('/api/status')).json()).tokenFetchesLastHour, 0, 'offline relay does not use up the token budget');
+relayOnline = true;
+res = await rget('/api/trending');
 assert.equal(res.status, 200);
 assert.deepEqual(relayed.map((x) => x.path.split('?')[0]), ['/v2/auth/temporary', '/v2/gifs/search']);
-assert.ok(relayed.every((x) => x.secret === 'relay-secret-123456' && x.ua.includes('Mozilla')));
+assert.ok(relayed.every((x) => x.ua.includes('Mozilla')) && relayed[1].auth.startsWith('Bearer '));
+assert.deepEqual((await (await w.fetch(new Request('https://w.test/health'), renv)).json()).relay, { connected: 1 });
+assert.equal((await w.fetch(new Request('https://w.test/relay/connect'), env)).status, 404, 'no hub route without RELAY_SECRET');
 console.log('unit: all assertions passed');

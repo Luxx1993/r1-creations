@@ -192,6 +192,8 @@ function errText(e) {
   if (!e.status) return 'Netzwerkfehler.\nSeitentaste = erneut versuchen';
   if (e.status === 429) return 'Zu viele Anfragen an RedGifs.\nKurz warten, dann Seitentaste.' +
     (e.cause ? '\n(' + (e.cause.source || '').split(' ')[0] + ' ' + (e.cause.code || e.cause.status) + ')' : '');
+  if (e.message === 'relay_offline') return 'NAS-Relay nicht verbunden.\nLäuft der Container? Dann Seitentaste.';
+  if (e.message === 'relay_timeout') return 'NAS-Relay antwortet nicht.\nSeitentaste = erneut';
   if (e.status === 503) return 'Token-Limit erreicht.\nIn einigen Minuten Seitentaste.';
   if (e.status === 404) return 'Zugriff verweigert oder nicht gefunden.\nInstall-QR prüfen.';
   if (e.message === 'auth_failed') return 'RedGifs lehnt das Token ab.\nSeitentaste = erneut';
