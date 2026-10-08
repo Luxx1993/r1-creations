@@ -1,115 +1,175 @@
 # Rabbit R1 Creations
 
-Sammlung kleiner Web-Apps („Creations“) für den Rabbit R1 (Bildschirm 240×282 px).
+A collection of small web apps ("creations") for the Rabbit R1 (240×282 px screen). Every creation
+comes in English and German.
 
-## Aufbau
+**Hub page with all install QR codes: https://luxx1993.github.io/r1-creations/**
 
-| Wo | Was |
+## Layout
+
+| Where | What |
 | --- | --- |
-| `main` | Übersichtsseite, Doku (`docs/r1-creations.md`), Werkzeuge (`tools/`), Deploy-Workflow |
-| `creation/<name>` | Eine Creation pro Branch (Dateien im Branch-Root) |
+| `main` | Hub page (generated), docs (`docs/r1-creations.md`), tools (`tools/`), deploy workflow |
+| `creation/<name>` | One creation per branch, files in the branch root |
+| `creation/<name>-en`, `creation/<name>-de` | The other language version of a creation |
 
-Die Seite `https://luxx1993.github.io/r1-creations/` listet alle Creations. Jede liegt unter
-`/<name>/`, z. B. `/tally/`.
+Each branch is published under `/<name>/`, for example `/tally/` or `/tally-de/`. The language
+versions are separate creations on the R1: each has its own install QR code and its own save.
 
 ## Creations
 
-| Name | Branch | Beschreibung |
-| --- | --- | --- |
-| Tally | `creation/tally` | Strichlisten-Zähler mit Auto-Rotation |
-| Marble Maze | `creation/marble-maze` | Murmel-Labyrinth: 15 Level, Neigung per Beschleunigungssensor, Drehregler = Tempo (10 Stufen) |
-| Clawd | `creation/clawd` | Clawd als Haustier im Diorama: 7 Szenen und 11 Stile aus dem Claude-Fables-Plugin, Hüte, Brillen und Schleifen, Auto-Rotation |
-| Clawd (English) | `creation/clawd-en` | Englische Fassung von Clawd: gleiche Funktionen, alle Texte auf Englisch |
-| Todoist | `creation/todoist` | Todoist-Aufgaben mit Sync: Heute, Eingang, Projekte, Suche, Sprach-Eingabe per PTT, Offline-Queue, Vorlesen. Deutsch und Englisch |
+| Creation | English | German | What it does |
+| --- | --- | --- | --- |
+| Tally | `creation/tally` | `creation/tally-de` | Tally counter with auto-rotation |
+| Marble Maze | `creation/marble-maze` | `creation/marble-maze-de` | Marble maze: 15 levels, tilt with the accelerometer, wheel = speed (10 steps) |
+| Clawd | `creation/clawd-en` | `creation/clawd` | Clawd as a pet in a diorama: 7 scenes and 11 art styles from the Claude Fables plugin, hats, glasses and bows, games, sound, time of day, auto-rotation |
+| Bubble Level | `creation/bubble-level-en` | `creation/bubble-level` | Inclinometer and spirit level with three modes: line, vials and 3D |
+| Claude Start | `creation/clau.de-en` | `creation/clau.de` | Quick links to claude.ai, plus browser, feature and voice tests for the R1 WebView |
+| Todoist | `creation/todoist` (`/todoist/en/`) | `creation/todoist` | Todoist tasks with sync: today, inbox, projects, search, voice input via PTT, offline queue, read aloud |
 
-### Tally installieren
+## Install
 
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
+On the R1: creations card → "add via QR code" → scan the code. All codes are on the
+[hub page](https://luxx1993.github.io/r1-creations/); they are also below. A click on a code opens
+its branch.
 
-[![Install-QR für Tally – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/tally/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/tally)
+To update a creation, delete the old card on the R1 first and scan the new code (the R1 caches the
+install address).
 
-(Ein Klick auf das Bild öffnet den Branch `creation/tally` mit Screenshots und Beschreibung. Das Bild ist immer der aktuelle Code der Creation.)
+### Tally
 
-### Marble Maze installieren
-
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
-
-[![Install-QR für Marble Maze – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/marble-maze/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/marble-maze)
-
-Bedienung: Neigen = Kugel rollt, Drehregler = Tempo (1–10), Seitentaste = Neutrallage kalibrieren (Doppelklick = Y-Achse umkehren), langer Druck = Levelmenü.
-
-### Clawd installieren
-
-Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
-
-[![Install-QR für Clawd – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd)
-
-Demo-Video (30 s): [clawd-demo.mp4](https://luxx1993.github.io/r1-creations/clawd/demo/clawd-demo.mp4)
-
-Clawd ist ein Haustier ohne Pflege und ohne Level in einer endlosen Welt (keine Begrenzung nach links oder rechts): Er läuft von selbst durch die Szene, reagiert auf Berührung und schläft ein, wenn niemand da ist.
-
-- Drehregler: lenkt Clawd nach links/rechts (nach oben drehen = nach rechts). Nach einem Druck auf die Seitentaste wählt er stattdessen einen Menüpunkt (Spiel, Schlaf, Items, Welt, Optionen), ein zweiter Druck führt ihn aus. Spiel öffnet eine Auswahl: Ball (Clawd jongliert, mit Ton bei jedem Aufprall), Seilspringen oder Pfeifen; Clawd pfeift und springt Seil auch von selbst.
-- Seitentaste lang halten oder Clawd gedrückt halten: streicheln. Kurz antippen: er reagiert. Viermal schnell antippen oder schütteln: ihm wird schwindlig. Ein Tipp auf die Szene schickt ihn dorthin.
-- Welt: Ort (Wald, Weltraum, Stadt, Wüste, Vulkan, Labor, Dorf) und Stil (Original, Pixel Art, Höhle, Blaupause, Mosaik, Frutiger Aero, Kupferstich, Wandteppich, Golden Age, Ukiyo-e, Kamon) als Rolodex-Auswahl. Items: Kopf, Gesicht und Körper (Hüte, Brillen, Schnurrbart, Schleife, Schal), jeweils im Stil gezeichnet.
-- Ton (alles per WebAudio erzeugt, ohne Dateien; in Welt unter „Ton“ abschaltbar): Clawd „spricht“ in Blips, schnarcht beim Schlafen, pfeift, der Ball klackt, und je nach Stil läuft eine eigene leise Hintergrundmelodie. Auf dem R1 muss die Karte einmal berührt werden, damit der Ton starten darf.
-- Optionen: Klang (Stil, Retro, Glocken, Minimal), Lautstärke (Aus bis 100 %), Ruhezeiten (Töne nachts stumm: 22–07, 23–08, 00–06) und Bewegung (Normal/Ruhig). In „Welt“ lässt sich die Tageszeit-Reaktion („Zeit“) abschalten.
-- Tageszeit: Nach der echten Uhrzeit tönt sich die Szene (Morgenrot, Abendrot, Nacht), Clawd begrüßt dich passend, ist morgens munterer, abends ruhiger mit mehr Pfeifen, nachts langsamer und schläft schneller ein (manchmal findest du ihn schlafend), und die Musik wird nachts leiser und langsamer.
-- Szenen, Stile und Animationen stammen aus dem Claude-Fables-Plugin und sind vorgerendert (`src/` im Branch enthält Generator und Anleitung). Noch nicht auf dem echten Gerät getestet: Sensorfunktionen, Auto-Rotation und die Ladezeit der rund 4 MB Bilder.
-
-### Clawd (English) installieren
-
-Gleiche Creation, alle Texte auf Englisch (eigener Speicherstand). Auf dem R1: Creations-Karte → „add via QR code“ → diesen Code scannen.
-
-[![Install-QR für Clawd (English) – Klick öffnet den Branch](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd-en/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd-en)
-
-Im Browser: `https://luxx1993.github.io/r1-creations/clawd-en/index.html`
-
-Demo-Video (English, 30 s): [clawd-demo-en.mp4](https://luxx1993.github.io/r1-creations/clawd-en/demo/clawd-demo-en.mp4)
-
-### Clawd am Desktop ausprobieren
-
-Clawd ist eine statische Seite (HTML, JavaScript und Bilder) und läuft in jedem normalen Browser, ohne Server und ohne den R1.
-
-- Online: `https://luxx1993.github.io/r1-creations/clawd/index.html` (setzt voraus, dass GitHub Pages öffentlich erreichbar ist).
-- Lokal: `git clone -b creation/clawd --single-branch https://github.com/Luxx1993/r1-creations.git clawd`, dann `index.html` im Browser öffnen (der Ordner `assets/` muss daneben liegen). Alternativ im Ordner `python3 -m http.server` starten und `http://localhost:8000/` öffnen.
-- Bedienung: Pfeiltasten = Drehregler (hoch/links und runter/rechts sind die beiden Drehrichtungen), Enter oder Leertaste = Seitentaste, `H` = streicheln, `O` = Ansicht in 90°-Schritten drehen, Maus = Touch (Klicken und Wischen).
-- Am Desktop fehlen die Sensoren (kein Schütteln, keine automatische Drehung), die Ansicht bleibt 240×282 px groß (Browser-Zoom hilft), der Spielstand liegt im `localStorage` des Browsers, und der Ton startet erst nach dem ersten Klick oder Tastendruck.
-- Weiterentwickeln: `index.html` ist generiert. Der Quelltext liegt in `src/index.src.html`, `python3 src/build.py` baut `index.html` und die versionierte Datei neu. Die Bilder entstehen mit dem Generator in `src/` aus dem Claude-Fables-Plugin (siehe `src/README.md`). Beim Weitergeben die Lizenzen beachten: Claudes 3D-Modell von ChetasLua (MIT) und die Schrift Monocraft (OFL).
-
-### Todoist installieren
-
-Synchronisiert direkt mit deinem eigenen Todoist-Konto (Optik der Todoist-Android-App im Dark Mode). Nach dem Scannen im Setup den API-Token eingeben (Todoist → Einstellungen → Integrationen → Entwickler); er bleibt auf dem R1. Ohne Token gibt es einen Demo-Modus.
-
-| Deutsch | English |
+| English | German |
 | --- | --- |
-| [![Install-QR für Todoist (Deutsch) – Klick öffnet die Anleitung](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) | [![Install QR for Todoist (English) – click for the guide](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/en/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
-| `/todoist/` · [Anleitung](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) | `/todoist/en/` · [Guide](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) |
+| [![Install QR for Tally (English)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/tally/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/tally) | [![Install QR for Tally (German)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/tally-de/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/tally-de) |
 
-Bedienung: Scrollrad = Aufgabe wählen, Seitentaste = erledigen (5 s Rückgängig), PTT halten = Aufgabe diktieren → Review → Senden, Plus = Texteingabe, Lautsprecher = Liste vorlesen, Bildschirm 1 s halten = Setup. Beide Sprachen kommen aus derselben Quelldatei (`index.html` im Branch, `release.py` hält `en/` synchron).
+Wheel up = +1, wheel down = −1, side button = +1, long press = reset. The display rotates with the device.
 
-## Neue Creation anlegen
+### Marble Maze
+
+| English | German |
+| --- | --- |
+| [![Install QR for Marble Maze (English)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/marble-maze/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/marble-maze) | [![Install QR for Marble Maze (German)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/marble-maze-de/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/marble-maze-de) |
+
+Tilt = the marble rolls, wheel = speed (1–10), side button = calibrate the neutral position (double
+click = flip the Y axis), long press = level menu.
+
+### Clawd
+
+| English | German |
+| --- | --- |
+| [![Install QR for Clawd (English)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd-en/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd-en) | [![Install QR for Clawd (German)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clawd/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clawd) |
+
+Demo videos (30 s): [English](https://luxx1993.github.io/r1-creations/clawd-en/demo/clawd-demo-en.mp4) ·
+[German](https://luxx1993.github.io/r1-creations/clawd/demo/clawd-demo.mp4)
+
+Clawd is a pet without feeding and without levels, living in an endless world: he wanders through
+the scene on his own, reacts to touch and dozes off when nobody is around.
+
+- **Wheel:** walks Clawd left and right (wheel up = right). After a press of the side button it picks
+  a menu item instead (Play, Sleep, Items, World, Options); a second press runs it. Play opens a
+  choice of ball (Clawd juggles, with a sound on every bounce), skipping rope or whistling. Clawd
+  also whistles and skips rope on his own.
+- **Touch:** hold the side button or hold Clawd to pet him. Tap him and he reacts. Poke him four
+  times quickly or shake the R1 and he gets dizzy. A tap on the scene sends him there.
+- **World:** place (forest, moon, city, desert, volcano, lab, village) and style (original, pixel
+  art, cave, blueprint, mosaic, Frutiger Aero, copperplate, tapestry, golden age, ukiyo-e, kamon) as
+  a rolodex picker. **Items:** head, face and body (hats, glasses, moustache, bow, scarf), each drawn
+  in the current style.
+- **Sound** (all made with WebAudio, no audio files): Clawd "speaks" in blips, snores while he
+  sleeps, whistles, the ball clacks, and each style has its own quiet background tune. On the R1 the
+  card has to be touched once before sound may start.
+- **Options:** sound pack (style, retro, bells, minimal), volume (off to 100 %), quiet hours (no sound
+  at night) and motion (normal/calm). The time-of-day behaviour can be switched off under World → Time.
+- **Time of day:** the scene is tinted by the real clock (dawn, dusk, night). Clawd greets you to
+  match, is perkier in the morning, calmer and whistling more in the evening, slower at night and
+  falls asleep sooner (sometimes you find him asleep), and the music gets quieter and slower at night.
+- Scenes, styles and animations come from the Claude Fables plugin and are pre-rendered (`src/` in
+  the branch holds the generator and instructions).
+
+#### Try Clawd on the desktop
+
+Clawd is a static page (HTML, JavaScript and images) and runs in any normal browser, without a
+server and without the R1.
+
+- Online: `https://luxx1993.github.io/r1-creations/clawd-en/index.html` (German: `/clawd/index.html`).
+- Locally: `git clone -b creation/clawd-en --single-branch https://github.com/Luxx1993/r1-creations.git clawd`,
+  then open `index.html` in the browser (the `assets/` folder has to sit next to it). Or run
+  `python3 -m http.server` in the folder and open `http://localhost:8000/`.
+- Controls: arrow keys = wheel (up/left and down/right are the two directions), Enter or Space = side
+  button, `H` = pet, `O` = rotate the view in 90° steps, mouse = touch (click and swipe).
+- On the desktop there are no sensors (no shaking, no auto-rotation), the view stays 240×282 px
+  (browser zoom helps), the save lives in the browser's `localStorage`, and sound only starts after
+  the first click or key press.
+- Development: `index.html` is generated. The source is `src/index.src.html`; `python3 src/build.py`
+  rebuilds `index.html` and the versioned file. The images are made from the Claude Fables plugin
+  with the generator in `src/` (see `src/README.md`). When sharing, mind the licences: Clawd's 3D
+  model by ChetasLua (MIT) and the Monocraft font (OFL).
+
+### Bubble Level
+
+| English | German |
+| --- | --- |
+| [![Install QR for Bubble Level (English)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/bubble-level-en/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/bubble-level-en) | [![Install QR for Bubble Level (German)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/bubble-level/wasserwaage/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/bubble-level) |
+
+Side button = switch mode (line → vials → 3D), long press = calibrate, double click = reset the
+calibration, wheel = unit (degrees, % slope, mm/m), tap the big number = HOLD, tap a vial = lock it.
+
+### Claude Start
+
+| English | German |
+| --- | --- |
+| [![Install QR for Claude Start (English)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clau.de-en/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clau.de-en) | [![Install QR for Claude Start (German)](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/clau.de/qr.png)](https://github.com/Luxx1993/r1-creations/tree/creation/clau.de) |
+
+A list of links into claude.ai (new chat, recent chats, projects, settings …) and test pages for the
+R1 WebView (browser version, missing features, voice). Wheel = pick, side button = open, hold =
+mark a link as working or broken. The list lives in `links.js`.
+
+### Todoist
+
+Syncs directly with your own Todoist account (looks like the Todoist Android app in dark mode).
+After scanning, enter your API token in the setup (Todoist → Settings → Integrations → Developer); it
+stays on your R1. Without a token there is a demo mode.
+
+| English | German |
+| --- | --- |
+| [![Install QR for Todoist (English) – click for the guide](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/en/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) | [![Install QR for Todoist (German) – click for the guide](https://raw.githubusercontent.com/Luxx1993/r1-creations/creation/todoist/qr.png)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) |
+| `/todoist/en/` · [Guide](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.en.md) | `/todoist/` · [Guide (German)](https://github.com/Luxx1993/r1-creations/blob/creation/todoist/README.md) |
+
+Wheel = pick a task, side button = complete (5 s undo), hold PTT = dictate a task → review → send,
+plus = type a task, speaker = read the list aloud, hold the screen for 1 s = setup. Both languages
+come from the same source file (`index.html` in the branch; `release.py` keeps `en/` in sync).
+
+## Add a new creation
 
 ```bash
 git checkout -b creation/<name> main
-# index.html, icon.png (96x96), creation.json anlegen
+# add index.html, icon.png (96x96) and creation.json
 pip install pillow qrcode
-python3 tools/make_qr.py --title "<Titel>" --description "<Text>" \
+python3 tools/make_qr.py --title "<Title>" --description "<Text>" \
   --url https://luxx1993.github.io/r1-creations/<name>/index.html
 git add -A && git commit -m "Add <name>" && git push -u origin creation/<name>
 ```
 
-`creation.json`: `{"title":"…","description":"…","version":"0.1.0","entry":"index.html"}`.
-Der Workflow `.github/workflows/pages.yml` baut bei jedem Push auf `main` oder `creation/**` die
-Seite neu (Übersicht + ein Ordner pro Creation).
+`creation.json`: `{"title":"…","lang":"en","description":"…","version":"0.1.0","entry":"index.html"}`.
+`lang` is `en` or `de` and shows as a badge on the hub page; versions with the same title are listed
+next to each other. Write `description` in English (the hub page is English); optional `also` adds
+extra links to a card, e.g. `[{"label":"English version","href":"en/index.html"}]`.
 
-## Einmalig einrichten
+For the other language, copy the branch to `creation/<name>-de` (or `-en`), translate all texts,
+use its own storage key, and make its own QR code with the new URL.
+
+The workflow `.github/workflows/pages.yml` rebuilds the site (hub page plus one folder per creation)
+on every push to `main`. A push to a `creation/**` branch starts that same build on `main`, because
+the `github-pages` environment only lets `main` deploy.
+
+## One-time setup
 
 Settings → Pages → Build and deployment → Source: **GitHub Actions**.
 
-## Hinweise
+## Notes
 
-- Neue Version einer Creation = neue Datei `index-v<version>.html`, alte Karte auf dem R1
-  deinstallieren, neuen QR scannen (die R1 cached die Install-URL).
-- Alle Creations teilen sich den Origin `luxx1993.github.io`: `localStorage`-Schlüssel mit
-  Creation-Namen versehen (z. B. `tally_state`).
-- Details, SDK und Erfahrungen vom echten Gerät: `docs/r1-creations.md`.
+- A new version of a creation = a new file `index-v<version>.html`: uninstall the old card on the
+  R1 and scan the new QR code (the R1 caches the install URL).
+- All creations share the origin `luxx1993.github.io`: prefix `localStorage` keys with the creation
+  name (e.g. `tally_state`, `tally_de_state`).
+- Details, the SDK and lessons from the real device: `docs/r1-creations.md`.
