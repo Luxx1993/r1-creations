@@ -62,7 +62,7 @@ async function fetchToken(env) {
   log.push(now());
   await kvPut(env, 'token_log', log, 3600);
   const r = await fetch(API + '/v2/auth/temporary', { headers: { 'User-Agent': UA, Accept: 'application/json' } });
-  if (r.status === 429) { await setBackoff(env, r); throw new HttpError(429, 'rate_limited'); }
+  if (r.status === 429) throw new HttpError(429, 'rate_limited', await setBackoff(env, r, 'token'));
   if (!r.ok) throw new HttpError(502, 'token_failed', { upstream: r.status });
   const body = await r.json();
   const p = jwtPayload(body.token);
@@ -75,13 +75,20 @@ async function fetchToken(env) {
 // ---------- 429 backoff ----------
 async function checkBackoff(env) {
   const b = await kvGet(env, 'backoff');
-  if (b && b.until > now()) throw new HttpError(429, 'rate_limited', { retryAfter: Math.ceil((b.until - now()) / 1000) });
+  if (b && b.until > now()) throw new HttpError(429, 'rate_limited', { retryAfter: Math.ceil((b.until - now()) / 1000), cause: b.reason || null });
 }
-async function setBackoff(env, r) {
+// Remembers why RedGifs throttled us (token request or API call, its error code) for diagnosis.
+async function setBackoff(env, r, source) {
   const prev = await kvGet(env, 'backoff');
   const ra = parseInt(r.headers.get('retry-after') || '', 10);
   const step = Number.isFinite(ra) && ra > 0 ? ra : Math.min(900, prev && prev.until > now() - 600e3 ? prev.step * 2 : 30);
-  await kvPut(env, 'backoff', { until: now() + step * 1000, step }, step + 60);
+  const body = await r.text().catch(() => '');
+  let code = '';
+  try { const e = JSON.parse(body).error || {}; code = String(e.code || e.message || '').slice(0, 80); } catch { code = body.slice(0, 80); }
+  const reason = { source, status: r.status, code, retryAfterHeader: r.headers.get('retry-after') || null, at: new Date().toISOString() };
+  await kvPut(env, 'backoff', { until: now() + step * 1000, step, reason }, step + 60);
+  await kvPut(env, 'last_429', reason);
+  return { retryAfter: step, cause: reason };
 }
 
 async function bumpStat(env, key) {
@@ -105,7 +112,7 @@ async function api(env, path, { auth = true } = {}) {
     tok = await getToken(env, { force: true, bad: tok });
     r = await call(tok);
   }
-  if (r.status === 429) { await setBackoff(env, r); throw new HttpError(429, 'rate_limited'); }
+  if (r.status === 429) throw new HttpError(429, 'rate_limited', await setBackoff(env, r, 'api ' + path.split('?')[0]));
   if (r.status === 401 || r.status === 403) throw new HttpError(502, 'auth_failed', { upstream: r.status });
   if (!r.ok) throw new HttpError(r.status === 404 ? 404 : 502, 'upstream', { upstream: r.status });
   return r.json();
@@ -190,7 +197,7 @@ const routes = {
     return {
       token: t ? { addr: t.addr, ageMin: Math.round((now() - t.at) / 60000), expiresInMin: Math.round((t.exp - sec()) / 60) } : null,
       tokenFetchesLastHour: log.length, maxPerHour: MAX_TOKEN_FETCHES_PER_HOUR,
-      backoff: await kvGet(env, 'backoff'), stats: (await kvGet(env, 'stats')) || {}, kv: !!env.TOKEN_KV,
+      backoff: await kvGet(env, 'backoff'), last429: await kvGet(env, 'last_429'), stats: (await kvGet(env, 'stats')) || {}, kv: !!env.TOKEN_KV,
     };
   },
 };

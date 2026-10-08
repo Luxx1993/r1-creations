@@ -77,6 +77,7 @@ assert.equal(res.status, 429);
 const n = calls.api.length;
 res = await get(w, '/api/search?q=Amateur&exact=1&page=2');
 assert.equal(res.status, 429); assert.equal(+res.headers.get('retry-after') > 60, true);
+assert.equal((await res.json()).cause.source, 'api /v2/gifs/search');
 assert.equal(calls.api.length, n, 'no upstream call during backoff');
 
 // media proxy: allowlist + range passthrough, no referer sent upstream
