@@ -93,13 +93,22 @@ step('scroll lock: 4 events in a burst -> +1 clip, after 150 ms the next one cou
 await shot('02-info-overlay');
 
 // double click = two sideClicks ~50 ms apart -> one toggle
-await fire('sideClick'); await wait(50); await fire('sideClick');
+await fire('sideClick'); await wait(320);
 assert.equal(await page.evaluate(() => paused && active.paused), true);
-assert.equal(await page.evaluate(() => dbg.sideDbl), 1);
 await shot('03-paused');
-await wait(300); await fire('sideClick');
+await fire('sideClick'); await wait(320);
 assert.equal(await page.evaluate(() => paused), false);
-step('sideClick = play/pause, double click debounced');
+step('sideClick = play/pause (after the double-click window)');
+
+// double press (two events ~50 ms apart) toggles fill mode, no pause; the choice is remembered
+await fire('sideClick'); await wait(50); await fire('sideClick'); await wait(320);
+assert.deepEqual(await page.evaluate(() => [paused, getComputedStyle(active).objectFit, localStorage.getItem('rg_fill')]), [false, 'cover', '1']);
+await shot('03b-fill');
+await page.waitForSelector('#acts.show');
+const fillBtn = await page.locator('#aFill').boundingBox();
+await page.mouse.click(fillBtn.x + 20, fillBtn.y + 20);    // the overlay button toggles back, without touching sound
+assert.deepEqual(await page.evaluate(() => [getComputedStyle(active).objectFit, soundOn]), ['contain', false]);
+step('double side press and the fill button switch fit/fill (cover, no stretching)');
 await page.waitForFunction(() => document.getElementById('nav').classList.contains('idle'), null, { timeout: 4000 });
 assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('nav')).pointerEvents), 'none');
 // tap where the hidden bar is: reveals it, does not switch tabs or toggle sound
@@ -224,7 +233,7 @@ await p4.route(qrUrl, (route) => qrLib ? route.fulfill({ status: 200, contentTyp
 await p4.goto(`${BASE}/install?k=${KEY}`);
 const payload = JSON.parse(await p4.locator('#json').textContent());
 assert.deepEqual(Object.keys(payload), ['title', 'url', 'description', 'iconUrl', 'themeColor']);
-assert.equal(payload.url, `${BASE}/?k=${KEY}&v=7`);
+assert.equal(payload.url, `${BASE}/?k=${KEY}&v=8`);
 assert.equal(payload.themeColor, '#FF2D20');
 await p4.waitForSelector('#qr img, #qr canvas', { timeout: 10000 }).catch(() => {});
 await p4.screenshot({ path: join(out, '10-install.png'), fullPage: true });
