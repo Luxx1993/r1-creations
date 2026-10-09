@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>R1 Install</title>
+<style>
+  :root { --bg: #0e0e10; --fg: #f2f2f3; --mut: #9a9aa2; --acc: #FF2D20; --card: #1a1a1f; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, sans-serif; }
+  main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .mut { color: var(--mut); font-size: 13px; }
+  #qr { background: #fff; padding: 20px; border-radius: 12px; width: max-content; margin: 18px auto; }
+  #qr img, #qr canvas { display: block; width: 280px; height: 280px; image-rendering: pixelated; }
+  .card { background: var(--card); border-radius: 12px; padding: 12px 14px; margin: 12px 0; }
+  label { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }
+  input[type=number] { width: 80px; padding: 4px 6px; border-radius: 6px; border: 1px solid #333; background: #111; color: var(--fg); }
+  code, pre { font: 12px/1.4 ui-monospace, monospace; word-break: break-all; white-space: pre-wrap; color: #ddd; }
+  ol { padding-left: 20px; margin: 6px 0; }
+  .err { color: var(--acc); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>R1-Creation installieren</h1>
+  <div class="mut" id="ver"></div>
+  <div id="qr"></div>
+  <div class="card">
+    <label><input type="checkbox" id="dbg"> Debug-Overlay (<code>debug=1</code>)</label>
+    <label>Sperrzeit Scrollrad <input type="number" id="lock" min="0" max="3000" step="25" value="150"> ms</label>
+    <div class="mut">Jede Änderung ergibt eine neue Install-URL → alte Karte löschen, neu scannen.</div>
+  </div>
+  <div class="card">
+    <b>Auf dem R1</b>
+    <ol>
+      <li>Alte Version dieser Creation löschen (falls vorhanden).</li>
+      <li>Creations-Karte öffnen → „add via QR code“.</li>
+      <li>Diesen Code scannen (Helligkeit hoch, ca. 20 cm Abstand).</li>
+    </ol>
+  </div>
+  <div class="card"><div class="mut">Install-URL (enthält den Zugriffsschlüssel, nicht teilen)</div><pre id="url"></pre>
+    <div class="mut">QR-Inhalt</div><pre id="json"></pre></div>
+</main>
+<script src="version.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+        integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
+        crossorigin="anonymous"></script>
+<script>
+'use strict';
+const key = new URLSearchParams(location.search).get('k') || '';
+const $ = (id) => document.getElementById(id);
+$('ver').textContent = 'App ' + window.APP_VERSION + ' · Install-Version v=' + window.INSTALL_V;
+
+function render() {
+  const u = new URL('/', location.origin);
+  u.searchParams.set('k', key);
+  u.searchParams.set('v', String(window.INSTALL_V));
+  if ($('dbg').checked) u.searchParams.set('debug', '1');
+  const lock = parseInt($('lock').value, 10);
+  if (Number.isFinite(lock) && lock !== 150) u.searchParams.set('lock', String(lock));
+  // Exactly the five fields rabbit's own QR tool encodes.
+  const payload = JSON.stringify({
+    title: 'RG Clips',
+    url: u.toString(),
+    description: 'Privater Clip-Viewer',
+    iconUrl: location.origin + '/icon.png',
+    themeColor: '#FF2D20',
+  });
+  $('url').textContent = u.toString();
+  $('json').textContent = payload;
+  $('qr').textContent = '';
+  if (typeof QRCode === 'undefined') { $('qr').innerHTML = '<p class="err">QR-Bibliothek nicht geladen (cdnjs).</p>'; return; }
+  new QRCode($('qr'), { text: payload, width: 280, height: 280, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+}
+$('dbg').addEventListener('change', render);
+$('lock').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
