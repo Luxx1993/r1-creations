@@ -62,12 +62,12 @@ const layout = await page.evaluate(() => ({
   vid: document.querySelector('video.on').getBoundingClientRect().toJSON(), videos: document.querySelectorAll('video').length,
 }));
 assert.ok(layout.sh <= 282 && layout.sw <= 240, 'no overflow');
-assert.deepEqual([layout.stage.top, layout.stage.height, layout.nav.height], [40, 206, 36]);
-assert.deepEqual([layout.vid.left, layout.vid.top, layout.vid.width, layout.vid.height], [0, 40, 240, 206]);
+assert.deepEqual([layout.stage.top, layout.stage.height, layout.nav.height], [0, 246, 36]);
+assert.deepEqual([layout.vid.left, layout.vid.top, layout.vid.width, layout.vid.height], [0, 0, 240, 246]);
 assert.equal(layout.videos, 2);
 assert.deepEqual(await page.evaluate(() => vids.map((v) => getComputedStyle(v).display)).then((d) => d.sort()), ['block', 'none'],
   'only the active video is rendered (the R1 WebView ignores opacity on video)');
-step('layout 240x282, stage 240x206 below the OS bar, nav 36 px, two <video> elements');
+step('layout 240x282, stage 240x246, nav 36 px, two <video> elements');
 await shot('01-feed');
 
 let st = await page.evaluate(() => ({ src: active.src, other: vids.find((v) => v !== active), objectFit: getComputedStyle(active).objectFit, muted: active.muted, loop: active.loop }));
@@ -148,7 +148,7 @@ for (let i = 0; i < 16; i++) await fire('scrollDown');
 await page.waitForFunction(() => document.querySelectorAll('#linner .tile').length === 40);
 await wait(250);   // transform transition
 const sel = await page.locator('.tile.sel').boundingBox();
-assert.ok(sel.y >= 62 && sel.y + sel.height <= 246, 'selected tile visible');
+assert.ok(sel.y >= 22 && sel.y + sel.height <= 246, 'selected tile visible');
 await fire('sideClick');
 await page.waitForFunction(() => document.querySelector('#ctx').textContent === 'Niche 17');
 assert.ok(apiReqs.some((u) => u.includes('/api/niche?id=niche-1-16')));
@@ -205,7 +205,7 @@ await p4.route(qrUrl, (route) => qrLib ? route.fulfill({ status: 200, contentTyp
 await p4.goto(`${BASE}/install?k=${KEY}`);
 const payload = JSON.parse(await p4.locator('#json').textContent());
 assert.deepEqual(Object.keys(payload), ['title', 'url', 'description', 'iconUrl', 'themeColor']);
-assert.equal(payload.url, `${BASE}/?k=${KEY}&v=3`);
+assert.equal(payload.url, `${BASE}/?k=${KEY}&v=4`);
 assert.equal(payload.themeColor, '#FF2D20');
 await p4.waitForSelector('#qr img, #qr canvas', { timeout: 10000 }).catch(() => {});
 await p4.screenshot({ path: join(out, '10-install.png'), fullPage: true });

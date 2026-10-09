@@ -148,7 +148,7 @@ zur Liste zurück (`history`). Ab 5 verbleibenden Clips wird die nächste Seite 
 
 URL-Parameter (bei Bedarf in die Install-URL; die Install-Seite hat Felder für Debug und Sperrzeit):
 `debug=1` (Event-Zähler, Abstand zwischen Scroll-Events, Sperrzeit), `lock=<ms>` (Sperrzeit Feed), `listlock=<ms>`,
-`top=<px>` (von der R1-Leiste verdeckter Bereich, Standard 40), `hd=1`, `media=proxy`.
+`top=<px>` (freier Streifen oben, Standard 0: auf dem R1 liegt die OS-Leiste oberhalb der Seite), `hd=1`, `media=proxy`.
 
 Sperrzeit einstellen: mit `debug=1` installieren, am Rad drehen und „gap“/„min“ ablesen (Abstand der Events einer Rastung).
 Die Sperrzeit sollte knapp über dem größten Abstand liegen, den *eine* Rastung erzeugt.
@@ -170,4 +170,12 @@ Playwrights Chromium kann kein H.264, der Test liefert daher einen WebM-Clip aus
 - Token-Stabilität auf Cloudflare (siehe oben, `/api/status`).
 - `CreationVoiceHandler` (`start`/`stop`, `sttEnded`) – nach Vorgabe umgesetzt, nur mit Stub getestet.
 - Ob die R1-WebView `no-referrer` für Video-Requests einhält (Chromium tut es). Wenn nicht, greift der `/media`-Fallback automatisch.
-- Flüssigkeit von `sd` auf dem Gerät, tatsächliche Sperrzeit, Höhe der OS-Leiste (`top`).
+- Flüssigkeit von `sd` über längere Zeit.
+
+## Auf dem R1 geprüft (2026-10-09)
+
+- Videos laufen direkt vom CDN (`no-referrer` wird eingehalten), die Liste kommt über das NAS-Relay.
+- Das Scrollrad liefert ein Event pro Rastung; 300 ms Sperre fühlte sich träge an, Standard jetzt 150 ms.
+- Die WebView zeichnet Video auf eigener Ebene und ignoriert `opacity`: das wartende Video muss `display:none` sein.
+- Die OS-Leiste („zurück“, Uhr, Akku) liegt oberhalb der 240×282-Seite und verdeckt nichts.
+- Direkter Zugriff auf die RedGifs-API aus der WebView: per CORS blockiert.

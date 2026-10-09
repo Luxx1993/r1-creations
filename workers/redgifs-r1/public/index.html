@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>RG</title>
 <style>
-  :root { --top: 40px; --nav: 36px; --bg: #0e0e10; --acc: #FF2D20; --fg: #f2f2f3; --mut: #9a9aa2; --tile: #1a1a1f; }
+  :root { --top: 0px; --nav: 36px; --bg: #0e0e10; --acc: #FF2D20; --fg: #f2f2f3; --mut: #9a9aa2; --tile: #1a1a1f; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
   html, body { margin: 0; width: 240px; height: 282px; overflow: hidden; background: var(--bg); color: var(--fg);
                font: 13px/1.25 system-ui, -apple-system, sans-serif; }
@@ -141,7 +141,7 @@ const DOUBLE_CLICK_MS = 250;      // zweiter sideClick (Doppelklick ≈ 50 ms) w
 const LOAD_AHEAD = 5;             // nächste Seite holen, wenn nur noch so viele Clips übrig sind
 const INFO_MS = 1800;             // Overlay mit Creator und Position
 const STALL_MS = 15000;           // ab dann gilt ein Video als hängend
-const TOP_SAFE = int(P.get('top'), 0, 80, 40);  // die R1 legt ihre Leiste über die obersten ~40 px
+const TOP_SAFE = int(P.get('top'), 0, 80, 0);   // auf dem R1 sitzt die OS-Leiste über der Seite, nicht darauf (Foto 2026-10-09)
 const USE_HD = P.get('hd') === '1';
 const SWIPE_PX = 28;
 const TILE_H = 54;                // .tile height + margin
