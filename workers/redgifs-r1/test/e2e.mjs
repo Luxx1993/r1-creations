@@ -65,6 +65,8 @@ assert.ok(layout.sh <= 282 && layout.sw <= 240, 'no overflow');
 assert.deepEqual([layout.stage.top, layout.stage.height, layout.nav.height], [40, 206, 36]);
 assert.deepEqual([layout.vid.left, layout.vid.top, layout.vid.width, layout.vid.height], [0, 40, 240, 206]);
 assert.equal(layout.videos, 2);
+assert.deepEqual(await page.evaluate(() => vids.map((v) => getComputedStyle(v).display)).then((d) => d.sort()), ['block', 'none'],
+  'only the active video is rendered (the R1 WebView ignores opacity on video)');
 step('layout 240x282, stage 240x206 below the OS bar, nav 36 px, two <video> elements');
 await shot('01-feed');
 
@@ -203,7 +205,7 @@ await p4.route(qrUrl, (route) => qrLib ? route.fulfill({ status: 200, contentTyp
 await p4.goto(`${BASE}/install?k=${KEY}`);
 const payload = JSON.parse(await p4.locator('#json').textContent());
 assert.deepEqual(Object.keys(payload), ['title', 'url', 'description', 'iconUrl', 'themeColor']);
-assert.equal(payload.url, `${BASE}/?k=${KEY}&v=1`);
+assert.equal(payload.url, `${BASE}/?k=${KEY}&v=2`);
 assert.equal(payload.themeColor, '#FF2D20');
 await p4.waitForSelector('#qr img, #qr canvas', { timeout: 10000 }).catch(() => {});
 await p4.screenshot({ path: join(out, '10-install.png'), fullPage: true });
