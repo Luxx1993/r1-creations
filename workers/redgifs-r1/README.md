@@ -137,12 +137,12 @@ Das Relay nimmt nur Anfragen an `/v1/…` und `/v2/…` von `api.redgifs.com` an
 | Eingabe | Feed | Explore / Niches | Suche |
 | --- | --- | --- | --- |
 | Scrollrad | ±1 Clip, danach 150 ms Sperre | Auswahl ±1 | – |
-| Seitentaste kurz | Play/Pause + Overlay (Creator, Position) | Öffnen | Suchen |
+| Seitentaste kurz | Play/Pause, blendet Creator, Position und Leiste ein | Öffnen | Suchen |
 | Seitentaste halten | Sprachsuche (`CreationVoiceHandler`), ohne Handler: Textfeld | gleich | – |
-| Tippen | Ton an/aus (nur Clips mit Ton) | Kachel öffnen | Feld/Taste |
+| Tippen | Ton an/aus und Einblenden von Creator, Position, Leiste (Tipp auf die ausgeblendete Leiste: nur einblenden) | Kachel öffnen | Feld/Taste |
 | Wischen hoch/runter | nächster/vorheriger Clip | Liste blättern | – |
 
-Untere Leiste: Home (Trending), Explore (Suche + Top-Tags), Niches. Zurück-Leiste der R1 führt aus Tag-/Niche-/Such-Feeds
+Clips nutzen den ganzen Bildschirm. Beim Scrollen bleibt er frei; Creator, Position und die Symbolleiste erscheinen nur auf Tipp oder Seitentaste und verschwinden nach 2,5 s. Symbolleiste: Home (Trending), Explore (Suche + Top-Tags), Niches. Zurück-Leiste der R1 führt aus Tag-/Niche-/Such-Feeds
 zur Liste zurück (`history`). Ab 5 verbleibenden Clips wird die nächste Seite geladen; maximal zwei `<video>` im DOM
 (aktiv + nächster mit `preload="metadata"`).
 

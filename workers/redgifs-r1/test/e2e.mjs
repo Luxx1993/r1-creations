@@ -110,10 +110,10 @@ assert.equal(await page.evaluate(() => soundOn), soundBefore, 'revealing the bar
 step('icon bar hides when idle; a tap on the hidden bar only reveals it');
 await page.waitForFunction(() => document.getElementById('nav').classList.contains('idle'), null, { timeout: 4000 });
 await wait(200); await fire('scrollDown');
-assert.equal(await page.evaluate(() => document.getElementById('nav').classList.contains('idle') && document.getElementById('info').classList.contains('show')), true);
+assert.equal(await page.evaluate(() => document.getElementById('nav').classList.contains('idle') && !document.getElementById('info').classList.contains('show')), true);
 await wait(200); await page.mouse.move(120, 200); await page.mouse.down(); await page.mouse.move(120, 120, { steps: 4 }); await page.mouse.up();
-assert.equal(await page.evaluate(() => document.getElementById('nav').classList.contains('idle')), true, 'swipe does not show the bar');
-step('wheel and swipe show creator/position but keep the icon bar hidden');
+assert.equal(await page.evaluate(() => document.getElementById('nav').classList.contains('idle') && !document.getElementById('info').classList.contains('show')), true, 'swipe shows nothing');
+step('wheel and swipe keep the clip uncovered (no bar, no creator overlay)');
 
 // tap toggles sound only on clips with audio (Trend1 has audio, Trend2 not)
 await page.evaluate(() => { curFeed.idx = 0; showItem(); });
@@ -224,7 +224,7 @@ await p4.route(qrUrl, (route) => qrLib ? route.fulfill({ status: 200, contentTyp
 await p4.goto(`${BASE}/install?k=${KEY}`);
 const payload = JSON.parse(await p4.locator('#json').textContent());
 assert.deepEqual(Object.keys(payload), ['title', 'url', 'description', 'iconUrl', 'themeColor']);
-assert.equal(payload.url, `${BASE}/?k=${KEY}&v=6`);
+assert.equal(payload.url, `${BASE}/?k=${KEY}&v=7`);
 assert.equal(payload.themeColor, '#FF2D20');
 await p4.waitForSelector('#qr img, #qr canvas', { timeout: 10000 }).catch(() => {});
 await p4.screenshot({ path: join(out, '10-install.png'), fullPage: true });

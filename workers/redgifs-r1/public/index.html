@@ -348,9 +348,9 @@ function step(dir) {
 
 // ---------- overlays ----------
 let infoTimer = 0;
-// withNav: taps and the side button also bring back the icon bar; scrolling (wheel or swipe) only
-// shows the creator and position.
-function showInfo(withNav) {
+// show: taps and the side button bring up creator, position, sound hint and the icon bar together.
+// Scrolling (wheel or swipe) only refreshes the texts, so the clip stays uncovered.
+function showInfo(show) {
   const f = curFeed, it = f.items[f.idx];
   if (!it) return;
   $('ctx').textContent = f.label;
@@ -360,8 +360,9 @@ function showInfo(withNav) {
   $('ipos').textContent = (f.idx + 1) + '/' + f.items.length + (f.done ? '' : '+');
   $('itags').textContent = it.t.join(' · ');
   $('snd').textContent = it.a ? (soundOn ? '🔊 Ton an' : '🔇 Tippen = Ton') : 'ohne Ton';
+  if (!show) return;
   for (const id of ['ctx', 'info', 'snd']) $(id).classList.add('show');
-  if (withNav) $('nav').classList.remove('idle');
+  $('nav').classList.remove('idle');
   clearTimeout(infoTimer);
   infoTimer = setTimeout(hideChrome, INFO_MS);
 }
