@@ -136,7 +136,7 @@ Das Relay nimmt nur Anfragen an `/v1/…` und `/v2/…` von `api.redgifs.com` an
 
 | Eingabe | Feed | Explore / Niches | Suche |
 | --- | --- | --- | --- |
-| Scrollrad | ±1 Clip, danach 300 ms Sperre | Auswahl ±1 | – |
+| Scrollrad | ±1 Clip, danach 150 ms Sperre | Auswahl ±1 | – |
 | Seitentaste kurz | Play/Pause + Overlay (Creator, Position) | Öffnen | Suchen |
 | Seitentaste halten | Sprachsuche (`CreationVoiceHandler`), ohne Handler: Textfeld | gleich | – |
 | Tippen | Ton an/aus (nur Clips mit Ton) | Kachel öffnen | Feld/Taste |

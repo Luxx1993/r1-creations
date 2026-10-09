@@ -29,7 +29,7 @@
   <div id="qr"></div>
   <div class="card">
     <label><input type="checkbox" id="dbg"> Debug-Overlay (<code>debug=1</code>)</label>
-    <label>Sperrzeit Scrollrad <input type="number" id="lock" min="0" max="3000" step="50" value="300"> ms</label>
+    <label>Sperrzeit Scrollrad <input type="number" id="lock" min="0" max="3000" step="25" value="150"> ms</label>
     <div class="mut">Jede Änderung ergibt eine neue Install-URL → alte Karte löschen, neu scannen.</div>
   </div>
   <div class="card">
@@ -59,7 +59,7 @@ function render() {
   u.searchParams.set('v', String(window.INSTALL_V));
   if ($('dbg').checked) u.searchParams.set('debug', '1');
   const lock = parseInt($('lock').value, 10);
-  if (Number.isFinite(lock) && lock !== 300) u.searchParams.set('lock', String(lock));
+  if (Number.isFinite(lock) && lock !== 150) u.searchParams.set('lock', String(lock));
   // Exactly the five fields rabbit's own QR tool encodes.
   const payload = JSON.stringify({
     title: 'RG Clips',

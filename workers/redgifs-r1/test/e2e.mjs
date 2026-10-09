@@ -84,7 +84,7 @@ await wait(320); await fire('scrollDown');
 assert.match(await text('#ipos'), /^3\//);
 await wait(320); await fire('scrollUp');
 assert.match(await text('#ipos'), /^2\//);
-step('scroll lock: 4 events in a burst -> +1 clip, after 300 ms the next one counts');
+step('scroll lock: 4 events in a burst -> +1 clip, after 150 ms the next one counts');
 await shot('02-info-overlay');
 
 // double click = two sideClicks ~50 ms apart -> one toggle
@@ -185,7 +185,7 @@ await p3.route('**/api/trending*', (route) => route.abort());
 await p3.goto(`${BASE}/?k=${KEY}&debug=1`);
 await p3.waitForFunction(() => document.getElementById('status').classList.contains('err'));
 assert.match(await p3.locator('#stxt').textContent(), /Netzwerkfehler/);
-assert.match(await p3.locator('#dbg').textContent(), /lock 300ms/);
+assert.match(await p3.locator('#dbg').textContent(), /lock 150ms/);
 await p3.screenshot({ path: join(out, '09-error-debug.png') });
 await p3.unroute('**/api/trending*');
 await p3.evaluate(() => window.dispatchEvent(new CustomEvent('sideClick')));
@@ -205,7 +205,7 @@ await p4.route(qrUrl, (route) => qrLib ? route.fulfill({ status: 200, contentTyp
 await p4.goto(`${BASE}/install?k=${KEY}`);
 const payload = JSON.parse(await p4.locator('#json').textContent());
 assert.deepEqual(Object.keys(payload), ['title', 'url', 'description', 'iconUrl', 'themeColor']);
-assert.equal(payload.url, `${BASE}/?k=${KEY}&v=2`);
+assert.equal(payload.url, `${BASE}/?k=${KEY}&v=3`);
 assert.equal(payload.themeColor, '#FF2D20');
 await p4.waitForSelector('#qr img, #qr canvas', { timeout: 10000 }).catch(() => {});
 await p4.screenshot({ path: join(out, '10-install.png'), fullPage: true });

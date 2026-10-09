@@ -135,7 +135,7 @@ const P = new URLSearchParams(location.search);
 const int = (v, lo, hi, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 const KEY = P.get('k') || '';
 const DEBUG = P.get('debug') === '1';
-const SCROLL_LOCK_MS = int(P.get('lock'), 0, 3000, 300);  // Sperrzeit nach jedem Videowechsel (?lock=…)
+const SCROLL_LOCK_MS = int(P.get('lock'), 0, 3000, 150);  // Sperrzeit nach jedem Videowechsel (?lock=…); R1: 1 Event pro Rastung
 const LIST_LOCK_MS = int(P.get('listlock'), 0, 3000, 0);  // Sperrzeit in Listen (eine Rastung = ein Eintrag)
 const DOUBLE_CLICK_MS = 250;      // zweiter sideClick (Doppelklick ≈ 50 ms) wird verworfen
 const LOAD_AHEAD = 5;             // nächste Seite holen, wenn nur noch so viele Clips übrig sind
