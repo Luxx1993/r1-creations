@@ -47,6 +47,11 @@ const shot = (name) => page.screenshot({ path: join(out, name + '.png') });
 const wait = (ms) => page.waitForTimeout(ms);
 const text = (sel) => page.locator(sel).textContent();
 const step = (name) => console.log('  ✓', name);
+// The icon bar fades out in the feed; a first touch reveals it, a second one picks the tab.
+async function openTab(p, tab) {
+  if (await p.locator('#nav.idle').count()) await p.mouse.click(120, 100);
+  await p.locator(`#nav button[data-tab=${tab}]`).click();
+}
 
 // --- access protection
 let r = await fetch(BASE + '/');
@@ -62,12 +67,12 @@ const layout = await page.evaluate(() => ({
   vid: document.querySelector('video.on').getBoundingClientRect().toJSON(), videos: document.querySelectorAll('video').length,
 }));
 assert.ok(layout.sh <= 282 && layout.sw <= 240, 'no overflow');
-assert.deepEqual([layout.stage.top, layout.stage.height, layout.nav.height], [0, 246, 36]);
-assert.deepEqual([layout.vid.left, layout.vid.top, layout.vid.width, layout.vid.height], [0, 0, 240, 246]);
+assert.deepEqual([layout.stage.top, layout.stage.height, layout.nav.height], [0, 282, 44]);
+assert.deepEqual([layout.vid.left, layout.vid.top, layout.vid.width, layout.vid.height], [0, 0, 240, 282]);
 assert.equal(layout.videos, 2);
 assert.deepEqual(await page.evaluate(() => vids.map((v) => getComputedStyle(v).display)).then((d) => d.sort()), ['block', 'none'],
   'only the active video is rendered (the R1 WebView ignores opacity on video)');
-step('layout 240x282, stage 240x246, nav 36 px, two <video> elements');
+step('layout 240x282, clip uses the full 240x282, icon bar 44 px on top, two <video> elements');
 await shot('01-feed');
 
 let st = await page.evaluate(() => ({ src: active.src, other: vids.find((v) => v !== active), objectFit: getComputedStyle(active).objectFit, muted: active.muted, loop: active.loop }));
@@ -95,6 +100,14 @@ await shot('03-paused');
 await wait(300); await fire('sideClick');
 assert.equal(await page.evaluate(() => paused), false);
 step('sideClick = play/pause, double click debounced');
+await page.waitForFunction(() => document.getElementById('nav').classList.contains('idle'), null, { timeout: 4000 });
+assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('nav')).pointerEvents), 'none');
+// tap where the hidden bar is: reveals it, does not switch tabs or toggle sound
+const soundBefore = await page.evaluate(() => soundOn);
+await page.mouse.click(120, 270);
+assert.equal(await page.evaluate(() => screen + ':' + document.getElementById('nav').classList.contains('idle')), 'feed:false');
+assert.equal(await page.evaluate(() => soundOn), soundBefore, 'revealing the bar does not toggle sound');
+step('icon bar hides when idle; a tap on the hidden bar only reveals it');
 
 // tap toggles sound only on clips with audio (Trend1 has audio, Trend2 not)
 await wait(320); await fire('scrollUp');
@@ -125,7 +138,7 @@ step('next page loaded within the last 5 clips; end of feed reached; still two <
 await p2.close();
 
 // --- Explore: tag tiles, wheel + sideClick, history back
-await page.locator('#nav button[data-tab=explore]').click();
+await openTab(page, 'explore');
 await page.waitForFunction(() => document.querySelectorAll('#linner .tile').length === 11);
 assert.equal(await page.evaluate(() => vids.every((v) => v.paused)), true);
 await fire('scrollDown'); await fire('scrollDown');
@@ -141,21 +154,21 @@ assert.equal(await page.locator('.tile.sel .t').textContent(), 'Blonde');
 step('Explore: wheel selects, sideClick opens tag feed, back returns to the list');
 
 // --- Niches: thumbnails, paging, open
-await page.locator('#nav button[data-tab=niches]').click();
+await openTab(page, 'niches');
 await page.waitForFunction(() => document.querySelectorAll('#linner .tile img').length === 20);
 await shot('06-niches');
 for (let i = 0; i < 16; i++) await fire('scrollDown');
 await page.waitForFunction(() => document.querySelectorAll('#linner .tile').length === 40);
 await wait(250);   // transform transition
 const sel = await page.locator('.tile.sel').boundingBox();
-assert.ok(sel.y >= 22 && sel.y + sel.height <= 246, 'selected tile visible');
+assert.ok(sel.y >= 22 && sel.y + sel.height <= 238, 'selected tile visible');
 await fire('sideClick');
 await page.waitForFunction(() => document.querySelector('#ctx').textContent === 'Niche 17');
 assert.ok(apiReqs.some((u) => u.includes('/api/niche?id=niche-1-16')));
 step('Niches: thumbnails, next page while scrolling, selection stays visible, opens niche feed');
 
 // --- text search via long press (no CreationVoiceHandler on desktop -> textarea)
-await page.locator('#nav button[data-tab=home]').click();
+await openTab(page, 'home');
 await page.keyboard.down('Space'); await wait(100); await page.keyboard.up('Space');
 await page.waitForFunction(() => screen === 'search' && document.activeElement.id === 'q');
 await page.keyboard.type('blo');
@@ -163,7 +176,7 @@ await shot('07-search');
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => document.querySelector('#ctx').textContent === '#Blonde' && document.querySelector('video.on')?.dataset.ok === '1');
 step('Space hold -> search field focused, "blo" -> #Blonde feed');
-await page.locator('#nav button[data-tab=home]').click();
+await openTab(page, 'home');
 
 // --- voice search via CreationVoiceHandler stub, double delivery guarded
 await page.evaluate(() => { window.__vh = []; window.CreationVoiceHandler = { postMessage: (m) => window.__vh.push(m) }; });
@@ -205,7 +218,7 @@ await p4.route(qrUrl, (route) => qrLib ? route.fulfill({ status: 200, contentTyp
 await p4.goto(`${BASE}/install?k=${KEY}`);
 const payload = JSON.parse(await p4.locator('#json').textContent());
 assert.deepEqual(Object.keys(payload), ['title', 'url', 'description', 'iconUrl', 'themeColor']);
-assert.equal(payload.url, `${BASE}/?k=${KEY}&v=4`);
+assert.equal(payload.url, `${BASE}/?k=${KEY}&v=5`);
 assert.equal(payload.themeColor, '#FF2D20');
 await p4.waitForSelector('#qr img, #qr canvas', { timeout: 10000 }).catch(() => {});
 await p4.screenshot({ path: join(out, '10-install.png'), fullPage: true });

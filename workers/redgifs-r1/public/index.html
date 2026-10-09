@@ -8,13 +8,13 @@
 <meta name="robots" content="noindex, nofollow">
 <title>RG</title>
 <style>
-  :root { --top: 0px; --nav: 36px; --bg: #0e0e10; --acc: #FF2D20; --fg: #f2f2f3; --mut: #9a9aa2; --tile: #1a1a1f; }
+  :root { --top: 0px; --nav: 44px; --bg: #0e0e10; --acc: #FF2D20; --fg: #f2f2f3; --mut: #9a9aa2; --tile: #1a1a1f; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
   html, body { margin: 0; width: 240px; height: 282px; overflow: hidden; background: var(--bg); color: var(--fg);
                font: 13px/1.25 system-ui, -apple-system, sans-serif; }
   #app { position: relative; width: 240px; height: 282px; overflow: hidden; }
   #top { position: absolute; left: 0; top: 0; width: 240px; height: var(--top); background: var(--bg); }
-  #stage { position: absolute; left: 0; top: var(--top); width: 240px; height: calc(282px - var(--top) - var(--nav));
+  #stage { position: absolute; left: 0; top: var(--top); width: 240px; height: calc(282px - var(--top));
            overflow: hidden; background: #000; touch-action: none; }
   .screen { position: absolute; inset: 0; display: none; }
   .screen.on { display: block; }
@@ -29,7 +29,7 @@
           font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .2s; }
   #ctx { left: 6px; max-width: 168px; }
   #snd { right: 6px; }
-  #info { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 8px 6px; opacity: 0; transition: opacity .2s;
+  #info { position: absolute; left: 0; right: 0; bottom: var(--nav); padding: 18px 8px 6px; opacity: 0; transition: opacity .2s;
           background: linear-gradient(transparent, rgba(0,0,0,.8)); pointer-events: none; }
   #info .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
   #iu { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -45,7 +45,7 @@
   #list { background: var(--bg); }
   #lhead { height: 22px; padding: 5px 9px 0; display: flex; justify-content: space-between; font-size: 11px; color: var(--mut);
            text-transform: uppercase; letter-spacing: .06em; }
-  #lwin { position: absolute; top: 22px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+  #lwin { position: absolute; top: 22px; left: 0; right: 0; bottom: var(--nav); overflow: hidden; }
   #linner { padding-top: 2px; transition: transform .15s ease-out; will-change: transform; }
   .tile { height: 48px; margin: 0 8px 6px; border-radius: 10px; background: var(--tile); display: flex; align-items: center;
           gap: 9px; padding: 0 10px; border: 2px solid transparent; }
@@ -84,12 +84,15 @@
   @keyframes pu { from { transform: scale(.8); opacity: .7; } to { transform: scale(1); opacity: 1; } }
 
   /* bottom navigation */
-  #nav { position: absolute; left: 0; bottom: 0; width: 240px; height: var(--nav); display: flex; background: #141417;
-         border-top: 1px solid #232328; }
-  #nav button { flex: 1; border: 0; background: none; color: var(--mut); font: 600 12px system-ui, -apple-system, sans-serif;
-                display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; }
+  /* Icon bar. Over the feed it floats on the clip and fades out when idle; in lists it stays. */
+  #nav { position: absolute; left: 0; bottom: 0; width: 240px; height: var(--nav); display: flex; z-index: 7;
+         background: rgba(14,14,16,.78); transition: opacity .25s, transform .25s; }
+  #nav.idle { opacity: 0; transform: translateY(10px); pointer-events: none; }
+  #nav button { flex: 1; border: 0; background: none; color: var(--mut); padding: 0;
+                display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  #nav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   #nav button.on { color: var(--fg); }
-  #nav button::after { content: ''; width: 18px; height: 2px; border-radius: 1px; background: transparent; }
+  #nav button::after { content: ''; width: 16px; height: 2px; border-radius: 1px; background: transparent; }
   #nav button.on::after { background: var(--acc); }
 
   #dbg { position: absolute; left: 0; top: var(--top); z-index: 9; display: none; padding: 2px 4px; white-space: pre;
@@ -121,9 +124,9 @@
     <div id="voice"><div class="dot"></div><div id="vtxt">Höre zu …</div></div>
   </div>
   <nav id="nav">
-    <button type="button" data-tab="home">Home</button>
-    <button type="button" data-tab="explore">Explore</button>
-    <button type="button" data-tab="niches">Niches</button>
+    <button type="button" data-tab="home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg></button>
+    <button type="button" data-tab="explore" aria-label="Explore"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg></button>
+    <button type="button" data-tab="niches" aria-label="Niches"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button>
   </nav>
   <div id="dbg"></div>
 </div>
@@ -139,7 +142,7 @@ const SCROLL_LOCK_MS = int(P.get('lock'), 0, 3000, 150);  // Sperrzeit nach jede
 const LIST_LOCK_MS = int(P.get('listlock'), 0, 3000, 0);  // Sperrzeit in Listen (eine Rastung = ein Eintrag)
 const DOUBLE_CLICK_MS = 250;      // zweiter sideClick (Doppelklick ≈ 50 ms) wird verworfen
 const LOAD_AHEAD = 5;             // nächste Seite holen, wenn nur noch so viele Clips übrig sind
-const INFO_MS = 1800;             // Overlay mit Creator und Position
+const INFO_MS = 2500;             // Overlay mit Creator, Position und Menüleiste, danach ausblenden
 const STALL_MS = 15000;           // ab dann gilt ein Video als hängend
 const TOP_SAFE = int(P.get('top'), 0, 80, 0);   // auf dem R1 sitzt die OS-Leiste über der Seite, nicht darauf (Foto 2026-10-09)
 const USE_HD = P.get('hd') === '1';
@@ -356,8 +359,16 @@ function showInfo() {
   $('itags').textContent = it.t.join(' · ');
   $('snd').textContent = it.a ? (soundOn ? '🔊 Ton an' : '🔇 Tippen = Ton') : 'ohne Ton';
   for (const id of ['ctx', 'info', 'snd']) $(id).classList.add('show');
+  $('nav').classList.remove('idle');
   clearTimeout(infoTimer);
-  infoTimer = setTimeout(() => { for (const id of ['ctx', 'info', 'snd']) $(id).classList.remove('show'); }, INFO_MS);
+  infoTimer = setTimeout(hideChrome, INFO_MS);
+}
+// In the feed the clip gets the whole screen: overlays and the icon bar fade out when nothing happens.
+function hideChrome() {
+  if (screen !== 'feed') return;
+  if (paused || errorAction) { infoTimer = setTimeout(hideChrome, INFO_MS); return; }
+  for (const id of ['ctx', 'info', 'snd']) $(id).classList.remove('show');
+  $('nav').classList.add('idle');
 }
 const flashInfo = showInfo;
 let ppTimer = 0;
@@ -454,7 +465,7 @@ let screen = 'feed', tab = 'home';
 function setScreen(s) {
   screen = s;
   for (const id of ['feed', 'list', 'search']) $(id).classList.toggle('on', id === s);
-  if (s !== 'feed') { for (const v of vids) v.pause(); clearTimeout(stallTimer); }
+  if (s !== 'feed') { for (const v of vids) v.pause(); clearTimeout(stallTimer); $('nav').classList.remove('idle'); }
   if (s !== 'search') $('q').blur();
   hideStatus();
 }
@@ -560,6 +571,11 @@ window.onPluginMessage = (d) => {
 // ---------- touch (pointer events only, no touchstart/preventDefault) ----------
 let ptr = null;
 $('stage').addEventListener('pointerdown', (e) => { dbg.ptr++; ptr = { x: e.clientX, y: e.clientY, t: performance.now(), target: e.target }; });
+let revealTap = false;   // a tap on the hidden bar area only brings the bar back (no sound toggle)
+$('app').addEventListener('pointerdown', (e) => {
+  revealTap = screen === 'feed' && $('nav').classList.contains('idle') && e.clientY >= 282 - 44;
+  if (screen === 'feed') showInfo();
+}, true);
 $('stage').addEventListener('pointercancel', () => { ptr = null; });
 $('stage').addEventListener('pointerup', (e) => {
   if (!ptr) return;
@@ -572,7 +588,7 @@ $('stage').addEventListener('pointerup', (e) => {
     if (Math.abs(dy) >= SWIPE_PX && Math.abs(dy) > Math.abs(dx)) {
       const t = performance.now();
       if (t >= lockUntil) { lockUntil = t + SCROLL_LOCK_MS; step(dy < 0 ? 1 : -1); }
-    } else if (Math.abs(dy) < 10 && Math.abs(dx) < 10) toggleSound();
+    } else if (Math.abs(dy) < 10 && Math.abs(dx) < 10 && !revealTap) toggleSound();
   } else if (screen === 'list') {
     if (Math.abs(dy) >= SWIPE_PX) listMove(-Math.round(dy / TILE_H) || (dy < 0 ? 1 : -1));
     else {
@@ -582,7 +598,12 @@ $('stage').addEventListener('pointerup', (e) => {
   }
 });
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitSearch(); } });
-for (const b of $('nav').children) b.addEventListener('pointerup', () => goTab(b.dataset.tab));
+// A button reacts only to a touch that also started on it, so tapping the hidden bar just reveals it.
+let navDown = null;
+for (const b of $('nav').children) {
+  b.addEventListener('pointerdown', () => { navDown = $('nav').classList.contains('idle') ? null : b; });
+  b.addEventListener('pointerup', () => { if (navDown === b) goTab(b.dataset.tab); navDown = null; });
+}
 
 // ---------- desktop fallbacks ----------
 let spaceDown = false;
