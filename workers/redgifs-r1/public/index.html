@@ -348,7 +348,9 @@ function step(dir) {
 
 // ---------- overlays ----------
 let infoTimer = 0;
-function showInfo() {
+// withNav: taps and the side button also bring back the icon bar; scrolling (wheel or swipe) only
+// shows the creator and position.
+function showInfo(withNav) {
   const f = curFeed, it = f.items[f.idx];
   if (!it) return;
   $('ctx').textContent = f.label;
@@ -359,7 +361,7 @@ function showInfo() {
   $('itags').textContent = it.t.join(' · ');
   $('snd').textContent = it.a ? (soundOn ? '🔊 Ton an' : '🔇 Tippen = Ton') : 'ohne Ton';
   for (const id of ['ctx', 'info', 'snd']) $(id).classList.add('show');
-  $('nav').classList.remove('idle');
+  if (withNav) $('nav').classList.remove('idle');
   clearTimeout(infoTimer);
   infoTimer = setTimeout(hideChrome, INFO_MS);
 }
@@ -380,15 +382,15 @@ function togglePause() {
   paused = !paused;
   if (paused) active.pause(); else playActive();
   flashPP(paused ? '❚❚' : '▶');
-  showInfo();
+  showInfo(true);
 }
 function toggleSound() {
   const it = curFeed.items[curFeed.idx];
-  if (!it || !it.a) { showInfo(); return; }
+  if (!it || !it.a) { showInfo(true); return; }
   soundOn = !soundOn;
   active.muted = !soundOn;
   if (!paused) playActive();
-  showInfo();
+  showInfo(true);
 }
 
 // ---------- lists: Explore (top tags) and Niches ----------
@@ -574,7 +576,6 @@ $('stage').addEventListener('pointerdown', (e) => { dbg.ptr++; ptr = { x: e.clie
 let revealTap = false;   // a tap on the hidden bar area only brings the bar back (no sound toggle)
 $('app').addEventListener('pointerdown', (e) => {
   revealTap = screen === 'feed' && $('nav').classList.contains('idle') && e.clientY >= 282 - 44;
-  if (screen === 'feed') showInfo();
 }, true);
 $('stage').addEventListener('pointercancel', () => { ptr = null; });
 $('stage').addEventListener('pointerup', (e) => {
@@ -588,7 +589,7 @@ $('stage').addEventListener('pointerup', (e) => {
     if (Math.abs(dy) >= SWIPE_PX && Math.abs(dy) > Math.abs(dx)) {
       const t = performance.now();
       if (t >= lockUntil) { lockUntil = t + SCROLL_LOCK_MS; step(dy < 0 ? 1 : -1); }
-    } else if (Math.abs(dy) < 10 && Math.abs(dx) < 10 && !revealTap) toggleSound();
+    } else if (Math.abs(dy) < 10 && Math.abs(dx) < 10) { if (revealTap) showInfo(true); else toggleSound(); }
   } else if (screen === 'list') {
     if (Math.abs(dy) >= SWIPE_PX) listMove(-Math.round(dy / TILE_H) || (dy < 0 ? 1 : -1));
     else {
