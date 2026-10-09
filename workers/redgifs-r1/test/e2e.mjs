@@ -221,6 +221,69 @@ await p3.waitForFunction(() => document.querySelector('video.on')?.dataset.ok ==
 step('network error shown, side button retries, debug overlay visible');
 await p3.close();
 
+// --- profile: favourite and follow from the feed, Profile tab, settings stored in the worker
+const meApi = (p, path, body) => p.evaluate(([k, path, body]) => fetch(path, body ? { method: 'POST', headers: { 'X-Access-Key': k, 'Content-Type': 'application/json' }, body } : { headers: { 'X-Access-Key': k } }).then((r) => r.json()), [KEY, path, body]);
+await openTab(page, 'home');
+await page.evaluate(() => { curFeed.idx = 0; showItem(); showInfo(true); });
+await page.waitForFunction(() => document.querySelector('video.on')?.dataset.ok === '1');
+await page.waitForSelector('#acts.show');
+const [acts, ipos, pill] = await page.evaluate(() => ['acts', 'ipos', 'ctx'].map((id) => document.getElementById(id).getBoundingClientRect().toJSON()));
+const apart = (a, b) => a.bottom <= b.top || b.bottom <= a.top || a.right <= b.left || b.right <= a.left;
+assert.ok(apart(acts, pill) && apart(acts, ipos) && acts.bottom <= 282 - 44, 'action column clear of texts and icon bar');
+const sndBefore = await page.evaluate(() => soundOn);
+for (const id of ['aFav', 'aFol']) { const b = await page.locator('#' + id).boundingBox(); await page.mouse.click(b.x + 19, b.y + 19); }
+await page.waitForFunction(() => document.getElementById('aFav').classList.contains('on') && document.getElementById('aFol').classList.contains('on'));
+assert.equal(await page.evaluate(() => soundOn), sndBefore, 'action buttons do not toggle sound');
+let meState = await meApi(page, '/api/me');
+assert.deepEqual([meState.favs, meState.follows], [['trend1'], ['creator1']]);
+await shot('11-fav-follow');
+await meApi(page, '/api/me/follow', '{"u":"ghost_user"}');          // a creator without a RedGifs account
+step('heart and person+ store favourite and follow in the worker');
+
+await openTab(page, 'me');
+const titles = () => page.evaluate(() => [...document.querySelectorAll('#linner .tile .t')].map((e) => e.textContent).join('|'));
+await page.waitForFunction(() => [...document.querySelectorAll('#linner .tile .t')].map((e) => e.textContent).join('|') === 'Favoriten|Einstellungen|@ghost_user|@creator1');
+assert.equal(await page.locator('.tile.sel .s').textContent(), '1 Clip');
+await shot('12-profile');
+await fire('sideClick');
+await page.waitForFunction(() => document.querySelector('#ctx').textContent === 'Favoriten' && document.querySelector('video.on')?.src.includes('Trend1-mobile.mp4'));
+
+await page.goBack(); await page.waitForFunction(() => screen === 'list');
+await fire('scrollDown'); await fire('scrollDown'); await fire('scrollDown');
+assert.equal(await page.locator('.tile.sel .t').textContent(), '@creator1');
+await wait(300); await fire('sideClick');                          // outside the double-press window
+await page.waitForFunction(() => document.querySelector('#ctx').textContent === '@creator1' && document.querySelector('video.on')?.dataset.ok === '1');
+assert.match(await page.evaluate(() => active.src), /Usercreator11-mobile\.mp4$/);
+await page.goBack(); await page.waitForFunction(() => screen === 'list');
+await fire('scrollUp'); await wait(300); await fire('sideClick');
+await page.waitForFunction(() => document.getElementById('status').classList.contains('err'));
+assert.match(await text('#stxt'), /kein RedGifs-Konto/);
+await shot('13-no-account');
+await page.goBack(); await page.waitForFunction(() => screen === 'list' && !document.getElementById('status').classList.contains('on'));
+step('Profil: favourites feed, followed creator feed, clear message for a creator without account');
+
+await fire('scrollUp'); await wait(300); await fire('sideClick');
+await page.waitForFunction(() => document.getElementById('ltitle').textContent === 'Einstellungen');
+assert.equal(await titles(), 'Füllen|Sperrzeit Rad|Qualität|Debug-Anzeige');
+await wait(300); await fire('sideClick'); await wait(300);         // Füllen: Aus -> An
+await fire('scrollDown'); await fire('sideClick'); await wait(300); // Sperrzeit 150 -> 200
+assert.equal(await page.locator('.tile.sel .s').textContent(), '200 ms');
+await shot('14-settings');
+await page.waitForFunction(() => SCROLL_LOCK_MS === 200 && fillMode);
+await page.waitForTimeout(300);
+meState = await meApi(page, '/api/me');
+assert.deepEqual(meState.settings, { fill: true, lock: 200 });
+await page.goBack(); await page.waitForFunction(() => document.getElementById('ltitle').textContent === 'Profil');
+const p5 = await ctx.newPage();
+await p5.addInitScript(() => localStorage.removeItem('rg_fill'));
+await p5.goto(`${BASE}/?k=${KEY}`);
+await p5.waitForFunction(() => SCROLL_LOCK_MS === 200 && document.getElementById('feed').classList.contains('fill'));
+await p5.goto(`${BASE}/?k=${KEY}&lock=150`);
+await p5.waitForFunction(() => document.getElementById('feed').classList.contains('fill'));
+assert.equal(await p5.evaluate(() => SCROLL_LOCK_MS), 150, 'lock from the install URL wins');
+await p5.close();
+step('settings: fill and scroll lock saved in the worker, applied on the next start, URL parameter wins');
+
 // --- install page
 // qrcode.js comes from cdnjs; fetch it with curl (honours the outbound proxy) and hand it to the page.
 // The <script> keeps its SRI hash, so a wrong file would still be rejected.
@@ -233,7 +296,7 @@ await p4.route(qrUrl, (route) => qrLib ? route.fulfill({ status: 200, contentTyp
 await p4.goto(`${BASE}/install?k=${KEY}`);
 const payload = JSON.parse(await p4.locator('#json').textContent());
 assert.deepEqual(Object.keys(payload), ['title', 'url', 'description', 'iconUrl', 'themeColor']);
-assert.equal(payload.url, `${BASE}/?k=${KEY}&v=8`);
+assert.equal(payload.url, `${BASE}/?k=${KEY}&v=9`);
 assert.equal(payload.themeColor, '#FF2D20');
 await p4.waitForSelector('#qr img, #qr canvas', { timeout: 10000 }).catch(() => {});
 await p4.screenshot({ path: join(out, '10-install.png'), fullPage: true });

@@ -53,7 +53,9 @@ http.createServer(async (req, res) => {
     const url = `http://${req.headers.host || 'localhost'}${req.url}`;
     const headers = new Headers();
     for (const [k, v] of Object.entries(req.headers)) if (typeof v === 'string') headers.set(k, v);
-    const r = await worker.fetch(new Request(url, { method: req.method, headers }), env);
+    let body;
+    if (req.method === 'POST') { const parts = []; for await (const c of req) parts.push(c); body = Buffer.concat(parts); }
+    const r = await worker.fetch(new Request(url, { method: req.method, headers, body }), env);
     res.writeHead(r.status, Object.fromEntries(r.headers));
     if (r.body && req.method !== 'HEAD') Readable.fromWeb(r.body).pipe(res); else res.end();
   } catch (e) {

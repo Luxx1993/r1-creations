@@ -29,14 +29,16 @@
   .pill { position: absolute; top: 6px; padding: 2px 7px; border-radius: 9px; background: rgba(0,0,0,.6);
           font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .2s; }
   #ctx { left: 6px; max-width: 168px; }
-  /* action column (fill, sound), shown together with the icon bar */
-  #acts { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px;
+  /* action column (favourite, follow, fill, sound), shown together with the icon bar */
+  #acts { position: absolute; right: 6px; top: 30px; display: flex; flex-direction: column; gap: 6px;
           opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 4; }
   #acts.show { pointer-events: auto; }
-  .act { width: 40px; height: 40px; border: 0; border-radius: 50%; padding: 0; background: rgba(0,0,0,.55); color: #fff;
+  .act { width: 38px; height: 38px; border: 0; border-radius: 50%; padding: 0; background: rgba(0,0,0,.55); color: #fff;
          display: flex; align-items: center; justify-content: center; }
   .act svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .act.off { color: var(--mut); }
+  .act.on { color: var(--acc); }
+  #aFav.on svg { fill: var(--acc); }
   #info { position: absolute; left: 0; right: 0; bottom: var(--nav); padding: 18px 8px 6px; opacity: 0; transition: opacity .2s;
           background: linear-gradient(transparent, rgba(0,0,0,.8)); pointer-events: none; }
   #info .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
@@ -116,6 +118,8 @@
       <video id="vB" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture></video>
       <div id="ctx" class="pill"></div>
       <div id="acts">
+        <button type="button" class="act" id="aFav" aria-label="Favorit"></button>
+        <button type="button" class="act" id="aFol" aria-label="Creator folgen"></button>
         <button type="button" class="act" id="aFill" aria-label="Füllen oder Einpassen"></button>
         <button type="button" class="act" id="aSnd" aria-label="Ton"></button>
       </div>
@@ -138,25 +142,27 @@
     <button type="button" data-tab="home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg></button>
     <button type="button" data-tab="explore" aria-label="Explore"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg></button>
     <button type="button" data-tab="niches" aria-label="Niches"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button>
+    <button type="button" data-tab="me" aria-label="Profil"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
   </nav>
   <div id="dbg"></div>
 </div>
 <script src="version.js"></script>
 <script>
 'use strict';
-// ---------- settings (URL parameters override the defaults) ----------
+// ---------- settings (URL parameter > saved in the profile > default) ----------
 const P = new URLSearchParams(location.search);
 const int = (v, lo, hi, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 const KEY = P.get('k') || '';
-const DEBUG = P.get('debug') === '1';
-const SCROLL_LOCK_MS = int(P.get('lock'), 0, 3000, 150);  // Sperrzeit nach jedem Videowechsel (?lock=…); R1: 1 Event pro Rastung
+let DEBUG = P.get('debug') === '1';
+let SCROLL_LOCK_MS = int(P.get('lock'), 0, 3000, 150);    // Sperrzeit nach jedem Videowechsel (?lock=…); R1: 1 Event pro Rastung
 const LIST_LOCK_MS = int(P.get('listlock'), 0, 3000, 0);  // Sperrzeit in Listen (eine Rastung = ein Eintrag)
 const DOUBLE_CLICK_MS = 250;      // Doppelklick der Seitentaste (zwei Events ≈ 50 ms) = Füllen/Einpassen
 const LOAD_AHEAD = 5;             // nächste Seite holen, wenn nur noch so viele Clips übrig sind
 const INFO_MS = 2500;             // Overlay mit Creator, Position und Menüleiste, danach ausblenden
 const STALL_MS = 15000;           // ab dann gilt ein Video als hängend
 const TOP_SAFE = int(P.get('top'), 0, 80, 0);   // auf dem R1 sitzt die OS-Leiste über der Seite, nicht darauf (Foto 2026-10-09)
-const USE_HD = P.get('hd') === '1';
+let USE_HD = P.get('hd') === '1';
+const LOCK_STEPS = [100, 150, 200, 250, 300, 500];   // Sperrzeit-Auswahl im Profil
 const SWIPE_PX = 28;
 const TILE_H = 54;                // .tile height + margin
 const VERSION = window.APP_VERSION || '?';
@@ -182,18 +188,23 @@ function dbgRender() {
 }
 // Debug only: can this WebView read api.redgifs.com directly (i.e. it ignores CORS)? If so, the
 // device could talk to RedGifs with its own IP and no relay would be needed.
-let corsTest = 'n/a';
-if (DEBUG) {
-  $('dbg').style.display = 'block'; setInterval(dbgRender, 500);
+let corsTest = 'n/a', dbgTimer = 0;
+function setDebug(on) {
+  DEBUG = on;
+  $('dbg').style.display = on ? 'block' : 'none';
+  clearInterval(dbgTimer); dbgTimer = on ? setInterval(dbgRender, 500) : 0;
+  if (!on || corsTest !== 'n/a') return;
   corsTest = 'testing';
   fetch('https://api.redgifs.com/v1/tags').then((r) => r.json())
     .then((b) => { corsTest = b && b.tags ? 'OK (' + b.tags.length + ' tags)' : 'odd response'; })
     .catch(() => { corsTest = 'blocked'; });
 }
+if (DEBUG) setDebug(true);
 
 // ---------- API ----------
-async function api(path) {
-  const r = await fetch(path, { headers: { 'X-Access-Key': KEY } });
+async function api(path, post) {
+  const r = await fetch(path, post === undefined ? { headers: { 'X-Access-Key': KEY } }
+    : { method: 'POST', headers: { 'X-Access-Key': KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(post) });
   let body = null;
   try { body = await r.json(); } catch (e) {}
   if (!r.ok) {
@@ -211,6 +222,7 @@ function errText(e) {
   if (e.message === 'relay_offline') return 'NAS-Relay nicht verbunden.\nLäuft der Container? Dann Seitentaste.';
   if (e.message === 'relay_timeout') return 'NAS-Relay antwortet nicht.\nSeitentaste = erneut';
   if (e.status === 503) return 'Token-Limit erreicht.\nIn einigen Minuten Seitentaste.';
+  if (e.message === 'user_not_found') return 'Dieser Creator hat kein RedGifs-Konto.\nZurück = Profil';
   if (e.status === 404) return 'Zugriff verweigert oder nicht gefunden.\nInstall-QR prüfen.';
   if (e.message === 'auth_failed') return 'RedGifs lehnt das Token ab.\nSeitentaste = erneut';
   return 'Serverfehler (' + e.status + ').\nSeitentaste = erneut';
@@ -240,7 +252,7 @@ function mediaUrl(u, viaProxy) {
 
 // ---------- feeds ----------
 function makeFeed(kind, params, label) {
-  return { kind, params, label, items: [], seen: new Set(), page: 0, pages: 1, idx: 0, loading: false, done: false, error: null, empty: 0, pending: 0 };
+  return { kind, params, label, items: [], seen: new Set(), page: 0, pages: 1, idx: 0, loading: false, done: false, error: null, empty: 0, pending: 0, shown: false };
 }
 const homeFeed = makeFeed('trending', {}, 'Trending');
 let curFeed = homeFeed;
@@ -266,12 +278,14 @@ async function loadMore(f) {
   if (f !== curFeed || screen !== 'feed') return;
   if (f.error && (!f.items.length || f.pending)) { showError(errText(f.error), () => { f.error = null; loadMore(f); }); return; }
   if (!f.items.length) {
-    if (f.done) showError(f.kind === 'search' ? 'Keine Treffer für „' + (f.params.q || '') + '“.' : 'Keine Clips gefunden.', () => {});
+    if (f.done) showError(f.kind === 'search' ? 'Keine Treffer für „' + (f.params.q || '') + '“.'
+      : f.kind === 'favs' ? 'Noch keine Favoriten.\nIm Clip: Herz antippen.' : 'Keine Clips gefunden.', () => {});
     else loadMore(f);
     return;
   }
   if (f.pending) { const d = f.pending; f.pending = 0; step(d); return; }
-  if (!vids.some((v) => v.dataset.id === (f.items[f.idx] || {}).id)) showItem();
+  // A freshly opened feed always takes over, even if its first clip is already loaded in a <video>.
+  if (!f.shown || active.dataset.id !== (f.items[f.idx] || {}).id) showItem();
   else { preloadNeighbour(); $('ipos').textContent = (f.idx + 1) + '/' + f.items.length + (f.done ? '' : '+'); }
 }
 
@@ -296,7 +310,7 @@ function assign(v, item, preload) {
   v.pause();
   v.dataset.id = item.id; v.dataset.mode = mode; v.dataset.ok = '';
   v.poster = mediaUrl(item.p, viaProxy);
-  v.src = mediaUrl(USE_HD ? item.hd : item.sd, viaProxy);
+  v.src = mediaUrl((USE_HD && item.hd) || item.sd, viaProxy);
   return true;
 }
 
@@ -309,6 +323,7 @@ function playActive() {
 function showItem() {
   const f = curFeed, it = f.items[f.idx];
   if (!it) { if (!f.loading) loadMore(f); return; }
+  f.shown = true;
   let v = vids.find((x) => x.dataset.id === it.id) || vids.find((x) => x !== active);
   const other = v === vids[0] ? vids[1] : vids[0];
   other.pause();
@@ -392,24 +407,35 @@ const ICON = {
   shrink: '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
   sound: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
   muted: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="m17 9 5 6M22 9l-5 6"/></svg>',
+  heart: '<svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/></svg>',
+  follow: '<svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/></svg>',
+  following: '<svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0M16 11l2 2 4-4"/></svg>',
 };
 const store = {
   get(k) { try { return localStorage.getItem('rg_' + k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem('rg_' + k, v); } catch (e) {} },
 };
-let fillMode = store.get('fill') === '1';
+let fillMode = store.get('fill') === '1';   // local copy, so the first clip starts in the right mode
 $('feed').classList.toggle('fill', fillMode);
 function renderActs() {
   const it = curFeed.items[curFeed.idx];
+  const fav = !!(it && me.favs.has(it.id)), fol = !!(it && it.u && isFollowing(it.u));
+  $('aFav').innerHTML = ICON.heart; $('aFav').classList.toggle('on', fav);
+  $('aFol').innerHTML = fol ? ICON.following : ICON.follow;
+  $('aFol').classList.toggle('on', fol); $('aFol').classList.toggle('off', !(it && it.u));
   $('aFill').innerHTML = fillMode ? ICON.shrink : ICON.expand;
   $('aSnd').innerHTML = it && it.a && soundOn ? ICON.sound : ICON.muted;
   $('aSnd').classList.toggle('off', !(it && it.a));
 }
-function toggleFill() {
-  fillMode = !fillMode;
-  store.set('fill', fillMode ? '1' : '0');
-  $('feed').classList.toggle('fill', fillMode);
+function setFill(on, save) {
+  fillMode = on;
+  store.set('fill', on ? '1' : '0');
+  $('feed').classList.toggle('fill', on);
   renderActs();
+  if (save) saveSetting({ fill: on });
+}
+function toggleFill() {
+  setFill(!fillMode, true);
   flashPP(fillMode ? '⤢' : '⤡');
 }
 function flashPP(text) {
@@ -431,10 +457,90 @@ function toggleSound() {
   showInfo(true);
 }
 
-// ---------- lists: Explore (top tags) and Niches ----------
+// ---------- profile: favourites, followed creators, settings (stored in the worker) ----------
+const me = { loaded: false, favs: new Set(), follows: [], settings: {} };
+const isFollowing = (u) => me.follows.some((x) => x.toLowerCase() === u.toLowerCase());
+async function loadMe() {
+  const b = await api('/api/me');
+  me.favs = new Set(b.favs || []); me.follows = b.follows || []; me.settings = b.settings || {};
+  me.loaded = true;
+  applySettings();
+}
+// URL parameters from the install QR win; otherwise the saved profile settings apply.
+function applySettings() {
+  const s = me.settings;
+  if (typeof s.fill === 'boolean' && s.fill !== fillMode) setFill(s.fill, false);
+  if (!P.has('lock') && Number.isFinite(s.lock)) SCROLL_LOCK_MS = s.lock;
+  if (!P.has('hd') && typeof s.hd === 'boolean') USE_HD = s.hd;
+  if (!P.has('debug') && typeof s.debug === 'boolean' && s.debug !== DEBUG) setDebug(s.debug);
+  renderActs();
+}
+function saveSetting(obj) {
+  Object.assign(me.settings, obj);
+  api('/api/me/settings', { settings: obj }).catch(() => flashPP('!'));
+}
+function toggleFav() {
+  const it = curFeed.items[curFeed.idx];
+  if (!it) return;
+  const was = me.favs.has(it.id);
+  if (was) me.favs.delete(it.id); else me.favs.add(it.id);
+  renderActs(); flashPP(was ? '♡' : '♥');
+  const item = {};
+  for (const k of ['id', 'w', 'h', 'd', 'a', 'u', 'v', 't', 'sd', 'hd', 'p']) if (k in it) item[k] = it[k];
+  api('/api/me/fav', { item }).then((b) => {
+    if (b.fav) me.favs.add(it.id); else me.favs.delete(it.id);
+    renderActs();
+  }).catch(() => { if (was) me.favs.add(it.id); else me.favs.delete(it.id); renderActs(); flashPP('!'); });
+}
+function toggleFollow() {
+  const it = curFeed.items[curFeed.idx];
+  if (!it || !it.u) return;
+  const was = isFollowing(it.u);
+  me.follows = was ? me.follows.filter((x) => x.toLowerCase() !== it.u.toLowerCase()) : [it.u].concat(me.follows);
+  renderActs(); flashPP(was ? '−' : '+');
+  api('/api/me/follow', { u: it.u }).then((b) => { me.follows = b.follows || me.follows; renderActs(); })
+    .catch(() => { loadMe().catch(() => {}); flashPP('!'); });
+}
+const onOff = (b) => b ? 'An' : 'Aus';
+const viaQr = (k) => P.has(k) ? ' · per QR' : '';
+function buildMe() {
+  const L = lists.me;
+  L.items = [
+    { kind: 'favs', t: 'Favoriten', s: me.favs.size === 1 ? '1 Clip' : me.favs.size + ' Clips' },
+    { kind: 'settings', t: 'Einstellungen', s: 'Füllen, Sperrzeit, Qualität, Debug' },
+  ];
+  if (!me.follows.length) L.items.push({ kind: 'none', t: 'Noch niemandem gefolgt', s: 'Im Clip: Person+ antippen' });
+  for (const u of me.follows) L.items.push({ kind: 'user', u, t: '@' + u, s: 'Neueste Clips' });
+  L.page = L.pages = 1; L.dirty = true;
+  L.sel = Math.min(L.sel, L.items.length - 1);
+}
+function buildSettings() {
+  const L = lists.settings;
+  L.items = [
+    { kind: 'set', key: 'fill', t: 'Füllen', s: onOff(fillMode) + ' · Doppelklick im Clip' },
+    { kind: 'set', key: 'lock', t: 'Sperrzeit Rad', s: SCROLL_LOCK_MS + ' ms' + viaQr('lock') },
+    { kind: 'set', key: 'hd', t: 'Qualität', s: (USE_HD ? 'HD' : 'SD') + viaQr('hd') },
+    { kind: 'set', key: 'debug', t: 'Debug-Anzeige', s: onOff(DEBUG) + viaQr('debug') },
+  ];
+  L.page = L.pages = 1; L.dirty = true;
+}
+function changeSetting(key) {
+  if (key === 'fill') setFill(!fillMode, true);
+  else if (key === 'lock') {
+    const i = LOCK_STEPS.indexOf(SCROLL_LOCK_MS);
+    SCROLL_LOCK_MS = LOCK_STEPS[(i + 1) % LOCK_STEPS.length];
+    saveSetting({ lock: SCROLL_LOCK_MS });
+  } else if (key === 'hd') { USE_HD = !USE_HD; saveSetting({ hd: USE_HD }); }
+  else if (key === 'debug') { setDebug(!DEBUG); saveSetting({ debug: DEBUG }); }
+  buildSettings(); renderList();
+}
+
+// ---------- lists: Explore (top tags), Niches, Profile ----------
 const lists = {
   explore: { title: 'Explore', items: [{ kind: 'search', t: 'Suche', s: 'Tippen oder Seitentaste halten' }], sel: 0, page: 0, pages: 1, loading: false, error: null, built: 0 },
   niches: { title: 'Niches', items: [], sel: 0, page: 0, pages: 1, loading: false, error: null, built: 0 },
+  me: { title: 'Profil', items: [], sel: 0, page: 0, pages: 1, loading: false, error: null, built: 0 },
+  settings: { title: 'Einstellungen', items: [], sel: 0, page: 1, pages: 1, loading: false, error: null, built: 0 },
 };
 let curList = null;
 
@@ -444,7 +550,10 @@ async function loadList(name) {
   L.loading = true; L.error = null;
   if (curList === L && L.items.length < 2) showLoading('Lade …');
   try {
-    if (name === 'explore') {
+    if (name === 'me') {
+      await loadMe();
+      buildMe();
+    } else if (name === 'explore') {
       const body = await api('/api/tags');
       for (const t of body.tags || []) L.items.push({ kind: 'tag', q: t.n, t: t.n, s: fmt(t.c) + ' Clips' });
       L.page = L.pages = 1;
@@ -464,7 +573,8 @@ function renderList() {
   const L = curList, inner = $('linner');
   $('ltitle').textContent = L.title;
   $('lver').textContent = 'v' + VERSION;
-  const rebuilt = inner.dataset.list !== L.title;
+  const rebuilt = inner.dataset.list !== L.title || L.dirty;
+  L.dirty = false;
   if (rebuilt) { inner.textContent = ''; inner.dataset.list = L.title; L.built = 0; inner.style.transition = 'none'; }
   for (let i = L.built; i < L.items.length; i++) {          // append only new tiles
     const it = L.items[i], el = document.createElement('div');
@@ -498,6 +608,15 @@ function openListItem(i) {
   if (it.kind === 'search') openSearch();
   else if (it.kind === 'tag') openFeed(makeFeed('search', { q: it.q, exact: '1' }, '#' + it.q));
   else if (it.kind === 'niche') openFeed(makeFeed('niche', { id: it.id }, it.t));
+  else if (it.kind === 'favs') openFeed(makeFeed('favs', {}, 'Favoriten'));
+  else if (it.kind === 'user') openFeed(makeFeed('user', { u: it.u }, '@' + it.u));
+  else if (it.kind === 'settings') openSettings();
+  else if (it.kind === 'set') changeSetting(it.key);
+}
+function openSettings() {
+  history.pushState({ tab, sub: 'settings' }, '');
+  buildSettings();
+  curList = lists.settings; setScreen('list'); renderList();
 }
 
 // ---------- screens, tabs, history ----------
@@ -516,8 +635,12 @@ function goTab(t, fromPop) {
   if (!fromPop && history.state && history.state.sub) history.replaceState({ tab: t }, '');
   if (t === 'home') { curFeed = homeFeed; enterFeed(); }
   else {
+    if (t === 'me' && me.loaded) {        // show the cached profile at once, then refresh it
+      buildMe();
+      loadMe().then(() => { if (curList === lists.me && screen === 'list') { buildMe(); renderList(); } }).catch(() => {});
+    }
     curList = lists[t]; setScreen('list'); renderList();
-    if (curList.items.length < 2 || curList.error) loadList(t);
+    if (curList.items.length < 2 || curList.error) { if (t === 'me') curList.page = 0; loadList(t); }
   }
 }
 function enterFeed() {
@@ -645,7 +768,7 @@ $('stage').addEventListener('pointerup', (e) => {
   }
 });
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitSearch(); } });
-for (const [id, fn] of [['aFill', toggleFill], ['aSnd', toggleSound]]) {
+for (const [id, fn] of [['aFav', toggleFav], ['aFol', toggleFollow], ['aFill', toggleFill], ['aSnd', toggleSound]]) {
   let down = false;
   $(id).addEventListener('pointerdown', () => { down = $('acts').classList.contains('show'); });
   $(id).addEventListener('pointerup', () => { if (down) { fn(); showInfo(true); } down = false; });
@@ -677,6 +800,7 @@ document.addEventListener('visibilitychange', () => {
 // ---------- start ----------
 history.replaceState({ tab: 'home' }, '');
 goTab('home');
+loadMe().catch(() => {});   // favourites, follows and settings; the feed does not wait for it
 dbgRender();
 </script>
 </body>

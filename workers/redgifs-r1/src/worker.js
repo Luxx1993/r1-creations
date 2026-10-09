@@ -13,7 +13,7 @@ const MEDIA_HOST = /^(media|userpic|thumbs\d*)\.redgifs\.com$/;
 const MEDIA_PATH = /^\/[A-Za-z0-9_-]{1,120}\.(mp4|jpg|jpeg|webp|png)$/;
 const PUBLIC_PATHS = new Set(['/robots.txt', '/icon.png', '/version.js']);
 
-const CACHE_TTL = { trending: 300, search: 600, niches: 3600, niche: 600, tags: 86400, suggest: 3600 };
+const CACHE_TTL = { trending: 300, search: 600, niches: 3600, niche: 600, tags: 86400, suggest: 3600, user: 600 };
 
 // Per-isolate state. Survives between requests on the same isolate; KV (optional) makes it global.
 const mem = { token: null, kv: new Map(), cache: new Map(), pendingToken: null };
@@ -50,6 +50,92 @@ async function upstream(env, path, headers) {
 }
 
 const RELAY_TIMEOUT_MS = 15000;
+
+// ---------- personal data: favourites, followed creators, settings ----------
+// Lives in the UserData Durable Object (survives reinstalls and works across devices); without that
+// binding (Node server, tests) it falls back to memory. Only references are stored, never media.
+const MAX_FAVS = 1000, MAX_FOLLOWS = 500;
+const SETTINGS = { fill: 'bool', hd: 'bool', debug: 'bool', lock: 'int' };
+const FAV_FIELDS = ['id', 'w', 'h', 'd', 'a', 'u', 'v', 't', 'sd', 'hd', 'p'];
+
+class MemStorage {
+  constructor() { this.m = new Map(); }
+  async get(k) { return this.m.get(k); }
+  async put(k, v) { this.m.set(k, v); }
+  async delete(k) { return this.m.delete(k); }
+  async list({ prefix = '', reverse = false } = {}) {
+    const keys = [...this.m.keys()].filter((k) => k.startsWith(prefix)).sort();
+    if (reverse) keys.reverse();
+    return new Map(keys.map((k) => [k, this.m.get(k)]));
+  }
+}
+
+async function userOp(storage, op, args = {}) {
+  const favKey = (at, id) => `fav:${String(at).padStart(15, '0')}:${id}`;
+  if (op === 'me') {
+    const favs = [...(await storage.list({ prefix: 'fav:' })).values()].map((f) => f.id);
+    return { favs, follows: (await storage.get('follows')) || [], settings: (await storage.get('settings')) || {} };
+  }
+  if (op === 'favs') {
+    const all = [...(await storage.list({ prefix: 'fav:', reverse: true })).values()];
+    const page = args.page || 1, size = 20;
+    return { items: all.slice((page - 1) * size, page * size), page, pages: Math.max(1, Math.ceil(all.length / size)), total: all.length };
+  }
+  if (op === 'fav') {
+    const item = args.item || {};
+    if (typeof item.id !== 'string' || !/^[a-z0-9]{1,80}$/.test(item.id)) throw new HttpError(400, 'bad_item');
+    const existing = await storage.get('favid:' + item.id);
+    if (existing) {
+      await storage.delete(existing); await storage.delete('favid:' + item.id);
+      return { fav: false };
+    }
+    const keys = [...(await storage.list({ prefix: 'fav:' })).keys()];
+    if (keys.length >= MAX_FAVS) throw new HttpError(409, 'favs_full');
+    const clean = Object.fromEntries(FAV_FIELDS.filter((f) => f in item).map((f) => [f, item[f]]));
+    for (const f of ['sd', 'hd', 'p']) if (clean[f] && !/^https:\/\/(media|thumbs\d*)\.redgifs\.com\//.test(clean[f])) delete clean[f];
+    const k = favKey(Date.now(), item.id);
+    await storage.put(k, clean); await storage.put('favid:' + item.id, k);
+    return { fav: true };
+  }
+  if (op === 'follow') {
+    const u = String(args.u || '');
+    if (!/^[A-Za-z0-9_.-]{1,64}$/.test(u)) throw new HttpError(400, 'bad_user');
+    const list = (await storage.get('follows')) || [];
+    const i = list.findIndex((x) => x.toLowerCase() === u.toLowerCase());
+    if (i >= 0) list.splice(i, 1); else { if (list.length >= MAX_FOLLOWS) throw new HttpError(409, 'follows_full'); list.unshift(u); }
+    await storage.put('follows', list);
+    return { following: i < 0, follows: list };
+  }
+  if (op === 'settings') {
+    const s = (await storage.get('settings')) || {};
+    for (const [k, type] of Object.entries(SETTINGS)) {
+      if (!(k in (args.settings || {}))) continue;
+      const v = args.settings[k];
+      if (type === 'bool') s[k] = !!v;
+      if (type === 'int' && Number.isFinite(+v)) s[k] = Math.min(3000, Math.max(0, Math.round(+v)));
+    }
+    await storage.put('settings', s);
+    return { settings: s };
+  }
+  throw new HttpError(404, 'not_found');
+}
+
+export class UserData {
+  constructor(ctx) { this.ctx = ctx; }
+  async fetch(req) {
+    const { op, args } = await req.json();
+    try { return Response.json(await userOp(this.ctx.storage, op, args)); }
+    catch (e) { return Response.json({ error: e.code || 'internal' }, { status: e.status || 500 }); }
+  }
+}
+
+async function user(env, op, args) {
+  if (!env.USER_DATA) return userOp(mem.userStore || (mem.userStore = new MemStorage()), op, args);
+  const r = await env.USER_DATA.get(env.USER_DATA.idFromName('me')).fetch('https://user/', { method: 'POST', body: JSON.stringify({ op, args }) });
+  const body = await r.json();
+  if (!r.ok) throw new HttpError(r.status, body.error || 'user_data');
+  return body;
+}
 
 export class RelayHub {
   constructor(ctx, env) {
@@ -274,6 +360,20 @@ const routes = {
     return cached('niche', `${id}|${page}`, async () =>
       slimGifs(await api(env, `/v2/niches/${id}/gifs?order=hot&count=${PAGE_SIZE}&page=${page}`)));
   },
+  async '/api/user'(env, url) {
+    const u = url.searchParams.get('u') || '';
+    if (!/^[A-Za-z0-9_.-]{1,64}$/.test(u)) throw new HttpError(400, 'bad_user');
+    const page = pageParam(url);
+    try {
+      return await cached('user', `${u.toLowerCase()}|${page}`, async () =>
+        slimGifs(await api(env, `/v2/users/${u}/search?order=new&count=${PAGE_SIZE}&page=${page}`)));
+    } catch (e) {
+      if (e instanceof HttpError && e.status === 404) throw new HttpError(404, 'user_not_found');
+      throw e;
+    }
+  },
+  async '/api/me'(env) { return user(env, 'me'); },
+  async '/api/favs'(env, url) { return user(env, 'favs', { page: pageParam(url) }); },
   async '/api/status'(env) {
     const t = (await kvGet(env, 'token')) || mem.token;
     const log = ((await kvGet(env, 'token_log')) || []).filter((x) => x > now() - 3600e3);
@@ -333,7 +433,8 @@ const json = (obj, status = 200, maxAge = 0) => new Response(JSON.stringify(obj)
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
-    if (req.method !== 'GET' && req.method !== 'HEAD') return finish(new Response('Method not allowed', { status: 405 }));
+    const isPost = req.method === 'POST' && url.pathname.startsWith('/api/me/');
+    if (req.method !== 'GET' && req.method !== 'HEAD' && !isPost) return finish(new Response('Method not allowed', { status: 405 }));
     if (url.pathname === '/robots.txt') return finish(new Response('User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain' } }));
     // Public setup check: says only whether a key is configured, never which.
     if (url.pathname === '/health') {
@@ -353,6 +454,15 @@ export default {
     }
     try {
       if (url.pathname === '/media') return finish(await media(req, url));
+      if (isPost) {                                   // /api/me/fav | /api/me/follow | /api/me/settings
+        const op = url.pathname.slice(8);
+        if (!['fav', 'follow', 'settings'].includes(op)) return finish(json({ error: 'not_found' }, 404));
+        const text = await req.text();
+        if (text.length > 8000) throw new HttpError(413, 'too_large');
+        let args;
+        try { args = JSON.parse(text || '{}'); } catch { throw new HttpError(400, 'bad_json'); }
+        return finish(json(await user(env, op, args)));
+      }
       const route = routes[url.pathname];
       if (route) {
         const kind = url.pathname.slice(5);

@@ -17,9 +17,18 @@ not_found_handling = "none"
 name = "RELAY_HUB"
 class_name = "RelayHub"
 
+[[durable_objects.bindings]]
+name = "USER_DATA"
+class_name = "UserData"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RelayHub"]
+
+# favourites, followed creators and settings (per installation owner, survives reinstalls)
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["UserData"]
 
 [observability]
 enabled = false                  # no request logs

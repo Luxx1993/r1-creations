@@ -47,6 +47,11 @@ export default async function mock(url, init = {}) {
     return json({ page, pages: 2, total: 40, niches: Array.from({ length: 20 }, (_, i) => ({ id: `niche-${page}-${i}`, name: `Niche ${(page - 1) * 20 + i + 1}`,
       gifs: '1234', subscribers: String(50000 - i * 1000), thumbnail: 'https://userpic.redgifs.com/niches/thumbnails/test.jpg' })) });
   }
+  const um = p.match(/^\/v2\/users\/([A-Za-z0-9_.-]+)\/search$/);
+  if (um) {
+    if (!/^creator\d+$/.test(um[1])) return json({ error: { code: 'UserNotFound', status: 404 } }, 404);
+    return json(gifs('User' + um[1], page, 2));
+  }
   const m = p.match(/^\/v2\/niches\/([a-z0-9-]+)\/gifs$/);
   if (m) {
     if (q.get('order') === 'trending') return json({ error: { code: 'BadOrder', status: 400 } }, 400);

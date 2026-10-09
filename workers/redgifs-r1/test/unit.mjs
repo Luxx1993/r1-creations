@@ -122,4 +122,33 @@ assert.deepEqual(relayed.map((x) => x.path.split('?')[0]), ['/v2/auth/temporary'
 assert.ok(relayed.every((x) => x.ua.includes('Mozilla')) && relayed[1].auth.startsWith('Bearer '));
 assert.deepEqual((await (await w.fetch(new Request('https://w.test/health'), renv)).json()).relay, { connected: 1 });
 assert.equal((await w.fetch(new Request('https://w.test/relay/connect'), env)).status, 404, 'no hub route without RELAY_SECRET');
+// personal data: favourites, follows, settings (memory store without the Durable Object binding)
+w = await load(apiFetch); reset();
+const post = (path, body) => w.fetch(new Request('https://w.test' + path, { method: 'POST', headers: { 'x-access-key': 'secret-key' }, body: JSON.stringify(body) }), env);
+assert.equal((await w.fetch(new Request('https://w.test/api/me/fav', { method: 'POST', body: '{}' }), env)).status, 404, 'key required for POST');
+assert.equal((await w.fetch(new Request('https://w.test/api/trending', { method: 'POST', headers: { 'x-access-key': 'secret-key' } }), env)).status, 405);
+const item = { id: 'abc1', u: 'creator1', sd: 'https://media.redgifs.com/Abc1-mobile.mp4', p: 'https://evil.example/x.jpg', extra: 'x' };
+assert.deepEqual(await (await post('/api/me/fav', { item })).json(), { fav: true });
+await post('/api/me/fav', { item: { ...item, id: 'abc2' } });
+let me = await (await get(w, '/api/me')).json();
+assert.deepEqual(me.favs.sort(), ['abc1', 'abc2']);
+let favs = await (await get(w, '/api/favs')).json();
+assert.equal(favs.items[0].id, 'abc2', 'newest first');
+assert.equal(favs.items[1].p, undefined, 'non-RedGifs URLs are dropped'); assert.equal(favs.items[1].extra, undefined);
+assert.deepEqual(await (await post('/api/me/fav', { item })).json(), { fav: false }, 'second press removes');
+assert.equal((await post('/api/me/fav', { item: { id: '../x' } })).status, 400);
+assert.equal((await post('/api/me/follow', { u: 'creator7' })).status, 200);
+assert.deepEqual((await (await post('/api/me/follow', { u: 'creator9' })).json()).follows, ['creator9', 'creator7']);
+assert.equal((await (await post('/api/me/follow', { u: 'CREATOR7' })).json()).following, false, 'unfollow is case-insensitive');
+assert.equal((await post('/api/me/follow', { u: 'bad name' })).status, 400);
+assert.deepEqual((await (await post('/api/me/settings', { settings: { fill: 1, lock: '175', evil: 'x' } })).json()).settings, { fill: true, lock: 175 });
+me = await (await get(w, '/api/me')).json();
+assert.deepEqual([me.follows, me.settings], [['creator9'], { fill: true, lock: 175 }]);
+assert.equal((await post('/api/me/nope', {})).status, 404);
+// creator feed: real account -> clips, unknown account -> user_not_found
+let uf = await (await get(w, '/api/user?u=creator3')).json();
+assert.ok(uf.items.length > 0 && calls.api.some((c) => c.startsWith('/v2/users/creator3/search?order=new')));
+res = await get(w, '/api/user?u=ghost');
+assert.equal(res.status, 404); assert.equal((await res.json()).error, 'user_not_found');
+assert.equal((await get(w, '/api/user?u=../../x')).status, 400);
 console.log('unit: all assertions passed');

@@ -1,13 +1,14 @@
 # RG Clips – privater RedGifs-Client für den Rabbit R1
 
 Eigene Creation für das R1-Display (240×282): ein Clip pro Bildschirm, eine Scrollrad-Rastung = genau ein Clip.
-Nur für die persönliche Nutzung. Kein Download, kein Speichern, kein Re-Hosting, keine Werbung, kein Login.
+Nur für die persönliche Nutzung. Kein Download, kein Speichern von Medien, kein Re-Hosting, keine Werbung, kein
+RedGifs-Login. Favoriten, gefolgte Creator und Einstellungen liegen als reine Verweise im eigenen Worker (siehe „Profil“).
 
 Liegt bewusst **nicht** auf einem `creation/*`-Branch: Die GitHub-Pages-Übersicht dieses Repos veröffentlicht jeden
 solchen Branch. Diese Creation läuft ausschließlich auf einem eigenen Cloudflare Worker mit Zugriffsschlüssel.
 
 ```
-src/worker.js        Worker: API-Proxy, Token-Cache, /media-Stream-Proxy, Zugriffsschutz, Header
+src/worker.js        Worker: API-Proxy, Token-Cache, /media-Stream-Proxy, Zugriffsschutz, Header, Profil (UserData)
 public/index.html    App (eine Datei, kein Build)
 public/install.html  Install-Seite mit QR (qrcode.js von cdnjs, SRI-geprüft)
 public/version.js    APP_VERSION und INSTALL_V
@@ -138,13 +139,32 @@ Das Relay nimmt nur Anfragen an `/v1/…` und `/v2/…` von `api.redgifs.com` an
 | --- | --- | --- | --- |
 | Scrollrad | ±1 Clip, danach 150 ms Sperre | Auswahl ±1 | – |
 | Seitentaste kurz | Play/Pause, blendet Creator, Position und Leiste ein | Öffnen | Suchen |
+| Seitentaste doppelt | Füllen/Einpassen (ohne Verzerren) | – | – |
 | Seitentaste halten | Sprachsuche (`CreationVoiceHandler`), ohne Handler: Textfeld | gleich | – |
 | Tippen | Ton an/aus und Einblenden von Creator, Position, Leiste (Tipp auf die ausgeblendete Leiste: nur einblenden) | Kachel öffnen | Feld/Taste |
 | Wischen hoch/runter | nächster/vorheriger Clip | Liste blättern | – |
 
-Clips nutzen den ganzen Bildschirm. Beim Scrollen bleibt er frei; Creator, Position und die Symbolleiste erscheinen nur auf Tipp oder Seitentaste und verschwinden nach 2,5 s. Symbolleiste: Home (Trending), Explore (Suche + Top-Tags), Niches. Zurück-Leiste der R1 führt aus Tag-/Niche-/Such-Feeds
+Clips nutzen den ganzen Bildschirm. Beim Scrollen bleibt er frei; Creator, Position und die Symbolleiste erscheinen nur auf Tipp oder Seitentaste und verschwinden nach 2,5 s. Symbolleiste: Home (Trending), Explore (Suche + Top-Tags), Niches, Profil. Rechts erscheinen mit der Leiste Herz
+(Favorit), Person+ (Creator folgen), Füllen und Ton. Zurück-Leiste der R1 führt aus Tag-/Niche-/Such-Feeds
 zur Liste zurück (`history`). Ab 5 verbleibenden Clips wird die nächste Seite geladen; maximal zwei `<video>` im DOM
 (aktiv + nächster mit `preload="metadata"`).
+
+## Profil
+
+Ein RedGifs-Login ist nicht sauber möglich: Die Anmeldung läuft über Kinde mit Captcha und leitet nur auf redgifs.com
+zurück, `/v2/me/*` verlangt ein Nutzer-Token (`401 UserTokenRequired`), die API-Bibliothek kennt nur temporäre Tokens.
+Stattdessen hat die App ein eigenes Profil im Worker (Durable Object `UserData`, SQLite, kostenloser Plan):
+
+- **Favoriten** (Herz): speichert nur Verweise (ID, Creator, Tags, CDN-URLs), max. 1000. Profil → Favoriten spielt sie als Feed ab.
+- **Gefolgte Creator** (Person+): max. 500. Profil → `@name` zeigt die neuesten Clips (`/v2/users/{name}/search?order=new`,
+  getestet). Creator ohne RedGifs-Konto liefern 404 → Hinweis „kein RedGifs-Konto“.
+- **Einstellungen**: Füllen, Sperrzeit Rad (100–500 ms), Qualität SD/HD, Debug-Anzeige. Reihenfolge: URL-Parameter aus
+  dem Install-QR > gespeicherte Einstellung > Standard.
+- Sammlungen (RedGifs-Collections) gibt es noch nicht.
+
+Worker-Routen: `GET /api/me`, `GET /api/favs?page=`, `GET /api/user?u=&page=`, `POST /api/me/fav|follow|settings`
+(Körper max. 8000 Zeichen, nur Whitelist-Felder, Medien-URLs nur `media|thumbs*.redgifs.com`).
+Beim Deploy legt Migration `v2` die Klasse `UserData` an (steht in `wrangler.toml`, Workers Builds übernimmt das).
 
 URL-Parameter (bei Bedarf in die Install-URL; die Install-Seite hat Felder für Debug und Sperrzeit):
 `debug=1` (Event-Zähler, Abstand zwischen Scroll-Events, Sperrzeit), `lock=<ms>` (Sperrzeit Feed), `listlock=<ms>`,
